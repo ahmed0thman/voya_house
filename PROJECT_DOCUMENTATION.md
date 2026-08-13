@@ -57,3 +57,14 @@ A single, massive GSAP timeline orchestrates the entire site based on the scroll
 - **Concept:** Designed as an "out of the box" premium footer.
 - **Parallax:** It sits behind the content at the bottom of the DOM. As the user scrolls past the Contact section, the footer is slowly revealed via a negative z-index parallax effect.
 - **Details:** Minimalist architecture, SVG branding, and clean SVG social icons (Instagram, Twitter, Location).
+
+## 6. Typography & Text Animation Refinements
+
+### Smart Word-Wrapping with GSAP SplitText
+A known issue with standard character-by-character GSAP animations is that the browser treats each animated `<span>` as an independent block, causing lines to break awkwardly in the middle of words on mobile screens. 
+- **The Fix:** The `SplitText` component was heavily refactored to parse the text into an array of words first. Each word is wrapped in an invisible `inline-block` container with `whitespace-nowrap`. This forces the browser to treat the entire word as an unbreakable unit, wrapping lines only at natural spaces while perfectly preserving the stagger delay of individual character animations.
+
+### Responsive Alignments & Spatial Design
+- Titles and descriptions across all character sections (Family, Coffee, Papa, Mama) were carefully aligned to the upper (`top-[20%]`) and lower (`top-[70%]`) thirds of the viewport to keep the visual focus firmly on the central cinematic action.
+- Global text wrapping was forced to `whitespace-break-spaces` (applied directly to the root `<body>`) to ensure that line breaks injected by designers are strictly respected across all browser engines.
+- Shadows behind primary typography were deepened (`drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]`) to ensure maximum legibility against bright backgrounds in the video sequence.

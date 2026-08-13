@@ -123,7 +123,7 @@ export default function Home() {
       const paddedIndex = i.toString().padStart(4, "0");
       img.src = `/assets/frames/frame_${paddedIndex}.jpg`;
       images.push(img);
-      
+
       img.onload = () => {
         loadedCount++;
         // Dismiss loading screen when the first few frames are ready
@@ -203,17 +203,17 @@ export default function Home() {
       }
     };
 
-    // passive: false is CRITICAL — it allows preventDefault on wheel
-    window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("keydown", onKeyDown);
+    // AUTO SCROLL STOPPED: Commented out event listeners to disable scroll hijacking
+    // window.addEventListener("wheel", onWheel, { passive: false });
+    // window.addEventListener("touchstart", onTouchStart, { passive: true });
+    // window.addEventListener("touchend", onTouchEnd, { passive: true });
+    // window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("keydown", onKeyDown);
+      // window.removeEventListener("wheel", onWheel);
+      // window.removeEventListener("touchstart", onTouchStart);
+      // window.removeEventListener("touchend", onTouchEnd);
+      // window.removeEventListener("keydown", onKeyDown);
     };
   }, [goToSection]);
 
@@ -242,7 +242,13 @@ export default function Home() {
           onUpdate: (self) => {
             if (!ctx) return;
             // Map scroll progress (0-1) to frame index (0-360)
-            const currentFrame = Math.max(0, Math.min(frameCount - 1, Math.floor(self.progress * (frameCount - 1))));
+            const currentFrame = Math.max(
+              0,
+              Math.min(
+                frameCount - 1,
+                Math.floor(self.progress * (frameCount - 1)),
+              ),
+            );
             const img = imagesRef.current[currentFrame];
             if (img && img.complete) {
               ctx.drawImage(img, 0, 0);
@@ -319,17 +325,26 @@ export default function Home() {
       // Section 2: Family Reveal (0.2 to 0.4)
       // ==========================================
       masterTl
+        .set(".ui-section-2", { autoAlpha: 1 }, 0.2)
         .fromTo(
-          ".ui-section-2",
-          { autoAlpha: 0, y: 40, scale: 0.95 },
-          { autoAlpha: 1, y: 0, scale: 1, duration: 0.05 },
-          0.2,
+          ".s2-title .char",
+          { opacity: 0, scale: 1.2, color: "#ffffff" },
+          {
+            opacity: 1,
+            scale: 1,
+            color: "#e8e4db",
+            duration: 0.02,
+            stagger: 0.002,
+          },
+          0.22,
         )
-        .to(
-          ".ui-section-2",
-          { autoAlpha: 0, y: -40, scale: 0.95, duration: 0.05 },
-          0.35,
-        );
+        .fromTo(
+          ".s2-desc .char",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.015, stagger: 0.0005 },
+          0.24,
+        )
+        .to(".ui-section-2", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.35);
 
       // ==========================================
       // Section 3: Coffee (0.4 to 0.6)
@@ -640,14 +655,18 @@ export default function Home() {
           </div>
 
           {/* Section 2: Family Reveal */}
-          <div className="ui-section-2 absolute inset-0 flex flex-col items-center px-6 text-center text-white opacity-0 invisible">
-            <div className="max-w-2xl bg-black/40 backdrop-blur-xl border border-white/10 p-10 md:p-16 rounded-[2rem] shadow-2xl relative overflow-hidden mt-[20vh]">
-              <h2 className="font-serif text-3xl md:text-5xl font-medium tracking-tight mb-4 relative z-10 drop-shadow-[0_4px_12px_rgba(0,0,0,0.6)]">
-                A Modern Family Experience
+          <div className="ui-section-2 absolute inset-0 text-white opacity-0 invisible">
+            <div className="absolute top-[10%] left-0 w-full text-center px-6">
+              <h2 className="s2-title font-serif text-5xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(255,255,255,0.2)] whitespace-break-spaces">
+                <SplitText text="A Modern Family" />
+                <br />
+                <SplitText text="Experience" />
               </h2>
-              <p className="text-sm md:text-base text-white/90 font-light relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                Everyday rituals, mindful choices, and sweet moments made for
-                sharing.
+            </div>
+
+            <div className="absolute top-[30%] left-0 w-full flex flex-col items-center text-center px-6">
+              <p className="s2-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] whitespace-break-spaces">
+                <SplitText text="Everyday rituals, mindful choices, and sweet moments made for sharing." />
               </p>
             </div>
           </div>
@@ -659,12 +678,12 @@ export default function Home() {
                 <Coffee01Icon size={32} className="text-[#F1E6C3]" />
               </div>
               <div className="s3-vertical-text mt-6 font-mono uppercase text-[10px] text-[#F1E6C3] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
-                <SplitText text="SPECIALTY" />
+                <SplitText text="VOYA " />
               </div>
             </div>
 
-            <div className="absolute top-[30%] left-0 w-full text-center">
-              <h2 className="s3-title font-serif text-5xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
+            <div className="absolute top-[20%] left-0 w-full text-center">
+              <h2 className="s3-title font-serif text-4xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
                 <SplitText text="Quality in" />
                 <br />
                 <SplitText text="everyday rituals." />
@@ -672,7 +691,7 @@ export default function Home() {
             </div>
 
             <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-              <p className="s3-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+              <p className="s3-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                 <SplitText text="A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup." />
               </p>
               <button className="s3-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#F1E6C3] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
@@ -692,8 +711,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="absolute top-[30%] left-0 w-full text-center">
-              <h2 className="s4-title font-serif text-5xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
+            <div className="absolute top-[20%] left-0 w-full text-center">
+              <h2 className="s4-title font-serif text-4xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
                 <SplitText text="Nourishment" />
                 <br />
                 <SplitText text="and strength." />
@@ -701,7 +720,7 @@ export default function Home() {
             </div>
 
             <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-              <p className="s4-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+              <p className="s4-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                 <SplitText text="Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence." />
               </p>
               <button className="s4-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#B7D39A] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
@@ -721,8 +740,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="absolute top-[30%] left-0 w-full text-center">
-              <h2 className="s5-title font-serif text-5xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
+            <div className="absolute top-[20%] left-0 w-full text-center">
+              <h2 className="s5-title font-serif text-4xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
                 <SplitText text="Warmth &" />
                 <br />
                 <SplitText text="Hospitality." />
@@ -730,7 +749,7 @@ export default function Home() {
             </div>
 
             <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-              <p className="s5-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
+              <p className="s5-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                 <SplitText text="Nurturing flavors and generous portions. Comfort food that feels like coming home." />
               </p>
               <button className="s5-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#D8A98F] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
