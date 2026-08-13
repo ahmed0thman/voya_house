@@ -26,6 +26,7 @@ body {
   color: var(--color-brand-black);
 }
 
+
 #canvas-container {
   position: fixed;
   top: 0;

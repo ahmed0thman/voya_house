@@ -8,6 +8,8 @@ import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useGSAP } from "@gsap/react";
 import Header from "@/components/Header";
 import SplitText from "@/components/SplitText";
+import SoundToggle from "@/components/SoundToggle";
+import { useAmbientSound } from "@/components/useAmbientSound";
 import { Coffee01Icon, Leaf01Icon, Pizza01Icon } from "hugeicons-react";
 
 // Section snap points as scroll progress (0–1)
@@ -30,6 +32,9 @@ export default function Home() {
 
   // Loading state
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Ambient sound engine
+  const { isMuted, toggleMute, enableSound, updateProgress, cleanup: cleanupSound } = useAmbientSound();
   const videoReady = useRef(false);
   const minTimeReached = useRef(false);
 
@@ -160,6 +165,20 @@ export default function Home() {
     };
   }, [isLoaded]);
 
+  // ─── Auto-unmute on first interaction ─────────────────────────────────
+  useEffect(() => {
+    const handleFirstTap = () => {
+      enableSound();
+    };
+    
+    // Catch the very first interaction (click/touch) to start audio
+    window.addEventListener("pointerdown", handleFirstTap, { once: true });
+    
+    return () => {
+      window.removeEventListener("pointerdown", handleFirstTap);
+    };
+  }, [enableSound]);
+
   // ─── Wheel & Touch hijack ──────────────────────────────────
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
@@ -253,6 +272,9 @@ export default function Home() {
             if (img && img.complete) {
               ctx.drawImage(img, 0, 0);
             }
+
+            // Drive ambient sound crossfading from scroll position
+            updateProgress(self.progress);
           },
         },
       });
@@ -526,6 +548,13 @@ export default function Home() {
     },
     { scope: container },
   );
+
+  // Cleanup sound engine on unmount
+  useEffect(() => {
+    return () => {
+      cleanupSound();
+    };
+  }, [cleanupSound]);
 
   // ─── Hero Entrance Animation ────────────────────────────────
   useGSAP(
@@ -957,6 +986,13 @@ export default function Home() {
           <span>Designed for the Journey</span>
         </div>
       </footer>
+
+      {/* ─── Sound Toggle ─── */}
+      <SoundToggle
+        isMuted={isMuted}
+        onToggle={toggleMute}
+        isPageLoaded={isLoaded}
+      />
 
       {/* ─── Loading Screen ─── */}
       {!isLoaded && (
