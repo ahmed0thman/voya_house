@@ -96,10 +96,20 @@ export default function Home() {
     };
 
     // Minimum 1 second display
-    const timer = setTimeout(() => {
+    const minTimer = setTimeout(() => {
       minTimeReached.current = true;
       tryDismiss();
     }, 1000);
+
+    // Fallback timer: Force dismiss after 3.5 seconds
+    // (Crucial for iOS Safari where media events might not fire until user interaction)
+    const fallbackTimer = setTimeout(() => {
+      if (!isLoaded) {
+        videoReady.current = true;
+        minTimeReached.current = true;
+        tryDismiss();
+      }
+    }, 3500);
 
     const video = videoRef.current;
     if (video) {
@@ -107,15 +117,21 @@ export default function Home() {
         videoReady.current = true;
         tryDismiss();
       };
-      // canplaythrough = enough data buffered to play without stalling
-      if (video.readyState >= 4) {
+
+      // readyState >= 2 (HAVE_CURRENT_DATA) means the first frame is loaded
+      // This is much safer than canplaythrough (4) on mobile Safari
+      if (video.readyState >= 2) {
         onReady();
       } else {
+        video.addEventListener("loadeddata", onReady, { once: true });
         video.addEventListener("canplaythrough", onReady, { once: true });
       }
     }
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(minTimer);
+      clearTimeout(fallbackTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -131,83 +147,62 @@ export default function Home() {
     };
   }, [isLoaded]);
 
-  // ─── Smooth Momentum Scroll ──────────────────────────────────
+  // ─── Wheel & Touch hijack ──────────────────────────────────
   useEffect(() => {
-    let targetScroll = window.scrollY;
-
     const onWheel = (e: WheelEvent) => {
-      e.preventDefault(); // Take over native scrolling
+      e.preventDefault(); // ← THIS is the key: browser never scrolls on its own
 
-      const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
-      targetScroll += e.deltaY;
-      targetScroll = Math.max(0, Math.min(targetScroll, scrollMax));
+      if (isAnimating.current) return; // ignore input during transition
 
-      gsap.to(window, {
-        scrollTo: { y: targetScroll, autoKill: true },
-        duration: 1.2,
-        ease: "power3.out", // This provides the "extra scrolling animation" (momentum)
-      });
-    };
-
-    let lastTouchY = 0;
-    const onTouchStart = (e: TouchEvent) => {
-      lastTouchY = e.touches[0].clientY;
-      targetScroll = window.scrollY; // Reset target to avoid jumping
-      gsap.killTweensOf(window); // Stop current momentum immediately on touch
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-      const currentY = e.touches[0].clientY;
-      const deltaY = lastTouchY - currentY;
-      lastTouchY = currentY;
-
-      const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
-      targetScroll += deltaY * 2; // Multiplier for better touch speed
-      targetScroll = Math.max(0, Math.min(targetScroll, scrollMax));
-
-      gsap.to(window, {
-        scrollTo: { y: targetScroll, autoKill: true },
-        duration: 1.2,
-        ease: "power3.out",
-      });
-    };
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
-      let jump = 0;
-
-      if (e.key === "ArrowDown") jump = 150;
-      else if (e.key === "ArrowUp") jump = -150;
-      else if (e.key === "PageDown" || e.key === " ") jump = window.innerHeight;
-      else if (e.key === "PageUp") jump = -window.innerHeight;
-
-      if (jump !== 0) {
-        e.preventDefault();
-        targetScroll = window.scrollY + jump;
-        targetScroll = Math.max(0, Math.min(targetScroll, scrollMax));
-
-        gsap.to(window, {
-          scrollTo: { y: targetScroll, autoKill: true },
-          duration: 1.2,
-          ease: "power3.out",
-        });
+      if (e.deltaY > 0) {
+        goToSection(currentIndex.current + 1);
+      } else if (e.deltaY < 0) {
+        goToSection(currentIndex.current - 1);
       }
     };
 
-    // passive: false is CRITICAL to allow preventDefault
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (isAnimating.current) return;
+      const delta = touchStartY.current - e.changedTouches[0].clientY;
+      const threshold = 50; // minimum px to count as a swipe
+      if (Math.abs(delta) < threshold) return;
+
+      if (delta > 0) {
+        goToSection(currentIndex.current + 1);
+      } else {
+        goToSection(currentIndex.current - 1);
+      }
+    };
+
+    // Keyboard support (arrow keys, space, page up/down)
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isAnimating.current) return;
+      if (["ArrowDown", "PageDown", " "].includes(e.key)) {
+        e.preventDefault();
+        goToSection(currentIndex.current + 1);
+      } else if (["ArrowUp", "PageUp"].includes(e.key)) {
+        e.preventDefault();
+        goToSection(currentIndex.current - 1);
+      }
+    };
+
+    // passive: false is CRITICAL — it allows preventDefault on wheel
     window.addEventListener("wheel", onWheel, { passive: false });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("keydown", onKeyDown);
 
     return () => {
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [goToSection]);
 
   // ─── GSAP Animation Timeline ──────────────────────────────
   useGSAP(
@@ -223,7 +218,8 @@ export default function Home() {
       if (!el || !video || !overlay || !groundGlow) return;
 
       video.pause();
-      video.currentTime = 0;
+      // Use 0.001 instead of 0 to force iOS Safari to render the first frame
+      video.currentTime = 0.001;
 
       // ScrollTrigger drives the animation timeline from scroll position.
       // NO snap config — we handle snapping ourselves via the wheel hijack.
@@ -232,10 +228,10 @@ export default function Home() {
           trigger: el,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.6, // Tighter scrub for responsiveness since we control scroll
+          scrub: 1.5, // Increased scrub smoothing to give mobile decoders more time to catch up
           onUpdate: (self) => {
             const duration = video.duration || 15;
-            video.currentTime = self.progress * duration;
+            video.currentTime = Math.max(0.001, self.progress * duration);
           },
         },
       });
@@ -575,6 +571,7 @@ export default function Home() {
             className="absolute inset-0 w-full h-full object-cover scale-105"
             muted
             playsInline
+            autoPlay
             preload="auto"
             src="/assets/voya-motion-landing.mp4"
           />
@@ -618,11 +615,11 @@ export default function Home() {
             </div>
 
             {/* Scroll Indicator */}
-            <div className="s1-scroll-indicator absolute bottom-[2%] left-1/2 -translate-x-1/2 flex flex-col items-center opacity-0 invisible">
+            <div className="s1-scroll-indicator absolute bottom-[1%] left-1/2 -translate-x-1/2 flex flex-col items-center opacity-0 invisible">
               <span className="text-[10px] uppercase tracking-[0.3em] font-medium text-white/70 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
                 Scroll
               </span>
-              <div className="w-[1px] h-16 bg-white/20 relative rounded-full">
+              <div className="w-[1px] h-10 bg-white/20 relative rounded-full">
                 {/* Glowing moving dot */}
                 <div
                   className="scroll-dot-anim absolute w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_#fff]"
