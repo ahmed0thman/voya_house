@@ -7,9 +7,10 @@ import HoldImageDial from './HoldImageDial';
 
 interface TalabatMenuProps {
   menu: BrandMenu;
+  autoHintFirstItem?: boolean;
 }
 
-export default function TalabatMenu({ menu }: TalabatMenuProps) {
+export default function TalabatMenu({ menu, autoHintFirstItem = false }: TalabatMenuProps) {
   const [activeCategory, setActiveCategory] = useState<string>(menu.categories[0].id);
   const [activeDialItem, setActiveDialItem] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -103,12 +104,12 @@ export default function TalabatMenu({ menu }: TalabatMenuProps) {
         className="flex-1 overflow-y-auto pb-32 px-6 scrollbar-hide relative"
         style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
       >
-        {menu.categories.map((category, index) => (
+        {menu.categories.map((category, categoryIndex) => (
           <section
             key={category.id}
             id={category.id}
             ref={(el) => {
-              sectionRefs.current[index] = el;
+              sectionRefs.current[categoryIndex] = el;
             }}
             className="pt-8 pb-12 border-b border-black/10 last:border-b-0"
           >
@@ -117,7 +118,7 @@ export default function TalabatMenu({ menu }: TalabatMenuProps) {
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {category.items.map((item) => (
+              {category.items.map((item, itemIndex) => (
                 <div 
                   key={item.id} 
                   className="bg-white/40 backdrop-blur-md rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-white/40 overflow-visible relative"
@@ -129,6 +130,7 @@ export default function TalabatMenu({ menu }: TalabatMenuProps) {
                     <HoldImageDial 
                       images={item.images} 
                       onHoldChange={(holding) => setActiveDialItem(holding ? item.id : null)}
+                      autoHint={autoHintFirstItem && categoryIndex === 0 && itemIndex === 0}
                     />
 
                     <div className="flex-1 min-w-0 py-1">

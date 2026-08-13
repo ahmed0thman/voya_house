@@ -6,9 +6,10 @@ import { gsap } from 'gsap';
 interface HoldImageDialProps {
   images: string[];
   onHoldChange?: (holding: boolean) => void;
+  autoHint?: boolean;
 }
 
-export default function HoldImageDial({ images, onHoldChange }: HoldImageDialProps) {
+export default function HoldImageDial({ images, onHoldChange, autoHint = false }: HoldImageDialProps) {
   const [isHolding, setIsHolding] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
   
@@ -18,6 +19,31 @@ export default function HoldImageDial({ images, onHoldChange }: HoldImageDialPro
   
   const startYRef = useRef(0);
   const currentYRef = useRef(0);
+  const interactedRef = useRef(false);
+
+  // Auto Hint Tutorial Logic
+  useEffect(() => {
+    if (autoHint && images.length > 1) {
+      const openTimer = setTimeout(() => {
+        if (!interactedRef.current) {
+          setIsHolding(true);
+          onHoldChange?.(true);
+
+          const closeTimer = setTimeout(() => {
+            if (!interactedRef.current) {
+              setIsHolding(false);
+              onHoldChange?.(false);
+            }
+          }, 1200);
+
+          return () => clearTimeout(closeTimer);
+        }
+      }, 1200);
+
+      return () => clearTimeout(openTimer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoHint, images.length]);
 
   const ITEM_SIZE = 100; // base size of the image
   const GAP = 12; // gap between images in the dial
@@ -114,6 +140,11 @@ export default function HoldImageDial({ images, onHoldChange }: HoldImageDialPro
   }, [isHolding, activeIdx, onHoldChange, STEP, CENTER_OFFSET]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
+    if (images.length <= 1) return;
+    
+    interactedRef.current = true;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    
     setIsHolding(true);
     onHoldChange?.(true);
     startYRef.current = e.clientY;

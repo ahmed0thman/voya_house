@@ -301,6 +301,7 @@ export default function MenuStackOverlay({
             className="opacity-0"
             brandId={brand}
             isActive={brand === activeBrand && !isSwitching}
+            isInitialActive={brand === initialBrandId}
           />
         ))}
 

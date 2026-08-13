@@ -7,12 +7,13 @@ import TalabatMenu from './TalabatMenu';
 interface BookletCardProps {
   brandId: 'coffee' | 'papa' | 'mama';
   isActive: boolean;
+  isInitialActive?: boolean;
   style?: React.CSSProperties;
   className?: string;
 }
 
 const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
-  ({ brandId, isActive, style, className = '' }, ref) => {
+  ({ brandId, isActive, isInitialActive = false, style, className = '' }, ref) => {
     const menu = menuData[brandId];
     if (!menu) return null;
 
@@ -27,7 +28,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
         }}
       >
         {/* The Menu Interface */}
-        <TalabatMenu menu={menu} />
+        <TalabatMenu menu={menu} autoHintFirstItem={isInitialActive} />
       </div>
     );
   }
