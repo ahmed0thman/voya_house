@@ -303,8 +303,22 @@ export function useAmbientSound() {
   const initialize = useCallback(() => {
     if (initializedRef.current) return;
 
-    const ctx = new AudioContext();
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    
+    const ctx = new AudioContextClass();
     ctxRef.current = ctx;
+
+    // ─── iOS Safari Unlock Hack ───
+    // Forcing a silent oscillator to play synchronously inside the user gesture
+    // strictly binds the AudioContext to the iOS media session.
+    const unlockOsc = ctx.createOscillator();
+    const unlockGain = ctx.createGain();
+    unlockGain.gain.value = 0;
+    unlockOsc.connect(unlockGain);
+    unlockGain.connect(ctx.destination);
+    unlockOsc.start(0);
+    unlockOsc.stop(ctx.currentTime + 0.1);
 
     const master = ctx.createGain();
     master.gain.value = 0.15;
