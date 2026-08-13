@@ -37,7 +37,8 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
               const headerRect = header.getBoundingClientRect();
               
               if (pillRect.left < headerRect.left || pillRect.right > headerRect.right) {
-                pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                const scrollLeft = pill.offsetLeft - header.clientWidth / 2 + pill.clientWidth / 2;
+                header.scrollTo({ left: scrollLeft, behavior: 'smooth' });
               }
             }
           }
