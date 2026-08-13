@@ -131,62 +131,83 @@ export default function Home() {
     };
   }, [isLoaded]);
 
-  // ─── Wheel & Touch hijack ──────────────────────────────────
+  // ─── Smooth Momentum Scroll ──────────────────────────────────
   useEffect(() => {
+    let targetScroll = window.scrollY;
+
     const onWheel = (e: WheelEvent) => {
-      e.preventDefault(); // ← THIS is the key: browser never scrolls on its own
+      e.preventDefault(); // Take over native scrolling
 
-      if (isAnimating.current) return; // ignore input during transition
+      const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+      targetScroll += e.deltaY;
+      targetScroll = Math.max(0, Math.min(targetScroll, scrollMax));
 
-      if (e.deltaY > 0) {
-        goToSection(currentIndex.current + 1);
-      } else if (e.deltaY < 0) {
-        goToSection(currentIndex.current - 1);
-      }
+      gsap.to(window, {
+        scrollTo: { y: targetScroll, autoKill: true },
+        duration: 1.2,
+        ease: "power3.out", // This provides the "extra scrolling animation" (momentum)
+      });
     };
 
+    let lastTouchY = 0;
     const onTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
+      lastTouchY = e.touches[0].clientY;
+      targetScroll = window.scrollY; // Reset target to avoid jumping
+      gsap.killTweensOf(window); // Stop current momentum immediately on touch
     };
 
-    const onTouchEnd = (e: TouchEvent) => {
-      if (isAnimating.current) return;
-      const delta = touchStartY.current - e.changedTouches[0].clientY;
-      const threshold = 50; // minimum px to count as a swipe
-      if (Math.abs(delta) < threshold) return;
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const currentY = e.touches[0].clientY;
+      const deltaY = lastTouchY - currentY;
+      lastTouchY = currentY;
 
-      if (delta > 0) {
-        goToSection(currentIndex.current + 1);
-      } else {
-        goToSection(currentIndex.current - 1);
-      }
+      const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+      targetScroll += deltaY * 2; // Multiplier for better touch speed
+      targetScroll = Math.max(0, Math.min(targetScroll, scrollMax));
+
+      gsap.to(window, {
+        scrollTo: { y: targetScroll, autoKill: true },
+        duration: 1.2,
+        ease: "power3.out",
+      });
     };
 
-    // Keyboard support (arrow keys, space, page up/down)
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isAnimating.current) return;
-      if (["ArrowDown", "PageDown", " "].includes(e.key)) {
+      const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+      let jump = 0;
+
+      if (e.key === "ArrowDown") jump = 150;
+      else if (e.key === "ArrowUp") jump = -150;
+      else if (e.key === "PageDown" || e.key === " ") jump = window.innerHeight;
+      else if (e.key === "PageUp") jump = -window.innerHeight;
+
+      if (jump !== 0) {
         e.preventDefault();
-        goToSection(currentIndex.current + 1);
-      } else if (["ArrowUp", "PageUp"].includes(e.key)) {
-        e.preventDefault();
-        goToSection(currentIndex.current - 1);
+        targetScroll = window.scrollY + jump;
+        targetScroll = Math.max(0, Math.min(targetScroll, scrollMax));
+
+        gsap.to(window, {
+          scrollTo: { y: targetScroll, autoKill: true },
+          duration: 1.2,
+          ease: "power3.out",
+        });
       }
     };
 
-    // passive: false is CRITICAL — it allows preventDefault on wheel
-    // window.addEventListener("wheel", onWheel, { passive: false });
-    // window.addEventListener("touchstart", onTouchStart, { passive: true });
-    // window.addEventListener("touchend", onTouchEnd, { passive: true });
-    // window.addEventListener("keydown", onKeyDown);
+    // passive: false is CRITICAL to allow preventDefault
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("keydown", onKeyDown);
 
     return () => {
-      // window.removeEventListener("wheel", onWheel);
-      // window.removeEventListener("touchstart", onTouchStart);
-      // window.removeEventListener("touchend", onTouchEnd);
-      // window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("keydown", onKeyDown);
     };
-  }, [goToSection]);
+  }, []);
 
   // ─── GSAP Animation Timeline ──────────────────────────────
   useGSAP(
