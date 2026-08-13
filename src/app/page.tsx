@@ -18,12 +18,15 @@ const COOLDOWN_MS = 3600; // lock input during animation
 
 export default function Home() {
   const container = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const groundGlowRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLElement>(null);
+
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const frameCount = 361;
 
   // Loading state
   const [isLoaded, setIsLoaded] = useState(false);
@@ -76,7 +79,7 @@ export default function Home() {
     });
   }, []);
 
-  // ─── Loading screen logic ──────────────────────────────────
+  // ─── Loading screen logic & Image Preloading ──────────────────────────────────
   useEffect(() => {
     const tryDismiss = () => {
       if (videoReady.current && minTimeReached.current && !isLoaded) {
@@ -102,7 +105,6 @@ export default function Home() {
     }, 1000);
 
     // Fallback timer: Force dismiss after 3.5 seconds
-    // (Crucial for iOS Safari where media events might not fire until user interaction)
     const fallbackTimer = setTimeout(() => {
       if (!isLoaded) {
         videoReady.current = true;
@@ -111,21 +113,32 @@ export default function Home() {
       }
     }, 3500);
 
-    const video = videoRef.current;
-    if (video) {
-      const onReady = () => {
-        videoReady.current = true;
-        tryDismiss();
-      };
+    // Preload image sequence
+    const images: HTMLImageElement[] = [];
+    imagesRef.current = images;
+    let loadedCount = 0;
 
-      // readyState >= 2 (HAVE_CURRENT_DATA) means the first frame is loaded
-      // This is much safer than canplaythrough (4) on mobile Safari
-      if (video.readyState >= 2) {
-        onReady();
-      } else {
-        video.addEventListener("loadeddata", onReady, { once: true });
-        video.addEventListener("canplaythrough", onReady, { once: true });
-      }
+    for (let i = 1; i <= frameCount; i++) {
+      const img = new window.Image();
+      const paddedIndex = i.toString().padStart(4, "0");
+      img.src = `/assets/frames/frame_${paddedIndex}.jpg`;
+      images.push(img);
+      
+      img.onload = () => {
+        loadedCount++;
+        // Dismiss loading screen when the first few frames are ready
+        if (loadedCount === 1) {
+          const canvas = canvasRef.current;
+          if (canvas) {
+            const ctx = canvas.getContext("2d");
+            canvas.width = 720;
+            canvas.height = 1280;
+            if (ctx) ctx.drawImage(img, 0, 0);
+          }
+          videoReady.current = true;
+          tryDismiss();
+        }
+      };
     }
 
     return () => {
@@ -210,16 +223,13 @@ export default function Home() {
       gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
       const el = container.current;
-      const video = videoRef.current;
+      const canvas = canvasRef.current;
       const overlay = overlayRef.current;
       const groundGlow = groundGlowRef.current;
       const footer = footerRef.current;
 
-      if (!el || !video || !overlay || !groundGlow) return;
-
-      video.pause();
-      // Use 0.001 instead of 0 to force iOS Safari to render the first frame
-      video.currentTime = 0.001;
+      if (!el || !canvas || !overlay || !groundGlow) return;
+      const ctx = canvas.getContext("2d");
 
       // ScrollTrigger drives the animation timeline from scroll position.
       // NO snap config — we handle snapping ourselves via the wheel hijack.
@@ -228,10 +238,15 @@ export default function Home() {
           trigger: el,
           start: "top top",
           end: "bottom bottom",
-          scrub: 1.5, // Increased scrub smoothing to give mobile decoders more time to catch up
+          scrub: 1.5, // Smoothing for mobile scrolling
           onUpdate: (self) => {
-            const duration = video.duration || 15;
-            video.currentTime = Math.max(0.001, self.progress * duration);
+            if (!ctx) return;
+            // Map scroll progress (0-1) to frame index (0-360)
+            const currentFrame = Math.max(0, Math.min(frameCount - 1, Math.floor(self.progress * (frameCount - 1))));
+            const img = imagesRef.current[currentFrame];
+            if (img && img.complete) {
+              ctx.drawImage(img, 0, 0);
+            }
           },
         },
       });
@@ -565,15 +580,10 @@ export default function Home() {
       >
         {/* FIXED Viewport Stage */}
         <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden">
-          {/* VIDEO BACKGROUND */}
-          <video
-            ref={videoRef}
+          {/* CANVAS SEQUENCE BACKGROUND */}
+          <canvas
+            ref={canvasRef}
             className="absolute inset-0 w-full h-full object-cover scale-105"
-            muted
-            playsInline
-            autoPlay
-            preload="auto"
-            src="/assets/voya-motion-landing.mp4"
           />
           <div
             ref={overlayRef}
