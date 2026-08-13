@@ -276,7 +276,7 @@ const LAYER_DEFS: { name: string; range: [number, number]; build: (ctx: AudioCon
 ];
 
 /** Volume for the always-on vocal layer (on top of master) */
-const VOCAL_VOLUME = 0.375;
+const VOCAL_VOLUME = 0.3;
 
 /** Crossfade envelope width (in scroll-progress units) */
 const FADE_WIDTH = 0.06;
@@ -290,6 +290,7 @@ export function useAmbientSound() {
   const vocalSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const initializedRef = useRef(false);
   const isMutedRef = useRef(true);
+  const isDuckedRef = useRef(false);
   const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
@@ -312,7 +313,7 @@ export function useAmbientSound() {
 
     const vocalGain = ctx.createGain();
     vocalGain.gain.value = 0;
-    vocalGain.connect(master);
+    vocalGain.connect(ctx.destination);
     vocalGainRef.current = vocalGain;
 
     const rawBuffer = vocalBufferRef.current;
@@ -375,6 +376,11 @@ export function useAmbientSound() {
         master.gain.cancelScheduledValues(ctx.currentTime);
         master.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
       }
+      const vocalGain = vocalGainRef.current;
+      if (vocalGain) {
+        vocalGain.gain.cancelScheduledValues(ctx.currentTime);
+        vocalGain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+      }
       isMutedRef.current = true;
       setIsMuted(true);
     }
@@ -415,7 +421,7 @@ export function useAmbientSound() {
     if (!ctx) return;
 
     const master = masterGainRef.current;
-    if (master && master.gain.value < 0.14) {
+    if (master && !isDuckedRef.current && master.gain.value < 0.14) {
       master.gain.setTargetAtTime(0.15, ctx.currentTime, 0.05);
     }
 
@@ -440,6 +446,18 @@ export function useAmbientSound() {
 
       volume = Math.max(0, Math.min(1, volume));
       layer.gain.gain.setTargetAtTime(volume, ctx.currentTime, 0.05);
+    }
+  }, []);
+
+  const setDucked = useCallback((ducked: boolean) => {
+    isDuckedRef.current = ducked;
+    if (!initializedRef.current || isMutedRef.current) return;
+    
+    const ctx = ctxRef.current;
+    const master = masterGainRef.current;
+    if (ctx && master) {
+      // Smoothly fade to a much lower volume (0.035) or back to 100% (0.15) over 0.5 seconds
+      master.gain.setTargetAtTime(ducked ? 0.035 : 0.15, ctx.currentTime, 0.5);
     }
   }, []);
 
@@ -471,6 +489,7 @@ export function useAmbientSound() {
     toggleMute,
     enableSound,
     updateProgress,
+    setDucked,
     cleanup,
   };
 }

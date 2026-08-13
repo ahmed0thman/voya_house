@@ -11,6 +11,7 @@ import SplitText from "@/components/SplitText";
 import SoundToggle from "@/components/SoundToggle";
 import { useAmbientSound } from "@/components/useAmbientSound";
 import { Coffee01Icon, Leaf01Icon, Pizza01Icon } from "hugeicons-react";
+import MenuStackOverlay from "@/components/MenuStackOverlay";
 
 // Section snap points as scroll progress (0–1)
 const SNAP_POINTS = [0, 0.3, 0.55, 0.74, 0.95];
@@ -24,6 +25,7 @@ export default function Home() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const groundGlowRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
+  const [activeMenu, setActiveMenu] = useState<'coffee' | 'papa' | 'mama' | null>(null);
   const contactRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLElement>(null);
 
@@ -34,7 +36,7 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Ambient sound engine
-  const { isMuted, toggleMute, enableSound, updateProgress, cleanup: cleanupSound } = useAmbientSound();
+  const { isMuted, toggleMute, enableSound, updateProgress, setDucked, cleanup: cleanupSound } = useAmbientSound();
   const videoReady = useRef(false);
   const minTimeReached = useRef(false);
 
@@ -42,6 +44,11 @@ export default function Home() {
   const currentIndex = useRef(0);
   const isAnimating = useRef(false);
   const touchStartY = useRef(0);
+
+  // Duck audio when menu booklet is open
+  useEffect(() => {
+    setDucked(activeMenu !== null);
+  }, [activeMenu, setDucked]);
 
   // Navigate to a specific section index
   const goToSection = useCallback((index: number) => {
@@ -82,6 +89,14 @@ export default function Home() {
         );
       },
     });
+  }, []);
+
+  // ─── Reset Scroll Position on Mount ───────────────────────────────────────────
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
   }, []);
 
   // ─── Loading screen logic & Image Preloading ──────────────────────────────────
@@ -169,13 +184,21 @@ export default function Home() {
   useEffect(() => {
     const handleFirstTap = () => {
       enableSound();
+      window.removeEventListener("pointerdown", handleFirstTap);
+      window.removeEventListener("touchstart", handleFirstTap);
+      window.removeEventListener("click", handleFirstTap);
     };
     
     // Catch the very first interaction (click/touch) to start audio
+    // iOS Safari strictly requires touchstart or click to unlock AudioContext
     window.addEventListener("pointerdown", handleFirstTap, { once: true });
+    window.addEventListener("touchstart", handleFirstTap, { once: true });
+    window.addEventListener("click", handleFirstTap, { once: true });
     
     return () => {
       window.removeEventListener("pointerdown", handleFirstTap);
+      window.removeEventListener("touchstart", handleFirstTap);
+      window.removeEventListener("click", handleFirstTap);
     };
   }, [enableSound]);
 
@@ -723,7 +746,10 @@ export default function Home() {
               <p className="s3-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                 <SplitText text="A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup." />
               </p>
-              <button className="s3-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#F1E6C3] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+              <button 
+                onClick={() => setActiveMenu('coffee')}
+                className="s3-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#F1E6C3] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+              >
                 Discover the Roast
               </button>
             </div>
@@ -752,7 +778,10 @@ export default function Home() {
               <p className="s4-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                 <SplitText text="Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence." />
               </p>
-              <button className="s4-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#B7D39A] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+              <button 
+                onClick={() => setActiveMenu('papa')}
+                className="s4-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#B7D39A] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+              >
                 Explore Healthy Menu
               </button>
             </div>
@@ -781,7 +810,10 @@ export default function Home() {
               <p className="s5-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
                 <SplitText text="Nurturing flavors and generous portions. Comfort food that feels like coming home." />
               </p>
-              <button className="s5-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#D8A98F] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]">
+              <button 
+                onClick={() => setActiveMenu('mama')}
+                className="s5-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#D8A98F] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+              >
                 Taste the Comfort
               </button>
             </div>
@@ -1085,6 +1117,11 @@ export default function Home() {
             </svg>
           </div>
         </div>
+      )}
+
+      {/* Render the Luxury Menu Booklet if active */}
+      {activeMenu && (
+        <MenuStackOverlay initialBrandId={activeMenu} onClose={() => setActiveMenu(null)} />
       )}
     </>
   );
