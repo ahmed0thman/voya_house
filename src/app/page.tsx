@@ -664,7 +664,7 @@ export default function Home() {
               </h2>
             </div>
 
-            <div className="absolute top-[30%] left-0 w-full flex flex-col items-center text-center px-6">
+            <div className="absolute top-[40%] left-0 w-full flex flex-col items-center text-center px-6">
               <p className="s2-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] whitespace-break-spaces">
                 <SplitText text="Everyday rituals, mindful choices, and sweet moments made for sharing." />
               </p>
