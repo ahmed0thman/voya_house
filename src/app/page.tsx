@@ -184,20 +184,20 @@ export default function Home() {
   useEffect(() => {
     const handleFirstTap = () => {
       enableSound();
-      window.removeEventListener("pointerdown", handleFirstTap);
-      window.removeEventListener("touchstart", handleFirstTap);
+      window.removeEventListener("pointerup", handleFirstTap);
+      window.removeEventListener("touchend", handleFirstTap);
       window.removeEventListener("click", handleFirstTap);
     };
     
     // Catch the very first interaction (click/touch) to start audio
-    // iOS Safari strictly requires touchstart or click to unlock AudioContext
-    window.addEventListener("pointerdown", handleFirstTap, { once: true });
-    window.addEventListener("touchstart", handleFirstTap, { once: true });
+    // iOS Safari strictly requires touchend or click to unlock AudioContext (touchstart is often ignored for scrolling)
+    window.addEventListener("pointerup", handleFirstTap, { once: true });
+    window.addEventListener("touchend", handleFirstTap, { once: true });
     window.addEventListener("click", handleFirstTap, { once: true });
     
     return () => {
-      window.removeEventListener("pointerdown", handleFirstTap);
-      window.removeEventListener("touchstart", handleFirstTap);
+      window.removeEventListener("pointerup", handleFirstTap);
+      window.removeEventListener("touchend", handleFirstTap);
       window.removeEventListener("click", handleFirstTap);
     };
   }, [enableSound]);
