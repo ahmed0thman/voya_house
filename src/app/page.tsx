@@ -358,14 +358,6 @@ export default function Home() {
         0.15,
       );
 
-      // Header visibility (fades in after Hero)
-      masterTl.fromTo(
-        ".site-header",
-        { opacity: 0 },
-        { opacity: 1, duration: 0.05 },
-        0.15,
-      );
-
       // ==========================================
       // Section 2: Family Reveal (0.2 to 0.4)
       // ==========================================
@@ -552,11 +544,20 @@ export default function Home() {
             ease: "power2.out",
           },
           0.87,
-        );
+        )
+        .to(".ui-section-5", { autoAlpha: 0, duration: 0.05 }, 0.95);
+
+      // Header visibility (fades in only after 5th section)
+      masterTl.fromTo(
+        ".site-header",
+        { opacity: 0 },
+        { opacity: 1, duration: 0.05 },
+        0.95,
+      );
 
       // Footer Logo Parallax/Fade
       if (footer) {
-        gsap.from(".footer-logo span", {
+        gsap.from(footer.querySelectorAll(".footer-logo span"), {
           scrollTrigger: {
             trigger: footer,
             start: "top bottom",
@@ -638,13 +639,13 @@ export default function Home() {
 
   return (
     <>
-      <Header />
-
       {/* 500vh Master Scroll Container */}
       <main
         ref={container}
         className="relative w-full h-[500vh] bg-[#080907] selection:bg-[#B7D39A] selection:text-black font-sans"
       >
+        <Header />
+
         {/* FIXED Viewport Stage */}
         <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden">
           {/* CANVAS SEQUENCE BACKGROUND */}

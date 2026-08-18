@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
 import { Cancel01Icon, Touch01Icon, ArrowRight01Icon } from "hugeicons-react";
 import BookletCard from "./BookletCard";
 
@@ -39,185 +40,220 @@ export default function MenuStackOverlay({
     };
   };
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
+  // ─── 1. Luxury Entrance Timeline (Aligned with RAF via useGSAP) ───
+  useGSAP(
+    () => {
+      document.body.style.overflow = "hidden";
+      const pos = getPositions(activeBrand);
 
-    // 1. Instantly set the geometric states of all cards without animating
-    const pos = getPositions(activeBrand);
-    
-    gsap.set(cardsRef.current[activeBrand], {
-      y: "0%",
-      rotationX: 0,
-      scale: 1,
-      z: 0,
-      transformOrigin: "bottom center",
-    });
+      const tl = gsap.timeline();
 
-    gsap.set(cardsRef.current[pos.left], {
-      y: "5%",
-      scale: 0.95,
-      z: -50,
-      rotationZ: 5,
-      transformOrigin: "bottom center",
-    });
-    
-    gsap.set(cardsRef.current[pos.right], {
-      y: "10%",
-      scale: 0.9,
-      z: -100,
-      rotationZ: 10,
-      transformOrigin: "bottom center",
-    });
+      // Background overlay smooth fade
+      tl.fromTo(
+        bgRef.current,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.45, ease: "power2.out" }
+      );
 
-    // 2. Delay the animation slightly to allow React and the browser to 
-    // finish painting the heavy DOM (3 full menus). This prevents main-thread blocking lag.
-    const entranceTimer = setTimeout(() => {
-      gsap.to(bgRef.current, {
-        opacity: 1,
-        duration: 0.8,
-        ease: "power2.out",
-      });
+      // Active Center Card - Tactile 3D physical rise
+      tl.fromTo(
+        cardsRef.current[activeBrand],
+        {
+          y: 35,
+          scale: 0.96,
+          opacity: 0,
+          rotationX: 8,
+          z: 0,
+          transformOrigin: "bottom center",
+        },
+        {
+          y: 0,
+          scale: 1,
+          opacity: 1,
+          rotationX: 0,
+          duration: 0.65,
+          ease: "power3.out",
+          force3D: true,
+        },
+        "<0.05"
+      );
 
-      gsap.to(cardsRef.current[activeBrand], {
-        opacity: 1,
-        duration: 0.8,
-        ease: "power2.out",
-      });
+      // Left Stacked Card - Organic fan out behind left
+      tl.fromTo(
+        cardsRef.current[pos.left],
+        {
+          y: "12%",
+          scale: 0.92,
+          z: -80,
+          rotationZ: 0,
+          opacity: 0,
+          transformOrigin: "bottom center",
+        },
+        {
+          y: "5%",
+          scale: 0.95,
+          z: -50,
+          rotationZ: 5,
+          opacity: 0.7,
+          duration: 0.65,
+          ease: "power3.out",
+          force3D: true,
+        },
+        "<0.08"
+      );
 
-      gsap.to(cardsRef.current[pos.left], {
-        opacity: 0.7,
-        duration: 0.8,
-        ease: "power2.out",
-      });
-      
-      gsap.to(cardsRef.current[pos.right], {
-        opacity: 0.4,
-        duration: 0.8,
-        ease: "power2.out",
-      });
-    }, 50);
+      // Right Stacked Card - Organic fan out behind right
+      tl.fromTo(
+        cardsRef.current[pos.right],
+        {
+          y: "18%",
+          scale: 0.88,
+          z: -140,
+          rotationZ: 0,
+          opacity: 0,
+          transformOrigin: "bottom center",
+        },
+        {
+          y: "10%",
+          scale: 0.9,
+          z: -100,
+          rotationZ: 10,
+          opacity: 0.4,
+          duration: 0.65,
+          ease: "power3.out",
+          force3D: true,
+        },
+        "<0.08"
+      );
 
-    return () => {
-      clearTimeout(entranceTimer);
-      document.body.style.overflow = "";
-    };
-  }, []); // Run only on mount
+      // Controls (Switcher, Hold Indicator, Close Button)
+      tl.fromTo(
+        ".overlay-control",
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.05 },
+        "<0.15"
+      );
 
-  // Handle Switcher Animation
-  useEffect(() => {
-    const pos = getPositions(activeBrand);
+      return () => {
+        document.body.style.overflow = "";
+      };
+    },
+    { scope: overlayRef }
+  );
 
-    if (isSwitching) {
-      // Fan out at 40% scale
-      gsap.to(cardsRef.current[pos.center], {
-        scale: 0.6,
-        y: "-30%",
-        x: "0%",
-        z: -100,
-        rotationY: 0,
-        rotationZ: 0,
-        opacity: hoverBrand === pos.center ? 1 : 0.8,
-        boxShadow:
-          hoverBrand === pos.center
-            ? "0 0 80px rgba(255,255,255,0.6)"
-            : "0 20px 40px rgba(0,0,0,0.4)",
-        duration: 0.5,
-        ease: "power3.out",
-        transformOrigin: "bottom center",
-      });
+  // ─── 2. Swiping & Fan-Out Animation (Transform + Opacity only, zero boxShadow churn) ───
+  useGSAP(
+    () => {
+      const pos = getPositions(activeBrand);
 
-      gsap.to(cardsRef.current[pos.left], {
-        scale: hoverBrand === pos.left ? 0.7 : 0.6,
-        y: hoverBrand === pos.left ? "-15%" : "-30%",
-        x: hoverBrand === pos.left ? "0%" : "-30%",
-        z: hoverBrand === pos.left ? -50 : -200,
-        rotationY: hoverBrand === pos.left ? 0 : 15,
-        rotationZ: hoverBrand === pos.left ? 0 : -5,
-        opacity: hoverBrand === pos.left ? 1 : 0.5,
-        boxShadow:
-          hoverBrand === pos.left
-            ? "0 0 80px rgba(255,255,255,0.6)"
-            : "0 20px 40px rgba(0,0,0,0.4)",
-        duration: 0.5,
-        ease: "power3.out",
-        transformOrigin: "bottom center",
-      });
+      if (isSwitching) {
+        // Fan out cards smoothly
+        gsap.to(cardsRef.current[pos.center], {
+          scale: 0.6,
+          y: "-30%",
+          x: "0%",
+          z: -100,
+          rotationY: 0,
+          rotationZ: 0,
+          opacity: hoverBrand === pos.center ? 1 : 0.8,
+          duration: 0.45,
+          ease: "power3.out",
+          transformOrigin: "bottom center",
+          force3D: true,
+        });
 
-      gsap.to(cardsRef.current[pos.right], {
-        scale: hoverBrand === pos.right ? 0.7 : 0.6,
-        y: hoverBrand === pos.right ? "-15%" : "-30%",
-        x: hoverBrand === pos.right ? "0%" : "30%",
-        z: hoverBrand === pos.right ? -50 : -200,
-        rotationY: hoverBrand === pos.right ? 0 : -15,
-        rotationZ: hoverBrand === pos.right ? 0 : 5,
-        opacity: hoverBrand === pos.right ? 1 : 0.5,
-        boxShadow:
-          hoverBrand === pos.right
-            ? "0 0 80px rgba(255,255,255,0.6)"
-            : "0 20px 40px rgba(0,0,0,0.4)",
-        duration: 0.5,
-        ease: "power3.out",
-        transformOrigin: "bottom center",
-      });
-    } else {
-      // Stack collapsed (React Swiper cards style)
-      gsap.to(cardsRef.current[pos.center], {
-        scale: 1,
-        y: "0%",
-        x: "0%",
-        z: 0,
-        rotationY: 0,
-        rotationZ: 0,
-        opacity: 1,
-        boxShadow: "0 40px 100px rgba(0,0,0,0.4)",
-        duration: 0.6,
-        ease: "power3.out",
-        transformOrigin: "bottom center",
-      });
+        gsap.to(cardsRef.current[pos.left], {
+          scale: hoverBrand === pos.left ? 0.7 : 0.6,
+          y: hoverBrand === pos.left ? "-15%" : "-30%",
+          x: hoverBrand === pos.left ? "0%" : "-30%",
+          z: hoverBrand === pos.left ? -50 : -200,
+          rotationY: hoverBrand === pos.left ? 0 : 15,
+          rotationZ: hoverBrand === pos.left ? 0 : -5,
+          opacity: hoverBrand === pos.left ? 1 : 0.5,
+          duration: 0.45,
+          ease: "power3.out",
+          transformOrigin: "bottom center",
+          force3D: true,
+        });
 
-      gsap.to(cardsRef.current[pos.left], {
-        scale: 0.95,
-        y: "5%",
-        x: "0%",
-        z: -50,
-        rotationY: 0,
-        rotationZ: 5,
-        opacity: 0.7,
-        boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
-        duration: 0.6,
-        ease: "power3.out",
-        transformOrigin: "bottom center",
-      });
+        gsap.to(cardsRef.current[pos.right], {
+          scale: hoverBrand === pos.right ? 0.7 : 0.6,
+          y: hoverBrand === pos.right ? "-15%" : "-30%",
+          x: hoverBrand === pos.right ? "0%" : "30%",
+          z: hoverBrand === pos.right ? -50 : -200,
+          rotationY: hoverBrand === pos.right ? 0 : -15,
+          rotationZ: hoverBrand === pos.right ? 0 : 5,
+          opacity: hoverBrand === pos.right ? 1 : 0.5,
+          duration: 0.45,
+          ease: "power3.out",
+          transformOrigin: "bottom center",
+          force3D: true,
+        });
+      } else {
+        // Stack collapsed (React Swiper cards style)
+        gsap.to(cardsRef.current[pos.center], {
+          scale: 1,
+          y: "0%",
+          x: "0%",
+          z: 0,
+          rotationY: 0,
+          rotationZ: 0,
+          opacity: 1,
+          duration: 0.5,
+          ease: "power3.out",
+          transformOrigin: "bottom center",
+          force3D: true,
+        });
 
-      gsap.to(cardsRef.current[pos.right], {
-        scale: 0.9,
-        y: "10%",
-        x: "0%",
-        z: -100,
-        rotationY: 0,
-        rotationZ: 10,
-        opacity: 0.4,
-        boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
-        duration: 0.6,
-        ease: "power3.out",
-        transformOrigin: "bottom center",
-      });
-    }
-  }, [isSwitching, activeBrand, hoverBrand]);
+        gsap.to(cardsRef.current[pos.left], {
+          scale: 0.95,
+          y: "5%",
+          x: "0%",
+          z: -50,
+          rotationY: 0,
+          rotationZ: 5,
+          opacity: 0.7,
+          duration: 0.5,
+          ease: "power3.out",
+          transformOrigin: "bottom center",
+          force3D: true,
+        });
 
+        gsap.to(cardsRef.current[pos.right], {
+          scale: 0.9,
+          y: "10%",
+          x: "0%",
+          z: -100,
+          rotationY: 0,
+          rotationZ: 10,
+          opacity: 0.4,
+          duration: 0.5,
+          ease: "power3.out",
+          transformOrigin: "bottom center",
+          force3D: true,
+        });
+      }
+    },
+    { scope: overlayRef, dependencies: [isSwitching, activeBrand, hoverBrand] }
+  );
+
+  // ─── 3. Clean Exit Timeline ───
   const handleClose = () => {
     const tl = gsap.timeline({ onComplete: onClose });
 
-    // Animate all out
+    tl.to(".overlay-control", { opacity: 0, duration: 0.2, ease: "power2.in" });
+
     BRANDS.forEach((brand) => {
       tl.to(
         cardsRef.current[brand],
         {
           opacity: 0,
-          duration: 0.4,
+          y: 25,
+          duration: 0.35,
           ease: "power2.in",
+          force3D: true,
         },
-        0,
+        0
       );
     });
 
@@ -225,14 +261,14 @@ export default function MenuStackOverlay({
       bgRef.current,
       {
         opacity: 0,
-        duration: 0.4,
+        duration: 0.35,
         ease: "power2.in",
       },
-      "-=0.2",
+      0
     );
   };
 
-  // Switcher Handlers
+  // ─── 4. Switcher Handlers ───
   const handlePointerMove = (e: PointerEvent) => {
     if (!isSwitching) return;
 
@@ -282,8 +318,11 @@ export default function MenuStackOverlay({
       style={{ perspective: "1200px", WebkitTouchCallout: "none" }}
     >
       {/* Background Click to close */}
-      {/* Optimized: static blur and bg-color; we only animate opacity for 60fps performance */}
-      <div ref={bgRef} className="absolute inset-0 z-0 backdrop-blur-[16px] bg-black/60 opacity-0" onClick={handleClose} />
+      <div
+        ref={bgRef}
+        className="absolute inset-0 z-0 backdrop-blur-[16px] bg-black/60 opacity-0"
+        onClick={handleClose}
+      />
 
       {/* 3D Booklet Container - Set to 100vh - 5rem */}
       <div
@@ -308,7 +347,7 @@ export default function MenuStackOverlay({
         {/* Global Close Button inside the booklet container area */}
         <button
           onClick={handleClose}
-          className="absolute top-0 right-0 -mt-2 -mr-2 md:-mt-4 md:-mr-4 z-50 p-2 md:p-3 bg-black text-white hover:bg-black/80 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/20 transition-all hover:scale-105 active:scale-95 group"
+          className="overlay-control opacity-0 absolute top-0 right-0 -mt-2 -mr-2 md:-mt-4 md:-mr-4 z-50 p-2 md:p-3 bg-black text-white hover:bg-black/80 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/20 transition-all hover:scale-105 active:scale-95 group"
         >
           <div className="absolute inset-0 rounded-full bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
           <Cancel01Icon size={20} className="relative z-10" />
@@ -341,8 +380,8 @@ export default function MenuStackOverlay({
         />
       </svg>
 
-      {/* The Switcher Button - Positioned Under the Booklet Container and scaled down by 25% */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
+      {/* The Switcher Button - Positioned Under the Booklet Container */}
+      <div className="overlay-control opacity-0 absolute bottom-3 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
         {isSwitching && (
           <span className="text-white/80 text-[10px] uppercase tracking-widest font-mono font-bold animate-pulse absolute -top-6 w-max">
             Swipe to switch
@@ -356,7 +395,11 @@ export default function MenuStackOverlay({
               <span className="text-white text-sm font-mono font-bold uppercase tracking-widest pt-0.5">
                 Hold
               </span>
-              <ArrowRight01Icon size={18} className="animate-wiggle-arrow text-white" strokeWidth={2.5} />
+              <ArrowRight01Icon
+                size={18}
+                className="animate-wiggle-arrow text-white"
+                strokeWidth={2.5}
+              />
             </div>
           )}
 
