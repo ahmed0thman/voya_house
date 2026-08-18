@@ -71,11 +71,11 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
   };
 
   return (
-    <div className="w-full h-full flex flex-col relative text-black">
+    <div className="w-full h-full flex flex-col relative text-black min-h-0 overflow-hidden">
       {/* Sticky Category Header */}
       <div 
         ref={headerRef}
-        className="sticky top-0 z-20 w-full overflow-x-auto whitespace-nowrap scrollbar-hide py-4 px-6 border-b border-black/10 backdrop-blur-xl bg-white/30"
+        className="shrink-0 z-20 w-full overflow-x-auto whitespace-nowrap scrollbar-hide py-4 px-6 border-b border-black/10 backdrop-blur-xl bg-white/30"
         style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
       >
         <div className="flex space-x-3">
@@ -102,8 +102,12 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
       {/* Main Scrollable Menu Content */}
       <div 
         ref={scrollRef}
-        className="flex-1 overflow-y-auto pb-32 px-6 scrollbar-hide relative"
-        style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-32 px-6 scrollbar-hide relative touch-pan-y"
+        style={{ 
+          WebkitOverflowScrolling: 'touch',
+          msOverflowStyle: 'none', 
+          scrollbarWidth: 'none' 
+        }}
       >
         {menu.categories.map((category, categoryIndex) => (
           <section

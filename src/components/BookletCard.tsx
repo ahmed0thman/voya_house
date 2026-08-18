@@ -178,7 +178,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
         {/* ─── Layer 2: The Interactive Menu (Visible when active) ─── */}
         {hasBeenActive && (
           <div
-            className={`absolute inset-0 w-full h-full transition-opacity duration-300 ${
+            className={`absolute inset-0 w-full h-full transition-opacity duration-300 z-20 ${
               isActive
                 ? "opacity-100 pointer-events-auto"
                 : "opacity-0 pointer-events-none"

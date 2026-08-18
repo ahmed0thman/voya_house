@@ -10,12 +10,13 @@ import Header from "@/components/Header";
 import SplitText from "@/components/SplitText";
 import SoundToggle from "@/components/SoundToggle";
 import { useAmbientSound } from "@/components/useAmbientSound";
-import { Coffee01Icon, Leaf01Icon, Pizza01Icon } from "hugeicons-react";
+import { Coffee01Icon, Leaf01Icon, Pizza01Icon, ArrowRight01Icon } from "hugeicons-react";
 import MenuStackOverlay from "@/components/MenuStackOverlay";
+import BookletShowroom from "@/components/BookletShowroom";
 
 // Section snap points as scroll progress (0–1)
 const SNAP_POINTS = [0, 0.3, 0.55, 0.74, 0.95];
-const TOTAL_SECTIONS = 7; // 5 video sections + contact + footer
+const TOTAL_SECTIONS = 8; // 5 video sections + booklets + contact + footer
 const SCROLL_DURATION = 3.5; // seconds per section transition
 const COOLDOWN_MS = 3600; // lock input during animation
 
@@ -26,6 +27,7 @@ export default function Home() {
   const groundGlowRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
   const [activeMenu, setActiveMenu] = useState<'coffee' | 'papa' | 'mama' | null>(null);
+  const bookletsRef = useRef<HTMLElement>(null);
   const contactRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLElement>(null);
 
@@ -68,10 +70,13 @@ export default function Home() {
       // Sections 0-4 (video container)
       const scrollMax = el.scrollHeight - window.innerHeight;
       scrollTarget = SNAP_POINTS[target] * scrollMax;
-    } else if (target === 5 && contactRef.current) {
+    } else if (target === 5 && bookletsRef.current) {
+      // Booklets Showroom Section
+      scrollTarget = bookletsRef.current.offsetTop;
+    } else if (target === 6 && contactRef.current) {
       // Contact Section
       scrollTarget = contactRef.current.offsetTop;
-    } else if (target === 6) {
+    } else if (target === 7) {
       // Footer Section (scroll to absolute bottom)
       scrollTarget = document.documentElement.scrollHeight - window.innerHeight;
     }
@@ -573,6 +578,8 @@ export default function Home() {
     { scope: container },
   );
 
+
+
   // Cleanup sound engine on unmount
   useEffect(() => {
     return () => {
@@ -749,9 +756,16 @@ export default function Home() {
               </p>
               <button 
                 onClick={() => setActiveMenu('coffee')}
-                className="s3-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#F1E6C3] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                className="s3-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
               >
-                Discover the Roast
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                  <Coffee01Icon size={16} className="text-black" />
+                </div>
+                <span className="font-sans font-bold text-xs md:text-sm tracking-widest uppercase text-black">
+                  Discover the Roast
+                </span>
+                <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
               </button>
             </div>
           </div>
@@ -781,9 +795,17 @@ export default function Home() {
               </p>
               <button 
                 onClick={() => setActiveMenu('papa')}
-                className="s4-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#B7D39A] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                className="s4-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#B7D39A] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(183,211,154,0.4)] hover:shadow-[0_12px_40px_rgba(183,211,154,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#B7D39A] focus-visible:outline-none overflow-hidden"
+                style={{ animationDelay: "1.5s" }}
               >
-                Explore Healthy Menu
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                  <Leaf01Icon size={16} className="text-black" />
+                </div>
+                <span className="font-sans font-bold text-xs md:text-sm tracking-widest uppercase text-black">
+                  Explore Healthy Menu
+                </span>
+                <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
               </button>
             </div>
           </div>
@@ -813,14 +835,27 @@ export default function Home() {
               </p>
               <button 
                 onClick={() => setActiveMenu('mama')}
-                className="s5-btn bg-white/90 backdrop-blur-md text-black px-8 py-4 text-xs md:text-sm font-bold hover:bg-[#D8A98F] transition-colors rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                className="s5-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#D8A98F] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(216,169,143,0.4)] hover:shadow-[0_12px_40px_rgba(216,169,143,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#D8A98F] focus-visible:outline-none overflow-hidden"
+                style={{ animationDelay: "3s" }}
               >
-                Taste the Comfort
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                  <Pizza01Icon size={16} className="text-black" />
+                </div>
+                <span className="font-sans font-bold text-xs md:text-sm tracking-widest uppercase text-black">
+                  Taste the Comfort
+                </span>
+                <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
               </button>
             </div>
           </div>
         </div>
       </main>
+
+      {/* ─── The Trilogy Booklets Showroom Section ─── */}
+      <section ref={bookletsRef} id="booklets" className="w-full">
+        <BookletShowroom onOpenBooklet={(menu) => setActiveMenu(menu)} />
+      </section>
 
       {/* ─── Contact Section (The Theater Override) ─── */}
       <section
@@ -897,9 +932,11 @@ export default function Home() {
             </div>
             <button
               type="button"
-              className="self-end bg-[#F1E6C3] text-black font-bold text-sm uppercase tracking-wider px-10 py-4 rounded-full hover:bg-white transition-all duration-300 shadow-[0_0_20px_rgba(241,230,195,0.4)] hover:shadow-[0_0_30px_rgba(255,255,255,0.6)] hover:-translate-y-1"
+              className="group relative self-end inline-flex items-center gap-3 bg-[#F1E6C3] hover:bg-white text-black font-bold text-xs md:text-sm uppercase tracking-widest px-10 py-4 rounded-full transition-all duration-300 shadow-[0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_0_35px_rgba(255,255,255,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
             >
-              Send Message
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+              <span>Send Message</span>
+              <ArrowRight01Icon size={16} className="transform translate-x-0 group-hover:translate-x-1.5 transition-transform duration-300" />
             </button>
           </form>
         </div>
