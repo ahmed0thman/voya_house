@@ -306,7 +306,7 @@ export default function MenuStackOverlay({
     }
   }, [isSwitching, hoverBrand, activeBrand]);
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+  const handlePointerDown = () => {
     setIsSwitching(true);
     setHoverBrand(activeBrand);
   };

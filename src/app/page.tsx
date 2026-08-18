@@ -14,6 +14,8 @@ import { Coffee01Icon, Leaf01Icon, Pizza01Icon, ArrowRight01Icon } from "hugeico
 import MenuStackOverlay from "@/components/MenuStackOverlay";
 import BookletShowroom from "@/components/BookletShowroom";
 import BrandStorySection from "@/components/BrandStorySection";
+import ContactSection from "@/components/ContactSection";
+import CinematicFooter from "@/components/CinematicFooter";
 
 // Section snap points as scroll progress (0–1)
 const SNAP_POINTS = [0, 0.3, 0.55, 0.74, 0.95];
@@ -30,7 +32,7 @@ export default function Home() {
   const [activeMenu, setActiveMenu] = useState<'coffee' | 'papa' | 'mama' | null>(null);
   const bookletsRef = useRef<HTMLElement>(null);
   const storyRef = useRef<HTMLDivElement>(null);
-  const contactRef = useRef<HTMLElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
 
   const imagesRef = useRef<HTMLImageElement[]>([]);
@@ -44,10 +46,9 @@ export default function Home() {
   const videoReady = useRef(false);
   const minTimeReached = useRef(false);
 
-  // Mutable refs for the wheel-hijack state machine
+  // Mutable refs for navigation state
   const currentIndex = useRef(0);
   const isAnimating = useRef(false);
-  const touchStartY = useRef(0);
 
   // Duck audio when menu booklet is open
   useEffect(() => {
@@ -212,61 +213,9 @@ export default function Home() {
     };
   }, [enableSound]);
 
-  // ─── Wheel & Touch hijack ──────────────────────────────────
+  // ─── Wheel & Touch hijack (Disabled for free natural scroll) ───
   useEffect(() => {
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault(); // ← THIS is the key: browser never scrolls on its own
-
-      if (isAnimating.current) return; // ignore input during transition
-
-      if (e.deltaY > 0) {
-        goToSection(currentIndex.current + 1);
-      } else if (e.deltaY < 0) {
-        goToSection(currentIndex.current - 1);
-      }
-    };
-
-    const onTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    const onTouchEnd = (e: TouchEvent) => {
-      if (isAnimating.current) return;
-      const delta = touchStartY.current - e.changedTouches[0].clientY;
-      const threshold = 50; // minimum px to count as a swipe
-      if (Math.abs(delta) < threshold) return;
-
-      if (delta > 0) {
-        goToSection(currentIndex.current + 1);
-      } else {
-        goToSection(currentIndex.current - 1);
-      }
-    };
-
-    // Keyboard support (arrow keys, space, page up/down)
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (isAnimating.current) return;
-      if (["ArrowDown", "PageDown", " "].includes(e.key)) {
-        e.preventDefault();
-        goToSection(currentIndex.current + 1);
-      } else if (["ArrowUp", "PageUp"].includes(e.key)) {
-        e.preventDefault();
-        goToSection(currentIndex.current - 1);
-      }
-    };
-
-    // AUTO SCROLL STOPPED: Commented out event listeners to disable scroll hijacking
-    // window.addEventListener("wheel", onWheel, { passive: false });
-    // window.addEventListener("touchstart", onTouchStart, { passive: true });
-    // window.addEventListener("touchend", onTouchEnd, { passive: true });
-    // window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      // window.removeEventListener("wheel", onWheel);
-      // window.removeEventListener("touchstart", onTouchStart);
-      // window.removeEventListener("touchend", onTouchEnd);
-      // window.removeEventListener("keydown", onKeyDown);
-    };
+    // Free scroll is active
   }, [goToSection]);
 
   // ─── GSAP Animation Timeline ──────────────────────────────
@@ -278,7 +227,6 @@ export default function Home() {
       const canvas = canvasRef.current;
       const overlay = overlayRef.current;
       const groundGlow = groundGlowRef.current;
-      const footer = footerRef.current;
 
       if (!el || !canvas || !overlay || !groundGlow) return;
       const ctx = canvas.getContext("2d");
@@ -564,21 +512,6 @@ export default function Home() {
         { opacity: 1, duration: 0.05 },
         0.95,
       );
-
-      // Footer Logo Parallax/Fade
-      if (footer) {
-        gsap.from(footer.querySelectorAll(".footer-logo span"), {
-          scrollTrigger: {
-            trigger: footer,
-            start: "top bottom",
-            end: "bottom bottom",
-            scrub: true,
-          },
-          y: 100,
-          opacity: 0,
-          stagger: 0.1,
-        });
-      }
     },
     { scope: container },
   );
@@ -656,7 +589,7 @@ export default function Home() {
         ref={container}
         className="relative w-full h-[500vh] bg-[#080907] selection:bg-[#B7D39A] selection:text-black font-sans"
       >
-        <Header />
+        <Header onOpenBooklet={(menu) => setActiveMenu(menu)} />
 
         {/* FIXED Viewport Stage */}
         <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden">
@@ -868,204 +801,12 @@ export default function Home() {
       </div>
 
       {/* ─── Contact Section (The Theater Override) ─── */}
-      <section
-        ref={contactRef}
-        id="contact"
-        className="relative z-20 w-full min-h-screen bg-[#080907] flex flex-col items-center justify-center py-20 px-6 shadow-[0_-20px_50px_rgba(0,0,0,0.8)]"
-      >
-        <div className="max-w-4xl w-full mx-auto relative z-10">
-          <div className="text-center mb-16 flex flex-col items-center">
-            <Image
-              src="/assets/logos/Asset 21.svg"
-              alt="Voya Icon"
-              width={60}
-              height={60}
-              className="mb-8 opacity-80"
-            />
-            <p className="font-mono text-xs md:text-sm uppercase tracking-[0.3em] text-white/50 mb-4">
-              End of the Line
-            </p>
-            <h2 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white font-medium drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
-              <span className="text-[#F1E6C3]">Join</span> the Voyage.
-            </h2>
-          </div>
+      <div ref={contactRef} className="w-full">
+        <ContactSection />
+      </div>
 
-          <form className="flex flex-col gap-6 md:gap-8 bg-white/5 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-[2rem] shadow-2xl">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-10">
-              <div className="relative z-0 w-full mt-2 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#F1E6C3] after:scale-x-0 focus-within:after:scale-x-100 after:transition-transform after:duration-300 after:origin-center after:shadow-[0_0_12px_rgba(241,230,195,0.9)]">
-                <input
-                  type="text"
-                  name="name"
-                  id="name"
-                  className="block py-2 px-0 w-full text-base text-white bg-transparent border-0 border-b border-white/30 appearance-none focus:outline-none focus:ring-0 peer transition-all"
-                  placeholder=" "
-                  required
-                />
-                <label
-                  htmlFor="name"
-                  className="peer-focus:font-medium absolute text-sm text-white/50 duration-300 transform -translate-y-6 scale-75 top-2 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-[#F1E6C3] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-                >
-                  Name
-                </label>
-              </div>
-              <div className="relative z-0 w-full mt-2 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#F1E6C3] after:scale-x-0 focus-within:after:scale-x-100 after:transition-transform after:duration-300 after:origin-center after:shadow-[0_0_12px_rgba(241,230,195,0.9)]">
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  className="block py-2 px-0 w-full text-base text-white bg-transparent border-0 border-b border-white/30 appearance-none focus:outline-none focus:ring-0 peer transition-all"
-                  placeholder=" "
-                  required
-                />
-                <label
-                  htmlFor="email"
-                  className="peer-focus:font-medium absolute text-sm text-white/50 duration-300 transform -translate-y-6 scale-75 top-2 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-[#F1E6C3] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-                >
-                  Email
-                </label>
-              </div>
-            </div>
-            <div className="relative z-0 w-full mt-4 after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-[#F1E6C3] after:scale-x-0 focus-within:after:scale-x-100 after:transition-transform after:duration-300 after:origin-center after:shadow-[0_0_12px_rgba(241,230,195,0.9)]">
-              <textarea
-                name="message"
-                id="message"
-                className="block py-2 px-0 w-full text-base text-white bg-transparent border-0 border-b border-white/30 appearance-none focus:outline-none focus:ring-0 peer transition-all resize-none [field-sizing:content]"
-                placeholder=" "
-                required
-              ></textarea>
-              <label
-                htmlFor="message"
-                className="peer-focus:font-medium absolute text-sm text-white/50 duration-300 transform -translate-y-6 scale-75 top-2 -z-10 origin-[0] peer-focus:left-0 peer-focus:text-[#F1E6C3] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6"
-              >
-                Message
-              </label>
-            </div>
-            <button
-              type="button"
-              className="group relative self-end inline-flex items-center gap-3 bg-[#F1E6C3] hover:bg-white text-black font-bold text-xs md:text-sm uppercase tracking-widest px-10 py-4 rounded-full transition-all duration-300 shadow-[0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_0_35px_rgba(255,255,255,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
-            >
-              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
-              <span>Send Message</span>
-              <ArrowRight01Icon size={16} className="transform translate-x-0 group-hover:translate-x-1.5 transition-transform duration-300" />
-            </button>
-          </form>
-        </div>
-      </section>
-
-      {/* ─── Footer Section ─── */}
-      <footer
-        ref={footerRef}
-        className="relative z-20 w-full bg-[#050505] flex flex-col justify-between pt-24 pb-12 px-6 md:px-12 border-t border-white/5 overflow-hidden"
-      >
-        <div className="flex flex-col md:flex-row justify-between w-full max-w-7xl mx-auto flex-1 z-10 gap-12 md:gap-0">
-          <div className="flex flex-col justify-between">
-            <div className="flex items-center gap-4 mb-12 md:mb-0">
-              <Image
-                src="/assets/logos/Asset 8.svg"
-                alt="Voya Logo"
-                width={32}
-                height={32}
-                className="opacity-90"
-              />
-              <div className="w-1.5 h-1.5 rounded-full bg-[#F1E6C3] animate-pulse"></div>
-              <span className="font-mono text-xs uppercase tracking-[0.2em] text-white/50">
-                Est. 2026
-              </span>
-            </div>
-            <ul className="flex flex-col gap-5 text-white/70 font-light text-sm md:text-base mt-8 md:mt-0">
-              <li>
-                <a
-                  href="#"
-                  className="flex items-center gap-3 hover:text-[#F1E6C3] transition-colors"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect
-                      x="2"
-                      y="2"
-                      width="20"
-                      height="20"
-                      rx="5"
-                      ry="5"
-                    ></rect>
-                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                  </svg>
-                  Instagram
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="flex items-center gap-3 hover:text-[#F1E6C3] transition-colors"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                  </svg>
-                  Twitter
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="flex flex-col justify-end text-left md:text-right mt-auto md:mt-0">
-            <div className="flex items-center md:justify-end gap-2 mb-4 text-white/40">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-              <p className="text-xs font-mono uppercase tracking-[0.2em]">
-                Visit Us
-              </p>
-            </div>
-            <p className="text-white/80 font-serif text-xl md:text-2xl leading-relaxed">
-              123 Voyage Street
-              <br />
-              New Cairo, EG
-            </p>
-          </div>
-        </div>
-
-        <div className="w-full flex justify-center items-end mt-24 md:mt-32 relative z-0">
-          <h1 className="footer-logo font-serif text-[22vw] leading-none text-white/[0.03] tracking-tighter w-full text-center select-none flex justify-between">
-            <span>V</span>
-            <span>O</span>
-            <span>Y</span>
-            <span>A</span>
-          </h1>
-        </div>
-
-        <div className="w-full flex flex-col md:flex-row justify-between items-center text-[10px] text-white/30 font-mono uppercase mt-8 md:mt-4 gap-4 md:gap-0">
-          <span>© 2026 Voya. All Rights Reserved.</span>
-          <span>Designed for the Journey</span>
-        </div>
-      </footer>
+      {/* ─── Cinematic Footer Section ─── */}
+      <CinematicFooter ref={footerRef} />
 
       {/* ─── Sound Toggle ─── */}
       <SoundToggle

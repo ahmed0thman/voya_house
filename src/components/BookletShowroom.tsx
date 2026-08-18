@@ -310,8 +310,8 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
           if (!cardEl) return;
           const relPos = getRelPos(idx);
 
-          let baseX = relPos === 0 ? 0 : relPos === -1 ? -spread : spread;
-          let baseRot = relPos === 0 ? 0 : relPos === -1 ? (isMobile ? -10 : -12) : isMobile ? 10 : 12;
+          const baseX = relPos === 0 ? 0 : relPos === -1 ? -spread : spread;
+          const baseRot = relPos === 0 ? 0 : relPos === -1 ? (isMobile ? -10 : -12) : isMobile ? 10 : 12;
 
           gsap.set(cardEl, {
             x: baseX + deltaX * 0.4,

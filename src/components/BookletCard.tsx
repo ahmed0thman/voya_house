@@ -160,7 +160,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
               <p
                 className={`font-serif italic text-xs md:text-sm ${menu.colors.text} opacity-80 leading-relaxed mb-3`}
               >
-                "{cover.tagline}"
+                &ldquo;{cover.tagline}&rdquo;
               </p>
               <div
                 className={`px-4 py-1 rounded-full border ${cover.borderTone} bg-black/5 backdrop-blur-md`}

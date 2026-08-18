@@ -116,7 +116,7 @@ export default function HoldImageDial({ images, onHoldChange, autoHint = false }
 
     const handlePointerMove = (e: PointerEvent) => {
       const deltaY = e.clientY - startYRef.current;
-      let newY = currentYRef.current + deltaY;
+      const newY = currentYRef.current + deltaY;
       gsap.set(trackRef.current, { y: newY });
       
       const newIdx = Math.round((CENTER_OFFSET - newY) / STEP);
