@@ -66,7 +66,7 @@ const CARDS: CardData[] = [
     accentGlow: "rgba(241, 230, 195, 0.6)",
     btnBg: "bg-[#3E3424]",
     btnText: "text-[#F1E6C3]",
-    svg: "/assets/illustrations/voya-character-1.svg",
+    svg: "/assets/illustrations/voya-character-4.svg",
     icon: Coffee01Icon,
   },
   {

@@ -13,10 +13,11 @@ import { useAmbientSound } from "@/components/useAmbientSound";
 import { Coffee01Icon, Leaf01Icon, Pizza01Icon, ArrowRight01Icon } from "hugeicons-react";
 import MenuStackOverlay from "@/components/MenuStackOverlay";
 import BookletShowroom from "@/components/BookletShowroom";
+import BrandStorySection from "@/components/BrandStorySection";
 
 // Section snap points as scroll progress (0–1)
 const SNAP_POINTS = [0, 0.3, 0.55, 0.74, 0.95];
-const TOTAL_SECTIONS = 8; // 5 video sections + booklets + contact + footer
+const TOTAL_SECTIONS = 9; // 5 video sections + booklets + story + contact + footer
 const SCROLL_DURATION = 3.5; // seconds per section transition
 const COOLDOWN_MS = 3600; // lock input during animation
 
@@ -28,6 +29,7 @@ export default function Home() {
   const loaderRef = useRef<HTMLDivElement>(null);
   const [activeMenu, setActiveMenu] = useState<'coffee' | 'papa' | 'mama' | null>(null);
   const bookletsRef = useRef<HTMLElement>(null);
+  const storyRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLElement>(null);
 
@@ -73,10 +75,13 @@ export default function Home() {
     } else if (target === 5 && bookletsRef.current) {
       // Booklets Showroom Section
       scrollTarget = bookletsRef.current.offsetTop;
-    } else if (target === 6 && contactRef.current) {
+    } else if (target === 6 && storyRef.current) {
+      // Brand Story Section
+      scrollTarget = storyRef.current.offsetTop;
+    } else if (target === 7 && contactRef.current) {
       // Contact Section
       scrollTarget = contactRef.current.offsetTop;
-    } else if (target === 7) {
+    } else if (target === 8) {
       // Footer Section (scroll to absolute bottom)
       scrollTarget = document.documentElement.scrollHeight - window.innerHeight;
     }
@@ -856,6 +861,11 @@ export default function Home() {
       <section ref={bookletsRef} id="booklets" className="w-full">
         <BookletShowroom onOpenBooklet={(menu) => setActiveMenu(menu)} />
       </section>
+
+      {/* ─── The Brand Overview Storytelling Section ─── */}
+      <div ref={storyRef} className="w-full">
+        <BrandStorySection onSelectMenu={(menu) => setActiveMenu(menu)} />
+      </div>
 
       {/* ─── Contact Section (The Theater Override) ─── */}
       <section
