@@ -14,12 +14,19 @@ export default function MorphingCartButton({
   onQuantityChange,
   brandColors,
 }: MorphingCartButtonProps) {
+  const [prevInitialQuantity, setPrevInitialQuantity] = useState(initialQuantity);
   const [quantity, setQuantity] = useState(initialQuantity);
   const [isOpen, setIsOpen] = useState(initialQuantity > 0);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const isInitializingRef = useRef(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  if (initialQuantity !== prevInitialQuantity) {
+    setPrevInitialQuantity(initialQuantity);
+    setQuantity(initialQuantity);
+    setIsOpen(initialQuantity > 0);
+  }
 
   // Array of quantities to show in the wheel
   const maxQuantity = 10;

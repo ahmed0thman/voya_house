@@ -16,6 +16,8 @@ import BookletShowroom from "@/components/BookletShowroom";
 import BrandStorySection from "@/components/BrandStorySection";
 import ContactSection from "@/components/ContactSection";
 import CinematicFooter from "@/components/CinematicFooter";
+import CartSheet from "@/components/CartSheet";
+import TableParamSync from "@/components/TableParamSync";
 
 // Section snap points as scroll progress (0–1)
 const SNAP_POINTS = [0, 0.3, 0.55, 0.74, 0.95];
@@ -814,6 +816,10 @@ export default function Home() {
         onToggle={toggleMute}
         isPageLoaded={isLoaded}
       />
+
+      {/* ─── Table Param Sync (QR Code) & Table Cart Sheet Overlay ─── */}
+      <TableParamSync />
+      <CartSheet />
 
       {/* ─── Loading Screen ─── */}
       {!isLoaded && (

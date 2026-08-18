@@ -1,9 +1,49 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { BrandMenu } from '@/data/mockMenu';
+import { BrandMenu, MenuItem } from '@/data/mockMenu';
+import { useCartStore } from '@/store/useCartStore';
+import { formatPrice } from '@/constants/config';
 import MorphingCartButton from './MorphingCartButton';
 import HoldImageDial from './HoldImageDial';
+
+function MenuItemCartButton({
+  item,
+  brandId,
+  brandColors,
+}: {
+  item: MenuItem;
+  brandId: "coffee" | "papa" | "mama";
+  brandColors: { bg: string; text: string; accent: string };
+}) {
+  const quantity = useCartStore((state) => state.getItemQuantity(item.id));
+  const addItem = useCartStore((state) => state.addItem);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
+
+  return (
+    <MorphingCartButton
+      initialQuantity={quantity}
+      onQuantityChange={(qty) => {
+        if (qty > 0 && quantity === 0) {
+          addItem({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            description: item.description,
+            image: item.images?.[0],
+            brandId,
+          });
+          if (qty > 1) {
+            updateQuantity(item.id, qty);
+          }
+        } else {
+          updateQuantity(item.id, qty);
+        }
+      }}
+      brandColors={brandColors}
+    />
+  );
+}
 
 interface TalabatMenuProps {
   menu: BrandMenu;
@@ -148,10 +188,10 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
 
                   {/* Bottom: Price + Cart Button */}
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/5">
-                    <span className={`font-semibold text-lg ${menu.colors.text}`}>
-                      ${item.price.toFixed(2)}
+                    <span className={`font-semibold text-base sm:text-lg font-mono ${menu.colors.text}`}>
+                      {formatPrice(item.price)}
                     </span>
-                    <MorphingCartButton brandColors={menu.colors} />
+                    <MenuItemCartButton item={item} brandId={menu.brandId} brandColors={menu.colors} />
                   </div>
                 </div>
               ))}

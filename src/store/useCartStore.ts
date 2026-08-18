@@ -20,6 +20,28 @@ export interface PlacedOrder {
   status: "received" | "preparing" | "served";
 }
 
+export function formatTableNumber(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "Table 04";
+
+  // If already starts with "table" case-insensitively, e.g. "table 4" or "Table 12"
+  if (/^table\s*/i.test(trimmed)) {
+    const numPart = trimmed.replace(/^table\s*/i, "").trim();
+    if (/^\d+$/.test(numPart)) {
+      return `Table ${numPart.padStart(2, "0")}`;
+    }
+    return `Table ${numPart}`;
+  }
+
+  // If pure digits e.g. "4" -> "Table 04", "12" -> "Table 12"
+  if (/^\d+$/.test(trimmed)) {
+    return `Table ${trimmed.padStart(2, "0")}`;
+  }
+
+  // Otherwise preserve custom labels e.g. "Patio 3", "VIP 1", "Bar 02"
+  return trimmed;
+}
+
 interface CartStore {
   items: CartItem[];
   activeOrders: PlacedOrder[];

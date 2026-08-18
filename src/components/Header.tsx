@@ -12,7 +12,9 @@ import {
   SparklesIcon,
   Location01Icon,
   ArrowRight01Icon,
+  ShoppingBag01Icon,
 } from "hugeicons-react";
+import { useCartStore } from "@/store/useCartStore";
 
 interface HeaderProps {
   onOpenBooklet?: (menu: "coffee" | "papa" | "mama") => void;
@@ -33,6 +35,10 @@ const QUICK_BOOKLETS = [
 export default function Header({ onOpenBooklet }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+
+  const totalItems = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
+  const openCart = useCartStore((s) => s.openCart);
+  const activeOrdersCount = useCartStore((s) => s.activeOrders.length);
 
   // Close on ESC
   useEffect(() => {
@@ -92,9 +98,14 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
     onOpenBooklet?.(menu);
   };
 
+  const handleCartClick = () => {
+    setIsOpen(false);
+    openCart();
+  };
+
   return (
     <>
-      <header className="site-header opacity-0 fixed top-0 left-0 w-full z-50 px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300">
+      <header className="site-header opacity-0 fixed top-0 left-0 w-full z-50 px-4 sm:px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300">
         <div className="flex justify-between items-center w-full max-w-7xl mx-auto pointer-events-auto">
           
           {/* Logo / Brand Name */}
@@ -121,14 +132,30 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
             ))}
           </nav>
 
-          {/* Right Action & Menu Toggle */}
-          <div className="flex items-center gap-4">
+          {/* Right Actions: Cart Button & Menu Toggle */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            
+            {/* Luxury Cart Button */}
             <button
-              onClick={() => scrollToSection("contact")}
-              className="hidden lg:inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#F1E6C3] hover:bg-white text-black font-mono text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-sm active:scale-95 cursor-pointer"
+              onClick={handleCartClick}
+              aria-label={`Table Cart (${totalItems} items)`}
+              className="relative inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-full bg-[#F1E6C3] hover:bg-white text-black font-mono text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-sm active:scale-95 cursor-pointer"
             >
-              <span>Visit Us</span>
-              <ArrowRight01Icon size={13} />
+              {/* Glowing Pulsing Dot when Cart is Not Empty */}
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F1E6C3] opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#F1E6C3] shadow-[0_0_12px_rgba(241,230,195,1)] border-2 border-black"></span>
+                </span>
+              )}
+
+              <ShoppingBag01Icon size={16} className="text-black shrink-0" />
+              <span className="hidden sm:inline">
+                {totalItems > 0 ? `Order (${totalItems})` : activeOrdersCount > 0 ? `Orders (${activeOrdersCount})` : "Order"}
+              </span>
+              <span className="sm:hidden font-mono text-xs">
+                {totalItems > 0 ? totalItems : ""}
+              </span>
             </button>
 
             {/* Hamburger Button */}
@@ -218,7 +245,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               })}
             </div>
 
-            {/* Quick 3D Menus Drawer */}
+            {/* Quick 3D Menus Drawer & Cart Link */}
             <div className="md:col-span-5 flex flex-col space-y-3">
               <span className="sheet-anim-item font-mono text-[10px] uppercase tracking-[0.25em] text-[#F1E6C3]/80 font-bold mb-2">
                 Instant Menu Booklets
@@ -252,6 +279,29 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                   </button>
                 );
               })}
+
+              {/* View Table Order inside Sheet */}
+              <button
+                onClick={handleCartClick}
+                className="sheet-anim-item group mt-2 flex items-center justify-between p-4 rounded-2xl border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 hover:bg-[#F1E6C3]/20 transition-all text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-[#F1E6C3] text-black flex items-center justify-center">
+                    <ShoppingBag01Icon size={16} />
+                  </div>
+                  <div>
+                    <span className="font-mono text-xs font-bold text-white block">
+                      Table Cart & Status
+                    </span>
+                    <span className="font-sans text-[11px] text-white/60">
+                      {totalItems > 0 ? `${totalItems} unplaced items` : activeOrdersCount > 0 ? `${activeOrdersCount} active requests` : "No items yet"}
+                    </span>
+                  </div>
+                </div>
+                <span className="font-mono text-xs text-[#F1E6C3] font-bold">
+                  View ↗
+                </span>
+              </button>
             </div>
 
           </div>

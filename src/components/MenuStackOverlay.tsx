@@ -3,8 +3,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import { Cancel01Icon, Touch01Icon, ArrowRight01Icon } from "hugeicons-react";
+import {
+  Cancel01Icon,
+  Touch01Icon,
+  ArrowRight01Icon,
+  ShoppingBag01Icon,
+  Clock01Icon,
+} from "hugeicons-react";
 import BookletCard from "./BookletCard";
+import { useCartStore } from "@/store/useCartStore";
+import { formatPrice } from "@/constants/config";
 
 type BrandId = "coffee" | "papa" | "mama";
 const BRANDS: BrandId[] = ["coffee", "papa", "mama"];
@@ -21,6 +29,14 @@ export default function MenuStackOverlay({
   const [activeBrand, setActiveBrand] = useState<BrandId>(initialBrandId);
   const [isSwitching, setIsSwitching] = useState(false);
   const [hoverBrand, setHoverBrand] = useState<BrandId | null>(null);
+
+  const totalItems = useCartStore((s) =>
+    s.items.reduce((acc, i) => acc + i.quantity, 0),
+  );
+  const totalPrice = useCartStore((s) => s.getTotalPrice());
+  const activeOrdersCount = useCartStore((s) => s.activeOrders.length);
+  const openCart = useCartStore((s) => s.openCart);
+  const tableNumber = useCartStore((s) => s.tableNumber);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
@@ -52,7 +68,7 @@ export default function MenuStackOverlay({
       tl.fromTo(
         bgRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.45, ease: "power2.out" }
+        { opacity: 1, duration: 0.45, ease: "power2.out" },
       );
 
       // Active Center Card - Tactile 3D physical rise
@@ -75,7 +91,7 @@ export default function MenuStackOverlay({
           ease: "power3.out",
           force3D: true,
         },
-        "<0.05"
+        "<0.05",
       );
 
       // Left Stacked Card - Organic fan out behind left
@@ -99,7 +115,7 @@ export default function MenuStackOverlay({
           ease: "power3.out",
           force3D: true,
         },
-        "<0.08"
+        "<0.08",
       );
 
       // Right Stacked Card - Organic fan out behind right
@@ -123,7 +139,7 @@ export default function MenuStackOverlay({
           ease: "power3.out",
           force3D: true,
         },
-        "<0.08"
+        "<0.08",
       );
 
       // Controls (Switcher, Hold Indicator, Close Button)
@@ -131,14 +147,14 @@ export default function MenuStackOverlay({
         ".overlay-control",
         { opacity: 0, y: 10 },
         { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", stagger: 0.05 },
-        "<0.15"
+        "<0.15",
       );
 
       return () => {
         document.body.style.overflow = "";
       };
     },
-    { scope: overlayRef }
+    { scope: overlayRef },
   );
 
   // ─── 2. Swiping & Fan-Out Animation (Transform + Opacity only, zero boxShadow churn) ───
@@ -234,7 +250,7 @@ export default function MenuStackOverlay({
         });
       }
     },
-    { scope: overlayRef, dependencies: [isSwitching, activeBrand, hoverBrand] }
+    { scope: overlayRef, dependencies: [isSwitching, activeBrand, hoverBrand] },
   );
 
   // ─── 3. Clean Exit Timeline ───
@@ -253,7 +269,7 @@ export default function MenuStackOverlay({
           ease: "power2.in",
           force3D: true,
         },
-        0
+        0,
       );
     });
 
@@ -264,7 +280,7 @@ export default function MenuStackOverlay({
         duration: 0.35,
         ease: "power2.in",
       },
-      0
+      0,
     );
   };
 
@@ -324,10 +340,10 @@ export default function MenuStackOverlay({
         onClick={handleClose}
       />
 
-      {/* 3D Booklet Container - Set to 100vh - 5rem */}
+      {/* 3D Booklet Container - Sized to comfortably clear floating top controls */}
       <div
         ref={containerRef}
-        className="relative z-10 w-full max-w-4xl h-[calc(100vh-6rem)] mb-12"
+        className="relative z-10 w-full max-w-4xl h-[calc(100dvh-7.5rem)] max-h-194 sm:max-h-200 mt-7 sm:mt-9 mb-12 sm:mb-14"
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* Render Booklets */}
@@ -343,16 +359,70 @@ export default function MenuStackOverlay({
             isInitialActive={brand === initialBrandId}
           />
         ))}
-
-        {/* Global Close Button inside the booklet container area */}
-        <button
-          onClick={handleClose}
-          className="overlay-control opacity-0 absolute top-0 right-0 -mt-2 -mr-2 md:-mt-4 md:-mr-4 z-50 p-2 md:p-3 bg-black text-white hover:bg-black/80 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/20 transition-all hover:scale-105 active:scale-95 group"
-        >
-          <div className="absolute inset-0 rounded-full bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
-          <Cancel01Icon size={20} className="relative z-10" />
-        </button>
       </div>
+
+      {/* ─── Top Utility Bar: Floating Table Order & Close Buttons ─── */}
+      {/* Floating Table Order Button */}
+      <button
+        onClick={openCart}
+        aria-label={`View Table Order (${totalItems} items)`}
+        className="overlay-control opacity-0 absolute top-3.5 left-4 sm:top-5 sm:left-6 z-50 group flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-black/80 hover:bg-black/95 border border-white/20 hover:border-[#F1E6C3]/60 backdrop-blur-xl text-white shadow-[0_10px_30px_rgba(0,0,0,0.8)] transition-all duration-300 active:scale-95 cursor-pointer"
+      >
+        {/* Pulsing indicator when cart has items or active order */}
+        {totalItems > 0 ? (
+          <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F1E6C3] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-[#F1E6C3] shadow-[0_0_10px_rgba(241,230,195,1)]"></span>
+          </span>
+        ) : activeOrdersCount > 0 ? (
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B7D39A] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#B7D39A] shadow-[0_0_8px_rgba(183,211,154,1)]"></span>
+          </span>
+        ) : null}
+
+        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/10 flex items-center justify-center text-[#F1E6C3] shrink-0">
+          {totalItems > 0 ? (
+            <ShoppingBag01Icon size={13} />
+          ) : activeOrdersCount > 0 ? (
+            <Clock01Icon size={13} />
+          ) : (
+            <ShoppingBag01Icon size={13} />
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs">
+          <span className="text-[#F1E6C3] font-bold">
+            {totalItems > 0
+              ? `${totalItems} Item${totalItems > 1 ? "s" : ""}`
+              : activeOrdersCount > 0
+                ? `${activeOrdersCount} in Kitchen`
+                : tableNumber}
+          </span>
+          {totalItems > 0 && (
+            <>
+              <span className="text-white/30">·</span>
+              <span className="text-white/90 font-bold">
+                {formatPrice(totalPrice)}
+              </span>
+            </>
+          )}
+        </div>
+
+        <span className="font-mono text-[10px] uppercase tracking-wider text-white/40 group-hover:text-white transition-colors pl-0.5 hidden sm:inline">
+          View ↗
+        </span>
+      </button>
+
+      {/* Global Close Button (Symmetrically aligned on the right) */}
+      <button
+        onClick={handleClose}
+        aria-label="Close Booklet Menu"
+        className="overlay-control opacity-0 absolute top-3.5 right-4 sm:top-5 sm:right-6 z-50 p-2 sm:p-2.5 bg-black/80 hover:bg-black/95 text-white/80 hover:text-white rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white/20 hover:border-white/40 backdrop-blur-xl transition-all hover:scale-105 active:scale-95 group cursor-pointer"
+      >
+        <div className="absolute inset-0 rounded-full bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
+        <Cancel01Icon size={18} className="relative z-10" />
+      </button>
 
       {/* SVG Arcs during Switch - Overlaid globally */}
       <svg
