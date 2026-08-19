@@ -36,7 +36,6 @@ export default function MenuStackOverlay({
   const totalPrice = useCartStore((s) => s.getTotalPrice());
   const activeOrdersCount = useCartStore((s) => s.activeOrders.length);
   const openCart = useCartStore((s) => s.openCart);
-  const tableNumber = useCartStore((s) => s.tableNumber);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
@@ -362,57 +361,55 @@ export default function MenuStackOverlay({
       </div>
 
       {/* ─── Top Utility Bar: Floating Table Order & Close Buttons ─── */}
-      {/* Floating Table Order Button */}
-      <button
-        onClick={openCart}
-        aria-label={`View Table Order (${totalItems} items)`}
-        className="overlay-control opacity-0 absolute top-3.5 left-4 sm:top-5 sm:left-6 z-50 group flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-black/80 hover:bg-black/95 border border-white/20 hover:border-[#F1E6C3]/60 backdrop-blur-xl text-white shadow-[0_10px_30px_rgba(0,0,0,0.8)] transition-all duration-300 active:scale-95 cursor-pointer"
-      >
-        {/* Pulsing indicator when cart has items or active order */}
-        {totalItems > 0 ? (
-          <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F1E6C3] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-[#F1E6C3] shadow-[0_0_10px_rgba(241,230,195,1)]"></span>
-          </span>
-        ) : activeOrdersCount > 0 ? (
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B7D39A] opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#B7D39A] shadow-[0_0_8px_rgba(183,211,154,1)]"></span>
-          </span>
-        ) : null}
-
-        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/10 flex items-center justify-center text-[#F1E6C3] shrink-0">
+      {/* Floating Table Order Button (Light Theme, visible only when user has items in cart or active orders) */}
+      {(totalItems > 0 || activeOrdersCount > 0) && (
+        <button
+          onClick={openCart}
+          aria-label={`View Table Order (${totalItems} items)`}
+          className="overlay-control absolute top-3.5 left-4 sm:top-5 sm:left-6 z-50 group flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#F1E6C3] hover:bg-white text-black border border-black/10 hover:border-black/20 backdrop-blur-xl shadow-[0_8px_25px_rgba(0,0,0,0.35)] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+        >
+          {/* Pulsing indicator when cart has items or active order */}
           {totalItems > 0 ? (
-            <ShoppingBag01Icon size={13} />
+            <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black/60 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-black shadow-[0_0_6px_rgba(0,0,0,0.4)]"></span>
+            </span>
           ) : activeOrdersCount > 0 ? (
-            <Clock01Icon size={13} />
-          ) : (
-            <ShoppingBag01Icon size={13} />
-          )}
-        </div>
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2D421A] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#2D421A] shadow-[0_0_8px_rgba(45,66,26,0.5)]"></span>
+            </span>
+          ) : null}
 
-        <div className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs">
-          <span className="text-[#F1E6C3] font-bold">
-            {totalItems > 0
-              ? `${totalItems} Item${totalItems > 1 ? "s" : ""}`
-              : activeOrdersCount > 0
-                ? `${activeOrdersCount} in Kitchen`
-                : tableNumber}
+          <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-black/10 flex items-center justify-center text-black shrink-0">
+            {totalItems > 0 ? (
+              <ShoppingBag01Icon size={13} className="text-black" />
+            ) : (
+              <Clock01Icon size={13} className="text-[#2D421A]" />
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs">
+            <span className="text-black font-bold">
+              {totalItems > 0
+                ? `${totalItems} Item${totalItems > 1 ? "s" : ""}`
+                : `${activeOrdersCount} in Kitchen`}
+            </span>
+            {totalItems > 0 && (
+              <>
+                <span className="text-black/30">·</span>
+                <span className="text-black font-bold">
+                  {formatPrice(totalPrice)}
+                </span>
+              </>
+            )}
+          </div>
+
+          <span className="font-mono text-[10px] uppercase tracking-wider text-black/60 group-hover:text-black transition-colors pl-0.5 hidden sm:inline">
+            View ↗
           </span>
-          {totalItems > 0 && (
-            <>
-              <span className="text-white/30">·</span>
-              <span className="text-white/90 font-bold">
-                {formatPrice(totalPrice)}
-              </span>
-            </>
-          )}
-        </div>
-
-        <span className="font-mono text-[10px] uppercase tracking-wider text-white/40 group-hover:text-white transition-colors pl-0.5 hidden sm:inline">
-          View ↗
-        </span>
-      </button>
+        </button>
+      )}
 
       {/* Global Close Button (Symmetrically aligned on the right) */}
       <button

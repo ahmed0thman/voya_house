@@ -142,11 +142,9 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
       {/* Main Scrollable Menu Content */}
       <div 
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-32 px-6 scrollbar-hide relative touch-pan-y"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-32 px-6 relative touch-pan-y"
         style={{ 
           WebkitOverflowScrolling: 'touch',
-          msOverflowStyle: 'none', 
-          scrollbarWidth: 'none' 
         }}
       >
         {menu.categories.map((category, categoryIndex) => (

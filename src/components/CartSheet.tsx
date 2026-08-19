@@ -468,7 +468,7 @@ export default function CartSheet() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start w-full">
             
             {/* Left: Items List */}
-            <div className="lg:col-span-7 flex flex-col space-y-2.5 sm:space-y-3 max-h-[48vh] sm:max-h-[55vh] overflow-y-auto pr-1">
+            <div className="lg:col-span-7 flex flex-col space-y-2.5 sm:space-y-3 max-h-[48vh] sm:max-h-[55vh] overflow-y-auto pr-1.5">
               <div className="flex justify-between items-center mb-1">
                 <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">
                   New Round Items ({totalItems})

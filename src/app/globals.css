@@ -140,3 +140,35 @@ body {
   pointer-events: none;
 }
 
+/* ─── Global Luxury Themed Scrollbar ─── */
+/* Standard properties — works on macOS overlay scrollbars (Chrome 121+, Firefox, Safari 18+) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(241, 230, 195, 0.6) transparent;
+}
+
+/* Webkit fallback — for classic (non-overlay) scrollbars on Windows/Linux */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(241, 230, 195, 0.6);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #F1E6C3;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+
