@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -34,7 +35,12 @@ const QUICK_BOOKLETS = [
 
 export default function Header({ onOpenBooklet }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const totalItems = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
   const openCart = useCartStore((s) => s.openCart);
@@ -105,8 +111,18 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
 
   return (
     <>
-      <header className="site-header opacity-0 fixed top-0 left-0 w-full z-50 px-4 sm:px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300">
-        <div className="flex justify-between items-center w-full max-w-7xl mx-auto pointer-events-auto">
+      <header className="voya-header fixed top-0 left-0 w-full z-40 px-4 sm:px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300">
+        {/* Dynamic Glassy Background & Glowing Bottom Border */}
+        <div className="header-bg absolute inset-0 pointer-events-none opacity-0 invisible bg-[#080907]/45 backdrop-blur-xl" />
+        <div
+          className="header-glow absolute bottom-0 left-0 w-full h-[1px] pointer-events-none opacity-0 invisible shadow-[0_1px_10px_rgba(241,230,195,0.5),0_0_20px_rgba(255,255,255,0.25)]"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(241, 230, 195, 0) 0%, rgba(241, 230, 195, 0.4) 20%, rgba(255, 255, 255, 0.85) 50%, rgba(241, 230, 195, 0.4) 80%, rgba(241, 230, 195, 0) 100%)",
+          }}
+        />
+
+        <div className="relative z-10 flex justify-between items-center w-full max-w-7xl mx-auto pointer-events-auto">
           
           {/* Logo / Brand Name */}
           <button
@@ -173,156 +189,156 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
       </header>
 
       {/* ─── Mobile / Full-Screen Menu Sheet ─── */}
-      {isOpen && (
-        <div
-          ref={sheetRef}
-          className="fixed inset-0 z-[100] bg-[#080907]/95 backdrop-blur-2xl flex flex-col justify-between p-6 sm:p-10 md:p-14 overflow-y-auto text-white"
-        >
-          {/* Top Bar inside Sheet */}
-          <div className="sheet-anim-item flex justify-between items-center w-full max-w-5xl mx-auto pb-6 border-b border-white/10">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/assets/logos/Asset 8.svg"
-                alt="Voya Logo"
-                width={28}
-                height={28}
-                className="opacity-90 brightness-110"
-              />
-              <span className="font-serif text-xl tracking-[0.15em] font-medium text-white">
-                VOYA HOUSE
-              </span>
-            </div>
-
-            <button
-              onClick={() => setIsOpen(false)}
-              aria-label="Close Menu"
-              className="w-11 h-11 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
-            >
-              <Cancel01Icon size={18} />
-            </button>
-          </div>
-
-          {/* Center Navigation Content */}
-          <div className="w-full max-w-5xl mx-auto my-auto py-8 grid grid-cols-1 md:grid-cols-12 gap-10">
-            
-            {/* Primary Section Links */}
-            <div className="md:col-span-7 flex flex-col space-y-4">
-              <span className="sheet-anim-item font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 font-bold mb-2">
-                Navigation Directory
-              </span>
-
-              {NAV_LINKS.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <button
-                    key={link.id}
-                    onClick={() => scrollToSection(link.id)}
-                    className="sheet-anim-item group flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:border-[#F1E6C3]/40 bg-white/[0.02] hover:bg-white/[0.06] transition-all duration-300 text-left cursor-pointer"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#F1E6C3] group-hover:scale-105 transition-transform shrink-0">
-                        <Icon size={18} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] text-[#F1E6C3]/60 font-bold">
-                            {link.num}
-                          </span>
-                          <h3 className="font-serif text-lg sm:text-xl text-white group-hover:text-[#F1E6C3] transition-colors font-medium">
-                            {link.label}
-                          </h3>
-                        </div>
-                        <p className="font-sans text-xs text-white/50">
-                          {link.tag}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-[#F1E6C3] group-hover:text-black flex items-center justify-center text-white/60 transition-all">
-                      <ArrowRight01Icon size={14} className="transform group-hover:translate-x-0.5 transition-transform" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Quick 3D Menus Drawer & Cart Link */}
-            <div className="md:col-span-5 flex flex-col space-y-3">
-              <span className="sheet-anim-item font-mono text-[10px] uppercase tracking-[0.25em] text-[#F1E6C3]/80 font-bold mb-2">
-                Instant Menu Booklets
-              </span>
-
-              {QUICK_BOOKLETS.map((booklet) => {
-                const Icon = booklet.icon;
-                return (
-                  <button
-                    key={booklet.id}
-                    onClick={() => handleBookletClick(booklet.id)}
-                    className="sheet-anim-item group flex items-center gap-4 p-3.5 rounded-2xl border border-white/10 hover:border-white/30 bg-white/[0.03] hover:bg-white/[0.08] transition-all text-left cursor-pointer"
-                  >
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ background: `${booklet.color}20`, color: booklet.color }}
-                    >
-                      <Icon size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-serif text-base text-white group-hover:text-[#F1E6C3] transition-colors truncate">
-                        {booklet.label}
-                      </h4>
-                      <p className="font-sans text-[11px] text-white/50 truncate">
-                        {booklet.desc}
-                      </p>
-                    </div>
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-white/40 group-hover:text-white shrink-0">
-                      Open ↗
-                    </span>
-                  </button>
-                );
-              })}
-
-              {/* View Table Order inside Sheet */}
-              <button
-                onClick={handleCartClick}
-                className="sheet-anim-item group mt-2 flex items-center justify-between p-4 rounded-2xl border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 hover:bg-[#F1E6C3]/20 transition-all text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[#F1E6C3] text-black flex items-center justify-center">
-                    <ShoppingBag01Icon size={16} />
-                  </div>
-                  <div>
-                    <span className="font-mono text-xs font-bold text-white block">
-                      Table Cart & Status
-                    </span>
-                    <span className="font-sans text-[11px] text-white/60">
-                      {totalItems > 0 ? `${totalItems} unplaced items` : activeOrdersCount > 0 ? `${activeOrdersCount} active requests` : "No items yet"}
-                    </span>
-                  </div>
-                </div>
-                <span className="font-mono text-xs text-[#F1E6C3] font-bold">
-                  View ↗
+      {mounted &&
+        isOpen &&
+        createPortal(
+          <div
+            ref={sheetRef}
+            className="fixed inset-0 z-[100] bg-[#080907]/95 backdrop-blur-2xl flex flex-col justify-between p-6 sm:p-10 md:p-14 overflow-y-auto text-white"
+          >
+            {/* Top Bar inside Sheet */}
+            <div className="sheet-anim-item flex justify-between items-center w-full max-w-5xl mx-auto pb-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/assets/logos/Asset 8.svg"
+                  alt="Voya Logo"
+                  width={28}
+                  height={28}
+                  className="opacity-90 brightness-110"
+                />
+                <span className="font-serif text-xl tracking-[0.15em] font-medium text-white">
+                  VOYA HOUSE
                 </span>
+              </div>
+
+              <button
+                onClick={() => setIsOpen(false)}
+                aria-label="Close Menu"
+                className="w-11 h-11 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
+              >
+                <Cancel01Icon size={18} />
               </button>
             </div>
 
-          </div>
+            {/* Center Navigation Content */}
+            <div className="w-full max-w-5xl mx-auto my-auto py-8 grid grid-cols-1 md:grid-cols-12 gap-10">
+              {/* Primary Section Links */}
+              <div className="md:col-span-7 flex flex-col space-y-4">
+                <span className="sheet-anim-item font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 font-bold mb-2">
+                  Navigation Directory
+                </span>
 
-          {/* Bottom Sheet Footer */}
-          <div className="sheet-anim-item flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mx-auto pt-6 border-t border-white/10 gap-4 text-center sm:text-left">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-xs text-white/50 font-mono">
-              <span>123 Voyage Street, New Cairo</span>
-              <span className="hidden sm:inline">·</span>
-              <span>07:00 &mdash; 23:00 Daily</span>
+                {NAV_LINKS.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <button
+                      key={link.id}
+                      onClick={() => scrollToSection(link.id)}
+                      className="sheet-anim-item group flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:border-[#F1E6C3]/40 bg-white/[0.02] hover:bg-white/[0.06] transition-all duration-300 text-left cursor-pointer"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#F1E6C3] group-hover:scale-105 transition-transform shrink-0">
+                          <Icon size={18} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] text-[#F1E6C3]/60 font-bold">
+                              {link.num}
+                            </span>
+                            <h3 className="font-serif text-lg sm:text-xl text-white group-hover:text-[#F1E6C3] transition-colors font-medium">
+                              {link.label}
+                            </h3>
+                          </div>
+                          <p className="font-sans text-xs text-white/50">
+                            {link.tag}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-[#F1E6C3] group-hover:text-black flex items-center justify-center text-white/60 transition-all">
+                        <ArrowRight01Icon size={14} className="transform group-hover:translate-x-0.5 transition-transform" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Quick 3D Menus Drawer & Cart Link */}
+              <div className="md:col-span-5 flex flex-col space-y-3">
+                <span className="sheet-anim-item font-mono text-[10px] uppercase tracking-[0.25em] text-[#F1E6C3]/80 font-bold mb-2">
+                  Instant Menu Booklets
+                </span>
+
+                {QUICK_BOOKLETS.map((booklet) => {
+                  const Icon = booklet.icon;
+                  return (
+                    <button
+                      key={booklet.id}
+                      onClick={() => handleBookletClick(booklet.id)}
+                      className="sheet-anim-item group flex items-center gap-4 p-3.5 rounded-2xl border border-white/10 hover:border-white/30 bg-white/[0.03] hover:bg-white/[0.08] transition-all text-left cursor-pointer"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ background: `${booklet.color}20`, color: booklet.color }}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-serif text-base text-white group-hover:text-[#F1E6C3] transition-colors truncate">
+                          {booklet.label}
+                        </h4>
+                        <p className="font-sans text-[11px] text-white/50 truncate">
+                          {booklet.desc}
+                        </p>
+                      </div>
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-white/40 group-hover:text-white shrink-0">
+                        Open ↗
+                      </span>
+                    </button>
+                  );
+                })}
+
+                {/* View Table Order inside Sheet */}
+                <button
+                  onClick={handleCartClick}
+                  className="sheet-anim-item group mt-2 flex items-center justify-between p-4 rounded-2xl border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 hover:bg-[#F1E6C3]/20 transition-all text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#F1E6C3] text-black flex items-center justify-center">
+                      <ShoppingBag01Icon size={16} />
+                    </div>
+                    <div>
+                      <span className="font-mono text-xs font-bold text-white block">
+                        Table Cart & Status
+                      </span>
+                      <span className="font-sans text-[11px] text-white/60">
+                        {totalItems > 0 ? `${totalItems} unplaced items` : activeOrdersCount > 0 ? `${activeOrdersCount} active requests` : "No items yet"}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="font-mono text-xs text-[#F1E6C3] font-bold">
+                    View ↗
+                  </span>
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-widest text-[#F1E6C3]">
-              <a href="mailto:concierge@voyahouse.com" className="hover:underline">
-                concierge@voyahouse.com
-              </a>
-            </div>
-          </div>
+            {/* Bottom Sheet Footer */}
+            <div className="sheet-anim-item flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mx-auto pt-6 border-t border-white/10 gap-4 text-center sm:text-left">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-xs text-white/50 font-mono">
+                <span>123 Voyage Street, New Cairo</span>
+                <span className="hidden sm:inline">·</span>
+                <span>07:00 &mdash; 23:00 Daily</span>
+              </div>
 
-        </div>
-      )}
+              <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-widest text-[#F1E6C3]">
+                <a href="mailto:concierge@voyahouse.com" className="hover:underline">
+                  concierge@voyahouse.com
+                </a>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

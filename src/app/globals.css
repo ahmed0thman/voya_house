@@ -167,20 +167,18 @@ body {
   animation: ctaAttract 4.5s ease-in-out infinite;
 }
 
-/* ─── Glassy Header with Glowing ::after Bottom Border ─── */
-.site-header {
+/* ─── Glassy Header with Glowing Bottom Border ─── */
+.voya-header {
+  background: transparent;
+}
+
+.header-bg {
   background: rgba(8, 9, 7, 0.45);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
-.site-header::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
+.header-glow {
   background: linear-gradient(
     90deg,
     rgba(241, 230, 195, 0) 0%,
@@ -190,7 +188,6 @@ body {
     rgba(241, 230, 195, 0) 100%
   );
   box-shadow: 0 1px 10px rgba(241, 230, 195, 0.5), 0 0 20px rgba(255, 255, 255, 0.25);
-  pointer-events: none;
 }
 
 /* ─── Global Luxury Themed Scrollbar ─── */

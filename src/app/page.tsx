@@ -10,7 +10,12 @@ import Header from "@/components/Header";
 import SplitText from "@/components/SplitText";
 import SoundToggle from "@/components/SoundToggle";
 import { useAmbientSound } from "@/components/useAmbientSound";
-import { Coffee01Icon, Leaf01Icon, Pizza01Icon, ArrowRight01Icon } from "hugeicons-react";
+import {
+  Coffee01Icon,
+  Leaf01Icon,
+  Pizza01Icon,
+  ArrowRight01Icon,
+} from "hugeicons-react";
 import MenuStackOverlay from "@/components/MenuStackOverlay";
 import BookletShowroom from "@/components/BookletShowroom";
 import BrandStorySection from "@/components/BrandStorySection";
@@ -26,13 +31,16 @@ const SCROLL_DURATION = 3.5; // seconds per section transition
 const COOLDOWN_MS = 3600; // lock input during animation
 
 export default function Home() {
+  const pageRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const canvasMobileRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const groundGlowRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
-  const [activeMenu, setActiveMenu] = useState<'coffee' | 'papa' | 'mama' | null>(null);
+  const [activeMenu, setActiveMenu] = useState<
+    "coffee" | "papa" | "mama" | null
+  >(null);
   const bookletsRef = useRef<HTMLElement>(null);
   const storyRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
@@ -45,7 +53,14 @@ export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Ambient sound engine
-  const { isMuted, toggleMute, enableSound, updateProgress, setDucked, cleanup: cleanupSound } = useAmbientSound();
+  const {
+    isMuted,
+    toggleMute,
+    enableSound,
+    updateProgress,
+    setDucked,
+    cleanup: cleanupSound,
+  } = useAmbientSound();
   const videoReady = useRef(false);
   const minTimeReached = useRef(false);
 
@@ -107,8 +122,8 @@ export default function Home() {
 
   // ─── Reset Scroll Position on Mount ───────────────────────────────────────────
   useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual';
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
     }
     window.scrollTo(0, 0);
   }, []);
@@ -207,13 +222,13 @@ export default function Home() {
       window.removeEventListener("touchend", handleFirstTap);
       window.removeEventListener("click", handleFirstTap);
     };
-    
+
     // Catch the very first interaction (click/touch) to start audio
     // iOS Safari strictly requires touchend or click to unlock AudioContext (touchstart is often ignored for scrolling)
     window.addEventListener("pointerup", handleFirstTap, { once: true });
     window.addEventListener("touchend", handleFirstTap, { once: true });
     window.addEventListener("click", handleFirstTap, { once: true });
-    
+
     return () => {
       window.removeEventListener("pointerup", handleFirstTap);
       window.removeEventListener("touchend", handleFirstTap);
@@ -328,8 +343,17 @@ export default function Home() {
       // ==========================================
       masterTl
         .to(".ui-section-1", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.15)
-        .to(".desktop-hero-stage", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.15)
-        .fromTo(".desktop-editorial-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.04 }, 0.18);
+        .to(
+          ".desktop-hero-stage",
+          { autoAlpha: 0, y: -40, duration: 0.05 },
+          0.15,
+        )
+        .fromTo(
+          ".desktop-editorial-stage",
+          { autoAlpha: 0 },
+          { autoAlpha: 1, duration: 0.04 },
+          0.18,
+        );
 
       // ==========================================
       // Section 2: Family Reveal (0.2 to 0.4)
@@ -356,9 +380,21 @@ export default function Home() {
         )
         .to(".ui-section-2", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.35)
         // Desktop Experience 1 (Collective)
-        .to(".exp-items-track", { y: "0vh", duration: 0.04, ease: "power2.out" }, 0.2)
-        .to(".exp-item-1", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.22)
-        .to(".exp-item-1", { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" }, 0.37);
+        .to(
+          ".exp-items-track",
+          { y: "0vh", duration: 0.04, ease: "power2.out" },
+          0.2,
+        )
+        .to(
+          ".exp-item-1",
+          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          0.22,
+        )
+        .to(
+          ".exp-item-1",
+          { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" },
+          0.37,
+        );
 
       // ==========================================
       // Section 3: Coffee (0.4 to 0.6)
@@ -414,9 +450,21 @@ export default function Home() {
         )
         .to(".ui-section-3", { autoAlpha: 0, duration: 0.05 }, 0.55)
         // Desktop Experience 2 (Coffee)
-        .to(".exp-items-track", { y: "-75vh", duration: 0.04, ease: "power2.out" }, 0.38)
-        .to(".exp-item-2", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.42)
-        .to(".exp-item-2", { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" }, 0.57);
+        .to(
+          ".exp-items-track",
+          { y: "-75vh", duration: 0.04, ease: "power2.out" },
+          0.38,
+        )
+        .to(
+          ".exp-item-2",
+          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          0.42,
+        )
+        .to(
+          ".exp-item-2",
+          { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" },
+          0.57,
+        );
 
       // ==========================================
       // Section 4: Papa Voya (0.6 to 0.8)
@@ -472,9 +520,21 @@ export default function Home() {
         )
         .to(".ui-section-4", { autoAlpha: 0, duration: 0.05 }, 0.75)
         // Desktop Experience 3 (Papa)
-        .to(".exp-items-track", { y: "-150vh", duration: 0.04, ease: "power2.out" }, 0.58)
-        .to(".exp-item-3", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.62)
-        .to(".exp-item-3", { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" }, 0.77);
+        .to(
+          ".exp-items-track",
+          { y: "-150vh", duration: 0.04, ease: "power2.out" },
+          0.58,
+        )
+        .to(
+          ".exp-item-3",
+          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          0.62,
+        )
+        .to(
+          ".exp-item-3",
+          { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" },
+          0.77,
+        );
 
       // ==========================================
       // Section 5: Mama Voya (0.8 to 1.0)
@@ -530,21 +590,27 @@ export default function Home() {
         )
         .to(".ui-section-5", { autoAlpha: 0, duration: 0.05 }, 0.95)
         // Desktop Experience 4 (Mama)
-        .to(".exp-items-track", { y: "-225vh", duration: 0.04, ease: "power2.out" }, 0.78)
-        .to(".exp-item-4", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.82);
+        .to(
+          ".exp-items-track",
+          { y: "-225vh", duration: 0.04, ease: "power2.out" },
+          0.78,
+        )
+        .to(
+          ".exp-item-4",
+          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          0.82,
+        );
 
-      // Header visibility (fades in only after 5th section)
+      // Header background & glowing line: transparent in Hero (0 to 0.15), fades in as Section 2 reveals (0.15 to 0.20)
       masterTl.fromTo(
-        ".site-header",
-        { opacity: 0 },
-        { opacity: 1, duration: 0.05 },
-        0.95,
+        [".header-bg", ".header-glow"],
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.05, ease: "power2.out" },
+        0.15,
       );
     },
-    { scope: container },
+    { scope: pageRef },
   );
-
-
 
   // Cleanup sound engine on unmount
   useEffect(() => {
@@ -559,12 +625,26 @@ export default function Home() {
       if (isLoaded) {
         const tl = gsap.timeline();
 
-        // Fade in section container
-        tl.to([".ui-section-1", ".desktop-hero-stage"], {
-          autoAlpha: 1,
-          duration: 0.8,
-          ease: "power2.out",
-        });
+        // Fade in header & hero section container
+        tl.to(
+          ".voya-header",
+          {
+            opacity: 1,
+            duration: 0.8,
+            ease: "power2.out",
+          },
+          0,
+        );
+
+        tl.to(
+          [".ui-section-1", ".desktop-hero-stage"],
+          {
+            autoAlpha: 1,
+            duration: 0.8,
+            ease: "power2.out",
+          },
+          0,
+        );
 
         // Animate VOYA wavy bottom-up
         tl.fromTo(
@@ -607,17 +687,17 @@ export default function Home() {
         );
       }
     },
-    { scope: container, dependencies: [isLoaded] },
+    { scope: pageRef, dependencies: [isLoaded] },
   );
 
   return (
-    <>
+    <div ref={pageRef} className="relative w-full bg-[#080907]">
+      <Header onOpenBooklet={(menu) => setActiveMenu(menu)} />
+
       <main
         ref={container}
         className="relative w-full h-[100dvh] bg-[#080907] selection:bg-[#B7D39A] selection:text-black font-sans overflow-hidden"
       >
-        <Header onOpenBooklet={(menu) => setActiveMenu(menu)} />
-
         {/* Viewport Stage */}
         <div className="absolute inset-0 w-full h-full">
           {/* ─── MOBILE STAGE (< md) ─── */}
@@ -697,7 +777,10 @@ export default function Home() {
 
             {/* Section 3: Voya Coffee */}
             <div className="ui-section-3 absolute inset-0 text-white opacity-0 invisible">
-              <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
+              <div
+                className="absolute left-[5%] flex flex-col items-center top-[96px]"
+                style={{ top: "6rem" }}
+              >
                 <div className="s3-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                   <Coffee01Icon size={32} className="text-[#F1E6C3]" />
                 </div>
@@ -717,7 +800,7 @@ export default function Home() {
                   <SplitText text="A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup." />
                 </p>
                 <button
-                  onClick={() => setActiveMenu('coffee')}
+                  onClick={() => setActiveMenu("coffee")}
                   className="s3-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
                 >
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
@@ -727,14 +810,20 @@ export default function Home() {
                   <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
                     Discover the Roast
                   </span>
-                  <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                  <ArrowRight01Icon
+                    size={16}
+                    className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                  />
                 </button>
               </div>
             </div>
 
             {/* Section 4: Papa Voya */}
             <div className="ui-section-4 absolute inset-0 text-white opacity-0 invisible">
-              <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
+              <div
+                className="absolute left-[5%] flex flex-col items-center top-[96px]"
+                style={{ top: "6rem" }}
+              >
                 <div className="s4-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                   <Leaf01Icon size={32} className="text-[#B7D39A]" />
                 </div>
@@ -754,7 +843,7 @@ export default function Home() {
                   <SplitText text="Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence." />
                 </p>
                 <button
-                  onClick={() => setActiveMenu('papa')}
+                  onClick={() => setActiveMenu("papa")}
                   className="s4-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#B7D39A] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(183,211,154,0.4)] hover:shadow-[0_12px_40px_rgba(183,211,154,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#B7D39A] focus-visible:outline-none overflow-hidden"
                   style={{ animationDelay: "1.5s" }}
                 >
@@ -765,14 +854,20 @@ export default function Home() {
                   <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
                     Explore Healthy Menu
                   </span>
-                  <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                  <ArrowRight01Icon
+                    size={16}
+                    className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                  />
                 </button>
               </div>
             </div>
 
             {/* Section 5: Mama Voya */}
             <div className="ui-section-5 absolute inset-0 text-white opacity-0 invisible">
-              <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
+              <div
+                className="absolute left-[5%] flex flex-col items-center top-[96px]"
+                style={{ top: "6rem" }}
+              >
                 <div className="s5-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                   <Pizza01Icon size={32} className="text-[#D8A98F]" />
                 </div>
@@ -792,7 +887,7 @@ export default function Home() {
                   <SplitText text="Nurturing flavors and generous portions. Comfort food that feels like coming home." />
                 </p>
                 <button
-                  onClick={() => setActiveMenu('mama')}
+                  onClick={() => setActiveMenu("mama")}
                   className="s5-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#D8A98F] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(216,169,143,0.4)] hover:shadow-[0_12px_40px_rgba(216,169,143,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#D8A98F] focus-visible:outline-none overflow-hidden"
                   style={{ animationDelay: "3s" }}
                 >
@@ -803,7 +898,10 @@ export default function Home() {
                   <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
                     Taste the Comfort
                   </span>
-                  <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                  <ArrowRight01Icon
+                    size={16}
+                    className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                  />
                 </button>
               </div>
             </div>
@@ -849,51 +947,139 @@ export default function Home() {
 
           {/* ─── DESKTOP / TABLET (md: and up) EDITORIAL SCROLLYTELLING (Sections 2–5) ─── */}
           <div className="desktop-editorial-stage hidden md:flex flex-row absolute inset-0 w-full h-full pointer-events-none opacity-0 invisible z-20">
-
             {/* LEFT COLUMN: Dark editorial pane */}
-            <div className="h-full relative z-20 flex flex-col pointer-events-auto overflow-hidden" style={{ width: '42%', backgroundColor: '#080907' }}>
-
+            <div
+              className="h-full relative z-20 flex flex-col pointer-events-auto overflow-hidden"
+              style={{ width: "42%", backgroundColor: "#080907" }}
+            >
               {/* Fixed header — kicker + section title + description */}
-              <div className="relative z-30" style={{ paddingLeft: '14%', paddingRight: '10%', paddingTop: '3.5rem' }}>
-                <p className="uppercase font-mono font-semibold" style={{ color: '#F1E6C3', letterSpacing: '3px', marginBottom: '1rem', fontSize: '10px' }}>
+              <div
+                className="relative z-30"
+                style={{
+                  paddingLeft: "14%",
+                  paddingRight: "10%",
+                  paddingTop: "5.5rem",
+                }}
+              >
+                <p
+                  className="uppercase font-mono font-semibold"
+                  style={{
+                    color: "#F1E6C3",
+                    letterSpacing: "3px",
+                    marginBottom: "1rem",
+                    fontSize: "10px",
+                  }}
+                >
                   FEATURED EXPERIENCES
                 </p>
-                <h2 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.15, marginBottom: '1rem' }}>
-                  The Voya{' '}<span style={{ color: '#F1E6C3' }}>Experience</span>
+                <h2
+                  className="font-serif text-white"
+                  style={{
+                    fontSize: "clamp(2rem, 3.5vw, 3rem)",
+                    lineHeight: 1.15,
+                    marginBottom: "1rem",
+                  }}
+                >
+                  The Voya <span style={{ color: "#F1E6C3" }}>Experience</span>
                 </h2>
-                <p style={{ color: '#888', maxWidth: '320px', fontSize: '13px', lineHeight: 1.6 }}>
-                  Handcrafted culinary crafts and mindful rituals designed for the whole family.
+                <p
+                  style={{
+                    color: "#888",
+                    maxWidth: "320px",
+                    fontSize: "13px",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  Handcrafted culinary crafts and mindful rituals designed for
+                  the whole family.
                 </p>
               </div>
 
               {/* Scrolling items track */}
-              <div className="flex-1 relative overflow-hidden" style={{ marginTop: '1.5rem' }}>
+              <div
+                className="flex-1 relative overflow-hidden"
+                style={{ marginTop: "1.5rem" }}
+              >
                 <div className="exp-items-track w-full flex flex-col">
-                  
                   {/* ── Experience 1: The Modern Collective ── */}
-                  <div className="exp-item-1 w-full flex flex-col justify-center shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                  <div
+                    className="exp-item-1 w-full flex flex-col justify-center shrink-0"
+                    style={{
+                      height: "75vh",
+                      paddingLeft: "14%",
+                      paddingRight: "10%",
+                    }}
+                  >
+                    <h3
+                      className="font-serif text-white"
+                      style={{
+                        fontSize: "clamp(2rem, 3vw, 2.75rem)",
+                        lineHeight: 1.2,
+                        marginBottom: "1.25rem",
+                      }}
+                    >
                       The Modern Collective
                     </h3>
-                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
-                      A private, bespoke sanctuary bringing specialty coffee, mindful nourishment, and artisanal comfort together under one warm roof.
+                    <p
+                      style={{
+                        fontSize: "16px",
+                        color: "#999",
+                        marginBottom: "2rem",
+                        maxWidth: "340px",
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      A private, bespoke sanctuary bringing specialty coffee,
+                      mindful nourishment, and artisanal comfort together under
+                      one warm roof.
                     </p>
 
-                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
-                      <div style={{ paddingRight: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                    <div
+                      className="flex items-center"
+                      style={{ marginBottom: "2rem" }}
+                    >
+                      <div style={{ paddingRight: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           HOUSES
                         </div>
-                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#F1E6C3", fontSize: "13px" }}
+                        >
                           3 Artisanal Brands
                         </div>
                       </div>
-                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
-                      <div style={{ paddingLeft: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                      <div
+                        style={{
+                          width: "1px",
+                          height: "2.25rem",
+                          backgroundColor: "#333",
+                        }}
+                      />
+                      <div style={{ paddingLeft: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           EXPERIENCE
                         </div>
-                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#F1E6C3", fontSize: "13px" }}
+                        >
                           All-Day Sanctuary
                         </div>
                       </div>
@@ -903,7 +1089,9 @@ export default function Home() {
                       <button
                         onClick={() => {
                           if (bookletsRef.current) {
-                            bookletsRef.current.scrollIntoView({ behavior: 'smooth' });
+                            bookletsRef.current.scrollIntoView({
+                              behavior: "smooth",
+                            });
                           }
                         }}
                         className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
@@ -912,35 +1100,93 @@ export default function Home() {
                         <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
                           Explore the House
                         </span>
-                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                        <ArrowRight01Icon
+                          size={16}
+                          className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                        />
                       </button>
                     </div>
                   </div>
 
                   {/* ── Experience 2: Voya Coffee ── */}
-                  <div className="exp-item-2 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                  <div
+                    className="exp-item-2 w-full flex flex-col justify-center opacity-20 shrink-0"
+                    style={{
+                      height: "75vh",
+                      paddingLeft: "14%",
+                      paddingRight: "10%",
+                    }}
+                  >
+                    <h3
+                      className="font-serif text-white"
+                      style={{
+                        fontSize: "clamp(2rem, 3vw, 2.75rem)",
+                        lineHeight: 1.2,
+                        marginBottom: "1.25rem",
+                      }}
+                    >
                       Quality in Everyday Rituals
                     </h3>
-                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
-                      A reflection of calmness and exploration. We source and roast with intention to craft the perfect specialty cup for every moment.
+                    <p
+                      style={{
+                        fontSize: "16px",
+                        color: "#999",
+                        marginBottom: "2rem",
+                        maxWidth: "340px",
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      A reflection of calmness and exploration. We source and
+                      roast with intention to craft the perfect specialty cup
+                      for every moment.
                     </p>
 
-                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
-                      <div style={{ paddingRight: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                    <div
+                      className="flex items-center"
+                      style={{ marginBottom: "2rem" }}
+                    >
+                      <div style={{ paddingRight: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           ROAST ORIGIN
                         </div>
-                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#F1E6C3", fontSize: "13px" }}
+                        >
                           Ethiopia &amp; Colombia
                         </div>
                       </div>
-                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
-                      <div style={{ paddingLeft: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                      <div
+                        style={{
+                          width: "1px",
+                          height: "2.25rem",
+                          backgroundColor: "#333",
+                        }}
+                      />
+                      <div style={{ paddingLeft: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           BREW CRAFT
                         </div>
-                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#F1E6C3", fontSize: "13px" }}
+                        >
                           Pour-Over V60
                         </div>
                       </div>
@@ -948,7 +1194,7 @@ export default function Home() {
 
                     <div>
                       <button
-                        onClick={() => setActiveMenu('coffee')}
+                        onClick={() => setActiveMenu("coffee")}
                         className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
                       >
                         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
@@ -958,35 +1204,93 @@ export default function Home() {
                         <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
                           Discover the Roast
                         </span>
-                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                        <ArrowRight01Icon
+                          size={16}
+                          className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                        />
                       </button>
                     </div>
                   </div>
 
                   {/* ── Experience 3: Papa Voya ── */}
-                  <div className="exp-item-3 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                  <div
+                    className="exp-item-3 w-full flex flex-col justify-center opacity-20 shrink-0"
+                    style={{
+                      height: "75vh",
+                      paddingLeft: "14%",
+                      paddingRight: "10%",
+                    }}
+                  >
+                    <h3
+                      className="font-serif text-white"
+                      style={{
+                        fontSize: "clamp(2rem, 3vw, 2.75rem)",
+                        lineHeight: 1.2,
+                        marginBottom: "1.25rem",
+                      }}
+                    >
                       Nourishment and Strength
                     </h3>
-                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
-                      Balanced meals and mindful choices. Clean energy and wholesome ingredients that reflect vitality, balance, and confidence.
+                    <p
+                      style={{
+                        fontSize: "16px",
+                        color: "#999",
+                        marginBottom: "2rem",
+                        maxWidth: "340px",
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      Balanced meals and mindful choices. Clean energy and
+                      wholesome ingredients that reflect vitality, balance, and
+                      confidence.
                     </p>
 
-                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
-                      <div style={{ paddingRight: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                    <div
+                      className="flex items-center"
+                      style={{ marginBottom: "2rem" }}
+                    >
+                      <div style={{ paddingRight: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           PHILOSOPHY
                         </div>
-                        <div className="font-bold" style={{ color: '#B7D39A', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#B7D39A", fontSize: "13px" }}
+                        >
                           Mindful Nutrition
                         </div>
                       </div>
-                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
-                      <div style={{ paddingLeft: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                      <div
+                        style={{
+                          width: "1px",
+                          height: "2.25rem",
+                          backgroundColor: "#333",
+                        }}
+                      />
+                      <div style={{ paddingLeft: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           SOURCING
                         </div>
-                        <div className="font-bold" style={{ color: '#B7D39A', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#B7D39A", fontSize: "13px" }}
+                        >
                           100% Organic
                         </div>
                       </div>
@@ -994,7 +1298,7 @@ export default function Home() {
 
                     <div>
                       <button
-                        onClick={() => setActiveMenu('papa')}
+                        onClick={() => setActiveMenu("papa")}
                         className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#B7D39A] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(183,211,154,0.4)] hover:shadow-[0_12px_40px_rgba(183,211,154,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#B7D39A] focus-visible:outline-none overflow-hidden"
                       >
                         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
@@ -1004,35 +1308,93 @@ export default function Home() {
                         <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
                           Explore Healthy Menu
                         </span>
-                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                        <ArrowRight01Icon
+                          size={16}
+                          className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                        />
                       </button>
                     </div>
                   </div>
 
                   {/* ── Experience 4: Mama Voya ── */}
-                  <div className="exp-item-4 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                  <div
+                    className="exp-item-4 w-full flex flex-col justify-center opacity-20 shrink-0"
+                    style={{
+                      height: "75vh",
+                      paddingLeft: "14%",
+                      paddingRight: "10%",
+                    }}
+                  >
+                    <h3
+                      className="font-serif text-white"
+                      style={{
+                        fontSize: "clamp(2rem, 3vw, 2.75rem)",
+                        lineHeight: 1.2,
+                        marginBottom: "1.25rem",
+                      }}
+                    >
                       Warmth &amp; Hospitality
                     </h3>
-                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
-                      Nurturing flavors and generous portions. Comfort food, freshly baked sourdough, and handcrafted treats that feel like coming home.
+                    <p
+                      style={{
+                        fontSize: "16px",
+                        color: "#999",
+                        marginBottom: "2rem",
+                        maxWidth: "340px",
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      Nurturing flavors and generous portions. Comfort food,
+                      freshly baked sourdough, and handcrafted treats that feel
+                      like coming home.
                     </p>
 
-                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
-                      <div style={{ paddingRight: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                    <div
+                      className="flex items-center"
+                      style={{ marginBottom: "2rem" }}
+                    >
+                      <div style={{ paddingRight: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           BAKERY
                         </div>
-                        <div className="font-bold" style={{ color: '#D8A98F', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#D8A98F", fontSize: "13px" }}
+                        >
                           Artisanal Sourdough
                         </div>
                       </div>
-                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
-                      <div style={{ paddingLeft: '1.5rem' }}>
-                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                      <div
+                        style={{
+                          width: "1px",
+                          height: "2.25rem",
+                          backgroundColor: "#333",
+                        }}
+                      />
+                      <div style={{ paddingLeft: "1.5rem" }}>
+                        <div
+                          className="uppercase"
+                          style={{
+                            fontSize: "10px",
+                            letterSpacing: "1.5px",
+                            color: "#777",
+                            marginBottom: "0.375rem",
+                          }}
+                        >
                           PORTIONS
                         </div>
-                        <div className="font-bold" style={{ color: '#D8A98F', fontSize: '13px' }}>
+                        <div
+                          className="font-bold"
+                          style={{ color: "#D8A98F", fontSize: "13px" }}
+                        >
                           Generous &amp; Shared
                         </div>
                       </div>
@@ -1040,7 +1402,7 @@ export default function Home() {
 
                     <div>
                       <button
-                        onClick={() => setActiveMenu('mama')}
+                        onClick={() => setActiveMenu("mama")}
                         className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#D8A98F] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(216,169,143,0.4)] hover:shadow-[0_12px_40px_rgba(216,169,143,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#D8A98F] focus-visible:outline-none overflow-hidden"
                       >
                         <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
@@ -1050,22 +1412,55 @@ export default function Home() {
                         <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
                           Taste the Comfort
                         </span>
-                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                        <ArrowRight01Icon
+                          size={16}
+                          className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                        />
                       </button>
                     </div>
                   </div>
-
                 </div>
               </div>
             </div>
 
             {/* RIGHT COLUMN: 9:16 canvas centered in a background-matched container */}
-            <div className="h-full relative overflow-hidden flex items-center justify-center" style={{ width: '58%', background: 'radial-gradient(ellipse at 50% 60%, #F0ECE7 0%, #E5E1DA 100%)' }}>
+            <div
+              className="h-full relative overflow-hidden flex items-center justify-center"
+              style={{
+                width: "58%",
+                background:
+                  "radial-gradient(ellipse at 50% 60%, #F0ECE7 0%, #E5E1DA 100%)",
+              }}
+            >
               {/* Smooth gradient shadow fading from the dark left into the background */}
-              <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '35%', background: 'linear-gradient(to right, #080907 0%, rgba(8,9,7,0.85) 30%, rgba(8,9,7,0.4) 60%, transparent 100%)', zIndex: 10, pointerEvents: 'none' as const }} />
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  left: 0,
+                  width: "35%",
+                  background:
+                    "linear-gradient(to right, #080907 0%, rgba(8,9,7,0.85) 30%, rgba(8,9,7,0.4) 60%, transparent 100%)",
+                  zIndex: 10,
+                  pointerEvents: "none" as const,
+                }}
+              />
               {/* Bottom vignette for depth */}
-              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '25%', background: 'linear-gradient(to top, rgba(8,9,7,0.6) 0%, transparent 100%)', zIndex: 10, pointerEvents: 'none' as const }} />
-              
+              <div
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: "25%",
+                  background:
+                    "linear-gradient(to top, rgba(8,9,7,0.6) 0%, transparent 100%)",
+                  zIndex: 10,
+                  pointerEvents: "none" as const,
+                }}
+              />
+
               {/* 9:16 Aspect Ratio Wrapper to perfectly bound the canvas */}
               <div className="relative h-full aspect-[9/16] z-0">
                 <canvas
@@ -1073,10 +1468,12 @@ export default function Home() {
                   className="w-full h-full object-cover"
                 />
                 {/* Edge blurring inset shadow to perfectly blend video edges into the container background (#E5E1DA) */}
-                <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 60px 40px #E5E1DA' }} />
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ boxShadow: "inset 0 0 60px 40px #E5E1DA" }}
+                />
               </div>
             </div>
-
           </div>
         </div>
       </main>
@@ -1114,7 +1511,7 @@ export default function Home() {
       {!isLoaded && (
         <div
           ref={loaderRef}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#080907]"
+          className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-[#080907]"
         >
           {/* Brand logo with subtle pulse */}
           <div
@@ -1205,8 +1602,11 @@ export default function Home() {
 
       {/* Render the Luxury Menu Booklet if active */}
       {activeMenu && (
-        <MenuStackOverlay initialBrandId={activeMenu} onClose={() => setActiveMenu(null)} />
+        <MenuStackOverlay
+          initialBrandId={activeMenu}
+          onClose={() => setActiveMenu(null)}
+        />
       )}
-    </>
+    </div>
   );
 }
