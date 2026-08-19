@@ -1060,7 +1060,7 @@ export default function Home() {
             </div>
 
             {/* RIGHT COLUMN: 9:16 canvas centered in a background-matched container */}
-            <div className="h-full relative overflow-hidden flex items-center justify-center" style={{ width: '58%', background: 'radial-gradient(ellipse at 50% 60%, #F0ECE7 0%, #E5E1DA 100%)' }}>
+            <div className="h-full relative overflow-hidden flex items-center justify-center" style={{ width: '58%', backgroundColor: '#d3d0cb' }}>
               {/* Smooth gradient shadow fading from the dark left into the background */}
               <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '35%', background: 'linear-gradient(to right, #080907 0%, rgba(8,9,7,0.85) 30%, rgba(8,9,7,0.4) 60%, transparent 100%)', zIndex: 10, pointerEvents: 'none' as const }} />
               {/* Bottom vignette for depth */}
