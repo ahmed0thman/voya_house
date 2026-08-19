@@ -1060,15 +1060,21 @@ export default function Home() {
             </div>
 
             {/* RIGHT COLUMN: 9:16 canvas centered in a background-matched container */}
-            <div className="h-full relative overflow-hidden flex items-center justify-center" style={{ width: '58%', backgroundColor: '#d3d0cb' }}>
+            <div className="h-full relative overflow-hidden flex items-center justify-center" style={{ width: '58%', background: 'radial-gradient(ellipse at 50% 60%, #F0ECE7 0%, #E5E1DA 100%)' }}>
               {/* Smooth gradient shadow fading from the dark left into the background */}
               <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '35%', background: 'linear-gradient(to right, #080907 0%, rgba(8,9,7,0.85) 30%, rgba(8,9,7,0.4) 60%, transparent 100%)', zIndex: 10, pointerEvents: 'none' as const }} />
               {/* Bottom vignette for depth */}
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '25%', background: 'linear-gradient(to top, rgba(8,9,7,0.6) 0%, transparent 100%)', zIndex: 10, pointerEvents: 'none' as const }} />
-              <canvas
-                ref={canvasRef}
-                className="w-full h-full object-contain relative z-0"
-              />
+              
+              {/* 9:16 Aspect Ratio Wrapper to perfectly bound the canvas */}
+              <div className="relative h-full aspect-[9/16] z-0">
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-full object-cover"
+                />
+                {/* Edge blurring inset shadow to perfectly blend video edges into the container background (#E5E1DA) */}
+                <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 60px 40px #E5E1DA' }} />
+              </div>
             </div>
 
           </div>
