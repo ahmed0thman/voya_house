@@ -855,11 +855,11 @@ export default function Home() {
 
               {/* Fixed header — kicker + section title + description */}
               <div className="relative z-30" style={{ paddingLeft: '14%', paddingRight: '10%', paddingTop: '3.5rem' }}>
-                <p className="uppercase font-mono font-semibold" style={{ color: '#C7A144', letterSpacing: '3px', marginBottom: '1rem', fontSize: '10px' }}>
+                <p className="uppercase font-mono font-semibold" style={{ color: '#F1E6C3', letterSpacing: '3px', marginBottom: '1rem', fontSize: '10px' }}>
                   FEATURED EXPERIENCES
                 </p>
                 <h2 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.15, marginBottom: '1rem' }}>
-                  The Voya{' '}<span style={{ color: '#C7A144' }}>Experience</span>
+                  The Voya{' '}<span style={{ color: '#F1E6C3' }}>Experience</span>
                 </h2>
                 <p style={{ color: '#888', maxWidth: '320px', fontSize: '13px', lineHeight: 1.6 }}>
                   Handcrafted culinary crafts and mindful rituals designed for the whole family.
@@ -872,10 +872,10 @@ export default function Home() {
                   
                   {/* ── Experience 1: The Modern Collective ── */}
                   <div className="exp-item-1 w-full flex flex-col justify-center shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
                       The Modern Collective
                     </h3>
-                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
                       A private, bespoke sanctuary bringing specialty coffee, mindful nourishment, and artisanal comfort together under one warm roof.
                     </p>
 
@@ -884,7 +884,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           HOUSES
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
                           3 Artisanal Brands
                         </div>
                       </div>
@@ -893,7 +893,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           EXPERIENCE
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
                           All-Day Sanctuary
                         </div>
                       </div>
@@ -906,19 +906,23 @@ export default function Home() {
                             bookletsRef.current.scrollIntoView({ behavior: 'smooth' });
                           }
                         }}
-                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                        className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
                       >
-                        EXPLORE THE HOUSE
+                        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                        <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
+                          Explore the House
+                        </span>
+                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
                       </button>
                     </div>
                   </div>
 
                   {/* ── Experience 2: Voya Coffee ── */}
                   <div className="exp-item-2 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
                       Quality in Everyday Rituals
                     </h3>
-                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
                       A reflection of calmness and exploration. We source and roast with intention to craft the perfect specialty cup for every moment.
                     </p>
 
@@ -927,7 +931,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           ROAST ORIGIN
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
                           Ethiopia &amp; Colombia
                         </div>
                       </div>
@@ -936,7 +940,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           BREW CRAFT
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#F1E6C3', fontSize: '13px' }}>
                           Pour-Over V60
                         </div>
                       </div>
@@ -945,19 +949,26 @@ export default function Home() {
                     <div>
                       <button
                         onClick={() => setActiveMenu('coffee')}
-                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                        className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
                       >
-                        DISCOVER THE ROAST
+                        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                        <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                          <Coffee01Icon size={16} className="text-black" />
+                        </div>
+                        <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
+                          Discover the Roast
+                        </span>
+                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
                       </button>
                     </div>
                   </div>
 
                   {/* ── Experience 3: Papa Voya ── */}
                   <div className="exp-item-3 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
                       Nourishment and Strength
                     </h3>
-                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
                       Balanced meals and mindful choices. Clean energy and wholesome ingredients that reflect vitality, balance, and confidence.
                     </p>
 
@@ -966,7 +977,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           PHILOSOPHY
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#B7D39A', fontSize: '13px' }}>
                           Mindful Nutrition
                         </div>
                       </div>
@@ -975,7 +986,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           SOURCING
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#B7D39A', fontSize: '13px' }}>
                           100% Organic
                         </div>
                       </div>
@@ -984,19 +995,26 @@ export default function Home() {
                     <div>
                       <button
                         onClick={() => setActiveMenu('papa')}
-                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                        className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#B7D39A] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(183,211,154,0.4)] hover:shadow-[0_12px_40px_rgba(183,211,154,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#B7D39A] focus-visible:outline-none overflow-hidden"
                       >
-                        EXPLORE HEALTHY MENU
+                        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                        <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                          <Leaf01Icon size={16} className="text-black" />
+                        </div>
+                        <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
+                          Explore Healthy Menu
+                        </span>
+                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
                       </button>
                     </div>
                   </div>
 
                   {/* ── Experience 4: Mama Voya ── */}
                   <div className="exp-item-4 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
-                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3vw, 2.75rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
                       Warmth &amp; Hospitality
                     </h3>
-                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                    <p style={{ fontSize: '16px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
                       Nurturing flavors and generous portions. Comfort food, freshly baked sourdough, and handcrafted treats that feel like coming home.
                     </p>
 
@@ -1005,7 +1023,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           BAKERY
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#D8A98F', fontSize: '13px' }}>
                           Artisanal Sourdough
                         </div>
                       </div>
@@ -1014,7 +1032,7 @@ export default function Home() {
                         <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
                           PORTIONS
                         </div>
-                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                        <div className="font-bold" style={{ color: '#D8A98F', fontSize: '13px' }}>
                           Generous &amp; Shared
                         </div>
                       </div>
@@ -1023,9 +1041,16 @@ export default function Home() {
                     <div>
                       <button
                         onClick={() => setActiveMenu('mama')}
-                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                        className="animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#D8A98F] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(216,169,143,0.4)] hover:shadow-[0_12px_40px_rgba(216,169,143,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#D8A98F] focus-visible:outline-none overflow-hidden"
                       >
-                        TASTE THE COMFORT
+                        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                        <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                          <Pizza01Icon size={16} className="text-black" />
+                        </div>
+                        <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
+                          Taste the Comfort
+                        </span>
+                        <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
                       </button>
                     </div>
                   </div>
