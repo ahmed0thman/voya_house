@@ -12,7 +12,59 @@
   --color-mama-orange: #C0542A;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-cormorant), var(--font-outfit), ui-serif, Georgia, serif;
+}
+
+.gradient-text-gold {
+  background: linear-gradient(135deg, #FFF0D0 0%, #F1E6C3 40%, #D4AF37 75%, #C2B280 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ─── Quiet Luxury Editorial Scrollytelling ─── */
+.btn-editorial-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 2.5rem;
+  background: linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%);
+  color: #080907;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.25);
+  text-decoration: none;
+}
+
+.btn-editorial-gold:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 28px rgba(241, 230, 195, 0.5);
+  background: #FFFFFF;
+  color: #080907;
+}
+
+.exp-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #080907 0%, transparent 25%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.exp-right-vignette::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 160px 90px #080907;
+  z-index: 10;
+  pointer-events: none;
 }
 
 html,
@@ -22,7 +74,8 @@ body {
 }
 
 body {
-  background-color: var(--color-brand-ivory);
+  background: radial-gradient(ellipse at 50% 60%, #F0ECE7 0%, #E5E1DA 100%);
+  background-color: #EAE6E0;
   color: var(--color-brand-black);
 }
 

@@ -28,6 +28,7 @@ const COOLDOWN_MS = 3600; // lock input during animation
 export default function Home() {
   const container = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasMobileRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const groundGlowRef = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -161,12 +162,17 @@ export default function Home() {
         loadedCount++;
         // Dismiss loading screen when the first few frames are ready
         if (loadedCount === 1) {
-          const canvas = canvasRef.current;
-          if (canvas) {
-            const ctx = canvas.getContext("2d");
-            canvas.width = 720;
-            canvas.height = 1280;
+          if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext("2d");
+            canvasRef.current.width = 720;
+            canvasRef.current.height = 1280;
             if (ctx) ctx.drawImage(img, 0, 0);
+          }
+          if (canvasMobileRef.current) {
+            const ctxMobile = canvasMobileRef.current.getContext("2d");
+            canvasMobileRef.current.width = 720;
+            canvasMobileRef.current.height = 1280;
+            if (ctxMobile) ctxMobile.drawImage(img, 0, 0);
           }
           videoReady.current = true;
           tryDismiss();
@@ -239,8 +245,9 @@ export default function Home() {
         scrollTrigger: {
           trigger: el,
           start: "top top",
-          end: "bottom bottom",
+          end: "+=500%",
           scrub: 1.5, // Smoothing for mobile scrolling
+          pin: true,
           onUpdate: (self) => {
             if (!ctx) return;
             // Map scroll progress (0-1) to frame index (0-360)
@@ -253,7 +260,14 @@ export default function Home() {
             );
             const img = imagesRef.current[currentFrame];
             if (img && img.complete) {
-              ctx.drawImage(img, 0, 0);
+              if (canvasRef.current) {
+                const ctx = canvasRef.current.getContext("2d");
+                if (ctx) ctx.drawImage(img, 0, 0);
+              }
+              if (canvasMobileRef.current) {
+                const ctxMobile = canvasMobileRef.current.getContext("2d");
+                if (ctxMobile) ctxMobile.drawImage(img, 0, 0);
+              }
             }
 
             // Drive ambient sound crossfading from scroll position
@@ -312,11 +326,10 @@ export default function Home() {
       // ==========================================
       // Section 1: Hero (0 to 0.2)
       // ==========================================
-      masterTl.to(
-        ".ui-section-1",
-        { autoAlpha: 0, y: -40, duration: 0.05 },
-        0.15,
-      );
+      masterTl
+        .to(".ui-section-1", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.15)
+        .to(".desktop-hero-stage", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.15)
+        .fromTo(".desktop-editorial-stage", { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.04 }, 0.18);
 
       // ==========================================
       // Section 2: Family Reveal (0.2 to 0.4)
@@ -341,7 +354,11 @@ export default function Home() {
           { opacity: 1, y: 0, duration: 0.015, stagger: 0.0005 },
           0.24,
         )
-        .to(".ui-section-2", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.35);
+        .to(".ui-section-2", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.35)
+        // Desktop Experience 1 (Collective)
+        .to(".exp-items-track", { y: "0vh", duration: 0.04, ease: "power2.out" }, 0.2)
+        .to(".exp-item-1", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.22)
+        .to(".exp-item-1", { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" }, 0.37);
 
       // ==========================================
       // Section 3: Coffee (0.4 to 0.6)
@@ -384,7 +401,6 @@ export default function Home() {
           { opacity: 1, y: 0, duration: 0.01 },
           0.46,
         )
-        // Glow emphasis on title
         .to(
           ".s3-title .char",
           {
@@ -396,7 +412,11 @@ export default function Home() {
           },
           0.47,
         )
-        .to(".ui-section-3", { autoAlpha: 0, duration: 0.05 }, 0.55);
+        .to(".ui-section-3", { autoAlpha: 0, duration: 0.05 }, 0.55)
+        // Desktop Experience 2 (Coffee)
+        .to(".exp-items-track", { y: "-75vh", duration: 0.04, ease: "power2.out" }, 0.38)
+        .to(".exp-item-2", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.42)
+        .to(".exp-item-2", { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" }, 0.57);
 
       // ==========================================
       // Section 4: Papa Voya (0.6 to 0.8)
@@ -439,7 +459,6 @@ export default function Home() {
           { opacity: 1, y: 0, duration: 0.01 },
           0.66,
         )
-        // Glow emphasis on title
         .to(
           ".s4-title .char",
           {
@@ -451,7 +470,11 @@ export default function Home() {
           },
           0.67,
         )
-        .to(".ui-section-4", { autoAlpha: 0, duration: 0.05 }, 0.75);
+        .to(".ui-section-4", { autoAlpha: 0, duration: 0.05 }, 0.75)
+        // Desktop Experience 3 (Papa)
+        .to(".exp-items-track", { y: "-150vh", duration: 0.04, ease: "power2.out" }, 0.58)
+        .to(".exp-item-3", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.62)
+        .to(".exp-item-3", { opacity: 0.2, x: 0, duration: 0.03, ease: "power2.out" }, 0.77);
 
       // ==========================================
       // Section 5: Mama Voya (0.8 to 1.0)
@@ -505,7 +528,10 @@ export default function Home() {
           },
           0.87,
         )
-        .to(".ui-section-5", { autoAlpha: 0, duration: 0.05 }, 0.95);
+        .to(".ui-section-5", { autoAlpha: 0, duration: 0.05 }, 0.95)
+        // Desktop Experience 4 (Mama)
+        .to(".exp-items-track", { y: "-225vh", duration: 0.04, ease: "power2.out" }, 0.78)
+        .to(".exp-item-4", { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" }, 0.82);
 
       // Header visibility (fades in only after 5th section)
       masterTl.fromTo(
@@ -534,7 +560,7 @@ export default function Home() {
         const tl = gsap.timeline();
 
         // Fade in section container
-        tl.to(".ui-section-1", {
+        tl.to([".ui-section-1", ".desktop-hero-stage"], {
           autoAlpha: 1,
           duration: 0.8,
           ease: "power2.out",
@@ -542,7 +568,7 @@ export default function Home() {
 
         // Animate VOYA wavy bottom-up
         tl.fromTo(
-          ".s1-title .char",
+          [".s1-title .char", ".s1-desktop-title .char"],
           { opacity: 0, y: 40 },
           {
             opacity: 1,
@@ -556,7 +582,7 @@ export default function Home() {
 
         // Slide up the subtitle wrapper AFTER the title finishes
         tl.fromTo(
-          ".s1-subtitle-wrapper",
+          [".s1-subtitle-wrapper", ".s1-desktop-subtitle-wrapper"],
           { autoAlpha: 0, y: 15 },
           { autoAlpha: 1, y: 0, duration: 0.5, ease: "power2.out" },
           "+=0.2", // Wait for title to finish
@@ -564,7 +590,7 @@ export default function Home() {
 
         // Immediately after sliding up, sweep the marker
         tl.to(
-          ".s1-subtitle-marker",
+          [".s1-subtitle-marker", ".s1-desktop-subtitle-marker"],
           {
             backgroundSize: "100% 100%",
             color: "#080907", // Change text to dark so it's readable on the yellow marker
@@ -575,7 +601,7 @@ export default function Home() {
         );
         // Fade in scroll indicator
         tl.to(
-          ".s1-scroll-indicator",
+          [".s1-scroll-indicator", ".s1-desktop-scroll-indicator"],
           { autoAlpha: 1, duration: 0.8, ease: "power2.out" },
           "+=0.2", // Wait a tiny bit after marker sweep
         );
@@ -586,44 +612,212 @@ export default function Home() {
 
   return (
     <>
-      {/* 500vh Master Scroll Container */}
       <main
         ref={container}
-        className="relative w-full h-[500vh] bg-[#080907] selection:bg-[#B7D39A] selection:text-black font-sans"
+        className="relative w-full h-[100dvh] bg-[#080907] selection:bg-[#B7D39A] selection:text-black font-sans overflow-hidden"
       >
         <Header onOpenBooklet={(menu) => setActiveMenu(menu)} />
 
-        {/* FIXED Viewport Stage */}
-        <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden">
-          {/* CANVAS SEQUENCE BACKGROUND */}
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full object-cover scale-105"
-          />
-          <div
-            ref={overlayRef}
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
-          />
+        {/* Viewport Stage */}
+        <div className="absolute inset-0 w-full h-full">
+          {/* ─── MOBILE STAGE (< md) ─── */}
+          <div className="md:hidden">
+            {/* Mobile Canvas Sequence Background */}
+            <canvas
+              ref={canvasMobileRef}
+              className="absolute inset-0 w-full h-full object-cover scale-105"
+            />
+            <div
+              ref={overlayRef}
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
+            />
 
-          {/* GROUND GLOW */}
-          <div
-            ref={groundGlowRef}
-            className="absolute bottom-0 left-0 w-full h-[7vh] blur-[30px] pointer-events-none"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
-          />
+            {/* GROUND GLOW */}
+            <div
+              ref={groundGlowRef}
+              className="absolute bottom-0 left-0 w-full h-[7vh] blur-[30px] pointer-events-none"
+              style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
+            />
 
-          {/* UI STAGE */}
+            {/* Mobile UI Overlay Sections */}
+            {/* Section 1: Hero */}
+            <div className="ui-section-1 absolute inset-0 flex flex-col justify-end pb-[15vh] px-6 text-white opacity-0 invisible">
+              <div className="flex flex-col items-center">
+                <h1 className="s1-title font-serif text-[5rem] leading-none tracking-tight m-0 p-0 font-medium drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
+                  <SplitText text="VOYA" />
+                </h1>
+                <div className="s1-subtitle-wrapper mt-4 flex opacity-0 invisible">
+                  <p
+                    className="s1-subtitle-marker text-xs font-bold uppercase tracking-widest px-2 py-1"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(120deg, #F1E6C3 0%, #F1E6C3 100%)",
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: "0% 100%",
+                      backgroundPosition: "0 100%",
+                      color: "rgba(255, 255, 255, 0.9)",
+                      display: "inline-block",
+                    }}
+                  >
+                    Where people come together
+                  </p>
+                </div>
+              </div>
 
-          {/* Section 1: Hero */}
-          <div className="ui-section-1 absolute inset-0 flex flex-col justify-end pb-[15vh] px-6 text-white opacity-0 invisible">
-            <div className="flex flex-col items-center">
-              <h1 className="s1-title font-serif text-[5rem] md:text-[9rem] leading-none tracking-tight m-0 p-0 font-medium drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
+              {/* Scroll Indicator */}
+              <div className="s1-scroll-indicator absolute bottom-[1%] left-1/2 -translate-x-1/2 flex flex-col items-center opacity-0 invisible">
+                <span className="text-[10px] uppercase tracking-[0.3em] font-medium text-white/70 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                  Scroll
+                </span>
+                <div className="w-[1px] h-10 bg-white/20 relative rounded-full">
+                  <div
+                    className="scroll-dot-anim absolute w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_#fff]"
+                    style={{ left: "50%", marginLeft: "-3px", top: 0 }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 2: Family Reveal */}
+            <div className="ui-section-2 absolute inset-0 text-white opacity-0 invisible">
+              <div className="absolute top-[10%] left-0 w-full text-center px-6">
+                <h2 className="s2-title font-serif text-5xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(255,255,255,0.2)] whitespace-break-spaces">
+                  <SplitText text="A Modern Family" />
+                  <br />
+                  <SplitText text="Experience" />
+                </h2>
+              </div>
+              <div className="absolute top-[40%] left-0 w-full flex flex-col items-center text-center px-6">
+                <p className="s2-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] whitespace-break-spaces">
+                  <SplitText text="Everyday rituals, mindful choices, and sweet moments made for sharing." />
+                </p>
+              </div>
+            </div>
+
+            {/* Section 3: Voya Coffee */}
+            <div className="ui-section-3 absolute inset-0 text-white opacity-0 invisible">
+              <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
+                <div className="s3-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                  <Coffee01Icon size={32} className="text-[#F1E6C3]" />
+                </div>
+                <div className="s3-vertical-text mt-6 font-mono uppercase text-[10px] text-[#F1E6C3] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
+                  <SplitText text="VOYA " />
+                </div>
+              </div>
+              <div className="absolute top-[20%] left-0 w-full text-center">
+                <h2 className="s3-title font-serif text-4xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
+                  <SplitText text="Quality in" />
+                  <br />
+                  <SplitText text="everyday rituals." />
+                </h2>
+              </div>
+              <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
+                <p className="s3-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                  <SplitText text="A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup." />
+                </p>
+                <button
+                  onClick={() => setActiveMenu('coffee')}
+                  className="s3-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
+                >
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                  <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                    <Coffee01Icon size={16} className="text-black" />
+                  </div>
+                  <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
+                    Discover the Roast
+                  </span>
+                  <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                </button>
+              </div>
+            </div>
+
+            {/* Section 4: Papa Voya */}
+            <div className="ui-section-4 absolute inset-0 text-white opacity-0 invisible">
+              <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
+                <div className="s4-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                  <Leaf01Icon size={32} className="text-[#B7D39A]" />
+                </div>
+                <div className="s4-vertical-text mt-6 font-mono uppercase text-[10px] text-[#B7D39A] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
+                  <SplitText text="PAPA VOYA" />
+                </div>
+              </div>
+              <div className="absolute top-[20%] left-0 w-full text-center">
+                <h2 className="s4-title font-serif text-4xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
+                  <SplitText text="Nourishment" />
+                  <br />
+                  <SplitText text="and strength." />
+                </h2>
+              </div>
+              <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
+                <p className="s4-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                  <SplitText text="Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence." />
+                </p>
+                <button
+                  onClick={() => setActiveMenu('papa')}
+                  className="s4-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#B7D39A] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(183,211,154,0.4)] hover:shadow-[0_12px_40px_rgba(183,211,154,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#B7D39A] focus-visible:outline-none overflow-hidden"
+                  style={{ animationDelay: "1.5s" }}
+                >
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                  <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                    <Leaf01Icon size={16} className="text-black" />
+                  </div>
+                  <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
+                    Explore Healthy Menu
+                  </span>
+                  <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                </button>
+              </div>
+            </div>
+
+            {/* Section 5: Mama Voya */}
+            <div className="ui-section-5 absolute inset-0 text-white opacity-0 invisible">
+              <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
+                <div className="s5-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+                  <Pizza01Icon size={32} className="text-[#D8A98F]" />
+                </div>
+                <div className="s5-vertical-text mt-6 font-mono uppercase text-[10px] text-[#D8A98F] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
+                  <SplitText text="MAMA VOYA" />
+                </div>
+              </div>
+              <div className="absolute top-[20%] left-0 w-full text-center">
+                <h2 className="s5-title font-serif text-4xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
+                  <SplitText text="Warmth &" />
+                  <br />
+                  <SplitText text="Hospitality." />
+                </h2>
+              </div>
+              <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
+                <p className="s5-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                  <SplitText text="Nurturing flavors and generous portions. Comfort food that feels like coming home." />
+                </p>
+                <button
+                  onClick={() => setActiveMenu('mama')}
+                  className="s5-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#D8A98F] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(216,169,143,0.4)] hover:shadow-[0_12px_40px_rgba(216,169,143,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#D8A98F] focus-visible:outline-none overflow-hidden"
+                  style={{ animationDelay: "3s" }}
+                >
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
+                  <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
+                    <Pizza01Icon size={16} className="text-black" />
+                  </div>
+                  <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
+                    Taste the Comfort
+                  </span>
+                  <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ─── DESKTOP / TABLET (md: and up) HERO SECTION 1 ─── */}
+          <div className="desktop-hero-stage hidden md:flex absolute inset-0 z-30 flex-col items-center justify-between pb-12 pt-28 px-12 bg-[#080907] text-white opacity-0 invisible">
+            <div className="my-auto flex flex-col items-center text-center">
+              <h1 className="s1-desktop-title font-serif text-[6.5rem] lg:text-[9.5rem] leading-none tracking-tight font-medium drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]">
                 <SplitText text="VOYA" />
               </h1>
-              <div className="s1-subtitle-wrapper mt-4 flex opacity-0 invisible">
+              <div className="s1-desktop-subtitle-wrapper mt-6 flex opacity-0 invisible">
                 <p
-                  className="s1-subtitle-marker text-xs md:text-sm font-bold uppercase tracking-widest px-2 py-1"
+                  className="s1-desktop-subtitle text-xs lg:text-sm font-mono font-bold uppercase tracking-[0.25em] px-4 py-2 rounded-full"
                   style={{
                     backgroundImage:
                       "linear-gradient(120deg, #F1E6C3 0%, #F1E6C3 100%)",
@@ -640,154 +834,218 @@ export default function Home() {
             </div>
 
             {/* Scroll Indicator */}
-            <div className="s1-scroll-indicator absolute bottom-[1%] left-1/2 -translate-x-1/2 flex flex-col items-center opacity-0 invisible">
-              <span className="text-[10px] uppercase tracking-[0.3em] font-medium text-white/70 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                Scroll
+            <div className="s1-desktop-scroll-indicator flex flex-col items-center opacity-0 invisible mb-2">
+              <span className="text-[11px] font-mono uppercase tracking-[0.3em] font-medium text-white/70 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                Scroll to Enter
               </span>
               <div className="w-[1px] h-10 bg-white/20 relative rounded-full">
-                {/* Glowing moving dot */}
                 <div
-                  className="scroll-dot-anim absolute w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_#fff]"
+                  className="scroll-dot-anim absolute w-1.5 h-1.5 bg-[#F1E6C3] rounded-full shadow-[0_0_8px_#F1E6C3]"
                   style={{ left: "50%", marginLeft: "-3px", top: 0 }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Section 2: Family Reveal */}
-          <div className="ui-section-2 absolute inset-0 text-white opacity-0 invisible">
-            <div className="absolute top-[10%] left-0 w-full text-center px-6">
-              <h2 className="s2-title font-serif text-5xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(255,255,255,0.2)] whitespace-break-spaces">
-                <SplitText text="A Modern Family" />
-                <br />
-                <SplitText text="Experience" />
-              </h2>
-            </div>
+          {/* ─── DESKTOP / TABLET (md: and up) EDITORIAL SCROLLYTELLING (Sections 2–5) ─── */}
+          <div className="desktop-editorial-stage hidden md:flex flex-row absolute inset-0 w-full h-full pointer-events-none opacity-0 invisible z-20">
 
-            <div className="absolute top-[40%] left-0 w-full flex flex-col items-center text-center px-6">
-              <p className="s2-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] whitespace-break-spaces">
-                <SplitText text="Everyday rituals, mindful choices, and sweet moments made for sharing." />
-              </p>
-            </div>
-          </div>
+            {/* LEFT COLUMN: Dark editorial pane */}
+            <div className="h-full relative z-20 flex flex-col pointer-events-auto overflow-hidden" style={{ width: '42%', backgroundColor: '#080907' }}>
 
-          {/* Section 3: Voya Coffee */}
-          <div className="ui-section-3 absolute inset-0 text-white opacity-0 invisible">
-            <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
-              <div className="s3-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-                <Coffee01Icon size={32} className="text-[#F1E6C3]" />
+              {/* Fixed header — kicker + section title + description */}
+              <div className="relative z-30" style={{ paddingLeft: '14%', paddingRight: '10%', paddingTop: '3.5rem' }}>
+                <p className="uppercase font-mono font-semibold" style={{ color: '#C7A144', letterSpacing: '3px', marginBottom: '1rem', fontSize: '10px' }}>
+                  FEATURED EXPERIENCES
+                </p>
+                <h2 className="font-serif text-white" style={{ fontSize: 'clamp(2rem, 3.5vw, 3rem)', lineHeight: 1.15, marginBottom: '1rem' }}>
+                  The Voya{' '}<span style={{ color: '#C7A144' }}>Experience</span>
+                </h2>
+                <p style={{ color: '#888', maxWidth: '320px', fontSize: '13px', lineHeight: 1.6 }}>
+                  Handcrafted culinary crafts and mindful rituals designed for the whole family.
+                </p>
               </div>
-              <div className="s3-vertical-text mt-6 font-mono uppercase text-[10px] text-[#F1E6C3] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
-                <SplitText text="VOYA " />
-              </div>
-            </div>
 
-            <div className="absolute top-[20%] left-0 w-full text-center">
-              <h2 className="s3-title font-serif text-4xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
-                <SplitText text="Quality in" />
-                <br />
-                <SplitText text="everyday rituals." />
-              </h2>
-            </div>
+              {/* Scrolling items track */}
+              <div className="flex-1 relative overflow-hidden" style={{ marginTop: '1.5rem' }}>
+                <div className="exp-items-track w-full flex flex-col">
+                  
+                  {/* ── Experience 1: The Modern Collective ── */}
+                  <div className="exp-item-1 w-full flex flex-col justify-center shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                      The Modern Collective
+                    </h3>
+                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                      A private, bespoke sanctuary bringing specialty coffee, mindful nourishment, and artisanal comfort together under one warm roof.
+                    </p>
 
-            <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-              <p className="s3-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-                <SplitText text="A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup." />
-              </p>
-              <button 
-                onClick={() => setActiveMenu('coffee')}
-                className="s3-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#F1E6C3] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(241,230,195,0.4)] hover:shadow-[0_12px_40px_rgba(241,230,195,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#F1E6C3] focus-visible:outline-none overflow-hidden"
-              >
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
-                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
-                  <Coffee01Icon size={16} className="text-black" />
+                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
+                      <div style={{ paddingRight: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          HOUSES
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          3 Artisanal Brands
+                        </div>
+                      </div>
+                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
+                      <div style={{ paddingLeft: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          EXPERIENCE
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          All-Day Sanctuary
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <button
+                        onClick={() => {
+                          if (bookletsRef.current) {
+                            bookletsRef.current.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                      >
+                        EXPLORE THE HOUSE
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ── Experience 2: Voya Coffee ── */}
+                  <div className="exp-item-2 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                      Quality in Everyday Rituals
+                    </h3>
+                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                      A reflection of calmness and exploration. We source and roast with intention to craft the perfect specialty cup for every moment.
+                    </p>
+
+                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
+                      <div style={{ paddingRight: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          ROAST ORIGIN
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          Ethiopia &amp; Colombia
+                        </div>
+                      </div>
+                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
+                      <div style={{ paddingLeft: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          BREW CRAFT
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          Pour-Over V60
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <button
+                        onClick={() => setActiveMenu('coffee')}
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                      >
+                        DISCOVER THE ROAST
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ── Experience 3: Papa Voya ── */}
+                  <div className="exp-item-3 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                      Nourishment and Strength
+                    </h3>
+                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                      Balanced meals and mindful choices. Clean energy and wholesome ingredients that reflect vitality, balance, and confidence.
+                    </p>
+
+                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
+                      <div style={{ paddingRight: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          PHILOSOPHY
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          Mindful Nutrition
+                        </div>
+                      </div>
+                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
+                      <div style={{ paddingLeft: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          SOURCING
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          100% Organic
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <button
+                        onClick={() => setActiveMenu('papa')}
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                      >
+                        EXPLORE HEALTHY MENU
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* ── Experience 4: Mama Voya ── */}
+                  <div className="exp-item-4 w-full flex flex-col justify-center opacity-20 shrink-0" style={{ height: '75vh', paddingLeft: '14%', paddingRight: '10%' }}>
+                    <h3 className="font-serif text-white" style={{ fontSize: 'clamp(1.75rem, 2.5vw, 2.25rem)', lineHeight: 1.2, marginBottom: '1.25rem' }}>
+                      Warmth &amp; Hospitality
+                    </h3>
+                    <p style={{ fontSize: '14px', color: '#999', marginBottom: '2rem', maxWidth: '340px', lineHeight: 1.7 }}>
+                      Nurturing flavors and generous portions. Comfort food, freshly baked sourdough, and handcrafted treats that feel like coming home.
+                    </p>
+
+                    <div className="flex items-center" style={{ marginBottom: '2rem' }}>
+                      <div style={{ paddingRight: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          BAKERY
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          Artisanal Sourdough
+                        </div>
+                      </div>
+                      <div style={{ width: '1px', height: '2.25rem', backgroundColor: '#333' }} />
+                      <div style={{ paddingLeft: '1.5rem' }}>
+                        <div className="uppercase" style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#777', marginBottom: '0.375rem' }}>
+                          PORTIONS
+                        </div>
+                        <div className="font-bold" style={{ color: '#C7A144', fontSize: '13px' }}>
+                          Generous &amp; Shared
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <button
+                        onClick={() => setActiveMenu('mama')}
+                        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.85rem 2.2rem', background: 'linear-gradient(135deg, #F1E6C3 0%, #D4AF37 100%)', color: '#080907', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.15em', fontSize: '0.75rem', borderRadius: '9999px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 20px rgba(212, 175, 55, 0.25)' }}
+                      >
+                        TASTE THE COMFORT
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
-                <span className="font-sans font-bold text-xs md:text-sm tracking-widest uppercase text-black">
-                  Discover the Roast
-                </span>
-                <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
-              </button>
-            </div>
-          </div>
-
-          {/* Section 4: Papa Voya */}
-          <div className="ui-section-4 absolute inset-0 text-white opacity-0 invisible">
-            <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
-              <div className="s4-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-                <Leaf01Icon size={32} className="text-[#B7D39A]" />
-              </div>
-              <div className="s4-vertical-text mt-6 font-mono uppercase text-[10px] text-[#B7D39A] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
-                <SplitText text="PAPA VOYA" />
               </div>
             </div>
 
-            <div className="absolute top-[20%] left-0 w-full text-center">
-              <h2 className="s4-title font-serif text-4xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
-                <SplitText text="Nourishment" />
-                <br />
-                <SplitText text="and strength." />
-              </h2>
+            {/* RIGHT COLUMN: Full-bleed canvas with smooth gradient fade from dark left */}
+            <div className="h-full relative overflow-hidden" style={{ width: '58%' }}>
+              {/* Smooth gradient shadow fading from the dark left into the image */}
+              <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '35%', background: 'linear-gradient(to right, #080907 0%, rgba(8,9,7,0.85) 30%, rgba(8,9,7,0.4) 60%, transparent 100%)', zIndex: 10, pointerEvents: 'none' as const }} />
+              {/* Bottom vignette for depth */}
+              <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '25%', background: 'linear-gradient(to top, rgba(8,9,7,0.6) 0%, transparent 100%)', zIndex: 10, pointerEvents: 'none' as const }} />
+              <canvas
+                ref={canvasRef}
+                className="w-full h-full object-cover"
+              />
             </div>
 
-            <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-              <p className="s4-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-                <SplitText text="Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence." />
-              </p>
-              <button 
-                onClick={() => setActiveMenu('papa')}
-                className="s4-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#B7D39A] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(183,211,154,0.4)] hover:shadow-[0_12px_40px_rgba(183,211,154,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#B7D39A] focus-visible:outline-none overflow-hidden"
-                style={{ animationDelay: "1.5s" }}
-              >
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
-                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
-                  <Leaf01Icon size={16} className="text-black" />
-                </div>
-                <span className="font-sans font-bold text-xs md:text-sm tracking-widest uppercase text-black">
-                  Explore Healthy Menu
-                </span>
-                <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
-              </button>
-            </div>
-          </div>
-
-          {/* Section 5: Mama Voya */}
-          <div className="ui-section-5 absolute inset-0 text-white opacity-0 invisible">
-            <div className="absolute top-[2%] left-[5%] flex flex-col items-center">
-              <div className="s5-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
-                <Pizza01Icon size={32} className="text-[#D8A98F]" />
-              </div>
-              <div className="s5-vertical-text mt-6 font-mono uppercase text-[10px] text-[#D8A98F] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
-                <SplitText text="MAMA VOYA" />
-              </div>
-            </div>
-
-            <div className="absolute top-[20%] left-0 w-full text-center">
-              <h2 className="s5-title font-serif text-4xl md:text-7xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
-                <SplitText text="Warmth &" />
-                <br />
-                <SplitText text="Hospitality." />
-              </h2>
-            </div>
-
-            <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-              <p className="s5-desc max-w-lg text-sm md:text-base text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
-                <SplitText text="Nurturing flavors and generous portions. Comfort food that feels like coming home." />
-              </p>
-              <button 
-                onClick={() => setActiveMenu('mama')}
-                className="s5-btn animate-cta-wiggle group relative inline-flex items-center gap-4 px-8 py-4 rounded-full bg-[#D8A98F] text-black font-extrabold border border-white/40 backdrop-blur-xl transition-all duration-300 shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_25px_rgba(216,169,143,0.4)] hover:shadow-[0_12px_40px_rgba(216,169,143,0.7)] hover:scale-105 active:scale-95 focus-visible:ring-2 focus-visible:ring-[#D8A98F] focus-visible:outline-none overflow-hidden"
-                style={{ animationDelay: "3s" }}
-              >
-                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
-                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center transition-colors">
-                  <Pizza01Icon size={16} className="text-black" />
-                </div>
-                <span className="font-sans font-bold text-xs md:text-sm tracking-widest uppercase text-black">
-                  Taste the Comfort
-                </span>
-                <ArrowRight01Icon size={16} className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300" />
-              </button>
-            </div>
           </div>
         </div>
       </main>
