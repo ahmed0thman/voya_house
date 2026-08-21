@@ -1,0 +1,182 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner:
+      - generic [ref=e3]:
+        - button "VOYA House" [ref=e4] [cursor=pointer]:
+          - generic [ref=e5]: VOYA
+          - generic [ref=e6]: House
+        - navigation [ref=e7]:
+          - button "Trilogy Showroom" [ref=e8] [cursor=pointer]
+          - button "Voya House" [ref=e9] [cursor=pointer]
+          - button "Visit & Concierge" [ref=e10] [cursor=pointer]
+        - generic [ref=e11]:
+          - button "Table Cart (0 items)" [ref=e12] [cursor=pointer]:
+            - generic [ref=e16]: Order
+          - button "Open Navigation Menu" [ref=e17] [cursor=pointer]
+    - main [ref=e20]
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: The House of Voya
+        - heading "Three Flavors. One House." [level=2] [ref=e29]
+        - paragraph [ref=e30]: Explore our complete trilogy of crafted menus. Swipe or select any booklet to unveil our curated roasts, mindful wellness recipes, and comforting home classics.
+      - generic [ref=e31]:
+        - generic [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]: "02"
+          - generic [ref=e39]: "02"
+          - generic [ref=e44]: "02"
+          - generic [ref=e49]: "02"
+          - generic [ref=e54]:
+            - generic [ref=e55]: WELLNESS & NOURISHMENT
+            - heading "Papa Voya" [level=3] [ref=e56]
+          - img "Papa Voya Mascot" [ref=e59]
+          - generic [ref=e60]:
+            - paragraph [ref=e61]: Balanced meals and clean energy. Strength and vitality.
+            - generic [ref=e62]: Select
+        - generic [ref=e67] [cursor=pointer]:
+          - generic [ref=e68]: "01"
+          - generic [ref=e74]: "01"
+          - generic [ref=e80]: "01"
+          - generic [ref=e86]: "01"
+          - generic [ref=e92]:
+            - generic [ref=e93]: SIGNATURE ROASTS
+            - heading "Voya Coffee" [level=3] [ref=e94]
+          - img "Voya Coffee Mascot" [ref=e97]
+          - generic [ref=e98]:
+            - paragraph [ref=e99]: Quality in everyday rituals. Sourced & roasted with intention.
+            - generic [ref=e100]: Open Booklet
+        - generic [ref=e105] [cursor=pointer]:
+          - generic [ref=e106]: "03"
+          - generic [ref=e114]: "03"
+          - generic [ref=e122]: "03"
+          - generic [ref=e130]: "03"
+          - generic [ref=e138]:
+            - generic [ref=e139]: WARMTH & HOSPITALITY
+            - heading "Mama Voya" [level=3] [ref=e140]
+          - img "Mama Voya Mascot" [ref=e143]
+          - generic [ref=e144]:
+            - paragraph [ref=e145]: Comfort food that feels like coming home.
+            - generic [ref=e146]: Select
+      - generic [ref=e150]:
+        - button "Previous booklet" [ref=e151]
+        - generic [ref=e154]:
+          - button "Papa" [ref=e155]
+          - button "Voya" [ref=e156]
+          - button "Mama" [ref=e157]
+        - button "Next booklet" [ref=e158]
+      - generic [ref=e161]: Swipe or Click to Cycle
+    - generic [ref=e164]:
+      - generic [ref=e165]:
+        - generic [ref=e166]: About Voya House
+        - heading "A house built around everyday moments." [level=2] [ref=e169]
+        - paragraph [ref=e170]: Voya House is more than just a destination — it is a welcoming sanctuary where specialty coffee, nourishing healthy food, and comforting family meals live together under one roof.
+      - generic [ref=e171]:
+        - generic [ref=e172] [cursor=pointer]:
+          - generic [ref=e173]:
+            - heading "The Morning Ritual" [level=3] [ref=e179]
+            - paragraph [ref=e180]: From single-origin beans to intentional roasting, our specialty coffee is an invitation to slow down, explore delicate notes, and enjoy quiet moments of calm.
+          - generic [ref=e181]: Discover the Roasts
+        - generic [ref=e186] [cursor=pointer]:
+          - generic [ref=e187]:
+            - heading "Mindful Nourishment" [level=3] [ref=e192]
+            - paragraph [ref=e193]: Wholesome bowls, crisp salads, and clean balanced meals crafted to give you steady energy, strength, and vibrant vitality throughout your day.
+          - generic [ref=e194]: Explore Healthy Food
+        - generic [ref=e199] [cursor=pointer]:
+          - generic [ref=e200]:
+            - heading "The Family Table" [level=3] [ref=e208]
+            - paragraph [ref=e209]: Generous comfort dishes, artisanal pizzas, and sweet treats made for sharing. Warm hospitality and familiar recipes that make you feel right at home.
+          - generic [ref=e210]: Taste Comfort Food
+      - generic [ref=e215]:
+        - generic [ref=e216]:
+          - generic [ref=e217]: Our Community
+          - heading "Where coffee, food, and people come together." [level=3] [ref=e218]
+          - paragraph [ref=e219]: Whether you’re stopping by for a quick morning espresso, enjoying a fresh healthy meal, or sharing a table with your loved ones on the weekend — there is always a place for you at Voya House.
+        - button "Visit Us" [ref=e220]
+    - generic [ref=e229]:
+      - generic [ref=e230]:
+        - generic [ref=e231]: Concierge & Inquiries
+        - heading "Join the Voyage." [level=2] [ref=e234]
+        - paragraph [ref=e235]: Whether you are reserving a table, inquiring about our seasonal bean allocations, or planning a private gathering — our house is always open.
+      - generic [ref=e236]:
+        - generic [ref=e237]:
+          - generic [ref=e238]:
+            - generic [ref=e239]:
+              - img "Voya Emblem" [ref=e241]
+              - generic [ref=e242]:
+                - heading "The House of Voya" [level=3] [ref=e243]
+                - text: Flagship Sanctuary
+            - paragraph [ref=e244]: Experience the harmony of specialty roasting, mindful nourishment, and generous comfort hospitality.
+            - generic [ref=e245]:
+              - generic [ref=e251]:
+                - generic [ref=e252]: Address
+                - paragraph [ref=e253]: 123 Voyage Street, New Cairo, EG
+              - generic [ref=e259]:
+                - generic [ref=e260]: House Hours
+                - paragraph [ref=e261]: Monday – Sunday · 07:00 – 23:00
+              - generic [ref=e267]:
+                - generic [ref=e268]: Concierge Desk
+                - paragraph [ref=e269]: concierge@voyahouse.com
+          - generic [ref=e270]:
+            - generic [ref=e271]: “Every sip a new trip.”
+            - generic [ref=e272]: EST. 2026
+        - generic [ref=e274]:
+          - generic [ref=e275]:
+            - generic [ref=e276]:
+              - generic [ref=e277]: Select Topic
+              - generic [ref=e278]:
+                - button "General Hello" [ref=e279]
+                - button "Coffee Allocation" [ref=e284]
+                - button "Papa Wellness Catering" [ref=e290]
+                - button "Mama Family Events" [ref=e295]
+            - generic [ref=e303]:
+              - generic [ref=e304]:
+                - generic [ref=e305]:
+                  - generic [ref=e306]: Your Name
+                  - textbox "Your Name" [ref=e308]:
+                    - /placeholder: e.g. Alexander Vance
+                - generic [ref=e309]:
+                  - generic [ref=e310]: Email Address
+                  - textbox "Email Address" [ref=e312]:
+                    - /placeholder: name@example.com
+              - generic [ref=e313]:
+                - generic [ref=e314]: How can we welcome you?
+                - textbox "How can we welcome you?" [ref=e316]:
+                  - /placeholder: Tell us about your inquiry, event date, or coffee preferences...
+          - generic [ref=e317]:
+            - generic [ref=e318]: Direct reply within 24 hours.
+            - button "Deliver Message" [ref=e319]
+    - contentinfo [ref=e323]:
+      - generic [ref=e324]:
+        - generic [ref=e325]:
+          - generic [ref=e326]:
+            - generic [ref=e327]: Flagship Location
+            - paragraph [ref=e332]: Voya House
+            - paragraph [ref=e333]: 123 Voyage Street New Cairo, Egypt
+          - generic [ref=e334]:
+            - generic [ref=e335]: The Repertoire
+            - generic [ref=e340]:
+              - generic [ref=e341]: 01 · Voya Specialty Coffee
+              - generic [ref=e347]: 02 · Papa Voya Healthy Food
+              - generic [ref=e352]: 03 · Mama Voya Comfort Table
+          - generic [ref=e360]:
+            - generic [ref=e361]: Daily Hours
+            - paragraph [ref=e366]: 07:00 — 23:00
+            - paragraph [ref=e367]: Seven days a week Dine-in · Pickup Window
+          - generic [ref=e368]:
+            - generic [ref=e369]: Concierge
+            - link "concierge@voyahouse.com" [ref=e374] [cursor=pointer]:
+              - /url: mailto:concierge@voyahouse.com
+            - generic [ref=e375]:
+              - link "Instagram" [ref=e376] [cursor=pointer]:
+                - /url: https://instagram.com
+              - generic [ref=e377]: ·
+              - link "Twitter / X" [ref=e378] [cursor=pointer]:
+                - /url: https://twitter.com
+                - text: Twitter
+        - generic [ref=e379]:
+          - generic [ref=e380]:
+            - img "Voya Logo" [ref=e381]
+            - generic [ref=e383]: “Every sip a new trip. Designed for the journey.”
+          - button "Back to Top" [ref=e384] [cursor=pointer]
+        - generic [ref=e389]: 2026 VOYA HOUSE INC. ALL RIGHTS RESERVED
+    - img "Voya" [ref=e392]
+  - button "Open Next.js Dev Tools" [ref=e406] [cursor=pointer]
