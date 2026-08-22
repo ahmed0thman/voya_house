@@ -51,6 +51,7 @@ export default function Home() {
 
   // Loading state
   const [isLoaded, setIsLoaded] = useState(false);
+  const [hasEntered, setHasEntered] = useState(false);
 
   // Ambient sound engine
   const {
@@ -88,9 +89,12 @@ export default function Home() {
     let scrollTarget = 0;
 
     if (target < SNAP_POINTS.length) {
-      // Sections 0-4 (video container)
-      const scrollMax = el.scrollHeight - window.innerHeight;
-      scrollTarget = SNAP_POINTS[target] * scrollMax;
+      // Sections 0-4 (video container pinned across 500vh)
+      const st = ScrollTrigger.getAll().find(
+        (s) => s.vars?.trigger === container.current,
+      );
+      const totalDist = st ? st.end - st.start : 5 * window.innerHeight;
+      scrollTarget = (st ? st.start : 0) + SNAP_POINTS[target] * totalDist;
     } else if (target === 5 && bookletsRef.current) {
       // Booklets Showroom Section
       scrollTarget = bookletsRef.current.offsetTop;
@@ -119,6 +123,54 @@ export default function Home() {
       },
     });
   }, []);
+
+  // Handler for "Explore the House" button
+  const handleExploreHouse = useCallback(() => {
+    if (isAnimating.current) return;
+    enableSound();
+
+    // Smooth upward float & fade out for logo, text, and button
+    gsap.to(
+      [
+        ".s1-logo",
+        ".s1-subtitle-wrapper",
+        ".s1-explore-btn",
+        ".s1-desktop-logo",
+        ".s1-desktop-subtitle-wrapper",
+        ".s1-desktop-explore-btn",
+      ],
+      {
+        y: -45,
+        autoAlpha: 0,
+        duration: 0.65,
+        stagger: 0.04,
+        ease: "power2.inOut",
+        onComplete: () => {
+          setHasEntered(true);
+          document.body.style.overflow = "";
+          setTimeout(() => {
+            const st = ScrollTrigger.getAll().find(
+              (s) => s.vars?.trigger === container.current,
+            );
+            const totalDist = st ? st.end - st.start : 5 * window.innerHeight;
+            const targetScroll = (st ? st.start : 0) + 0.34 * totalDist; // Exact last frame of Section 2 (Family)
+
+            isAnimating.current = true;
+            currentIndex.current = 1;
+
+            gsap.to(window, {
+              scrollTo: { y: targetScroll, autoKill: false },
+              duration: 2.2,
+              ease: "power2.inOut",
+              onComplete: () => {
+                isAnimating.current = false;
+              },
+            });
+          }, 40);
+        },
+      },
+    );
+  }, [enableSound]);
 
   // ─── Reset Scroll Position on Mount ───────────────────────────────────────────
   useEffect(() => {
@@ -202,9 +254,9 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Lock scroll while loading
+  // Lock scroll while loading OR until user clicks "Explore the House"
   useEffect(() => {
-    if (!isLoaded) {
+    if (!isLoaded || !hasEntered) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -212,7 +264,26 @@ export default function Home() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isLoaded]);
+  }, [isLoaded, hasEntered]);
+
+  // Prevent wheel & touch gestures until "Explore the House" is clicked
+  useEffect(() => {
+    if (hasEntered || !isLoaded) return;
+
+    const preventScroll = (e: Event) => {
+      if (!hasEntered) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", preventScroll, { passive: false });
+    window.addEventListener("touchmove", preventScroll, { passive: false });
+
+    return () => {
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("touchmove", preventScroll);
+    };
+  }, [hasEntered, isLoaded]);
 
   // ─── Auto-unmute on first interaction ─────────────────────────────────
   useEffect(() => {
@@ -342,6 +413,12 @@ export default function Home() {
       // Section 1: Hero (0 to 0.2)
       // ==========================================
       masterTl
+        .fromTo(
+          ".header-brand-logo",
+          { autoAlpha: 0, y: -6 },
+          { autoAlpha: 1, y: 0, duration: 0.04 },
+          0.12,
+        )
         .to(".ui-section-1", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.15)
         .to(
           ".desktop-hero-stage",
@@ -625,65 +702,56 @@ export default function Home() {
       if (isLoaded) {
         const tl = gsap.timeline();
 
-        // Fade in header & hero section container
+        // 1. Fade in header & hero section containers
         tl.to(
           ".voya-header",
           {
             opacity: 1,
-            duration: 0.8,
+            duration: 1.0,
             ease: "power2.out",
           },
           0,
         );
+        tl.set(".header-brand-logo", { autoAlpha: 0 }, 0);
 
         tl.to(
           [".ui-section-1", ".desktop-hero-stage"],
           {
             autoAlpha: 1,
-            duration: 0.8,
+            duration: 1.0,
             ease: "power2.out",
           },
           0,
         );
 
-        // Animate VOYA wavy bottom-up
+        // 2. Logo smooth scale and graceful dissolve
         tl.fromTo(
-          [".s1-title .char", ".s1-desktop-title .char"],
-          { opacity: 0, y: 40 },
+          [".s1-logo", ".s1-desktop-logo"],
+          { opacity: 0, scale: 0.94, y: 15 },
           {
             opacity: 1,
+            scale: 1,
             y: 0,
-            duration: 0.8,
-            stagger: 0.05,
-            ease: "back.out(1.5)",
+            duration: 1.2,
+            ease: "power3.out",
           },
-          "-=0.4",
+          0.2,
         );
 
-        // Slide up the subtitle wrapper AFTER the title finishes
+        // 3. Subtitle fade up
         tl.fromTo(
           [".s1-subtitle-wrapper", ".s1-desktop-subtitle-wrapper"],
-          { autoAlpha: 0, y: 15 },
-          { autoAlpha: 1, y: 0, duration: 0.5, ease: "power2.out" },
-          "+=0.2", // Wait for title to finish
+          { autoAlpha: 0, y: 12 },
+          { autoAlpha: 1, y: 0, duration: 0.9, ease: "power2.out" },
+          0.5,
         );
 
-        // Immediately after sliding up, sweep the marker
-        tl.to(
-          [".s1-subtitle-marker", ".s1-desktop-subtitle-marker"],
-          {
-            backgroundSize: "100% 100%",
-            color: "#080907", // Change text to dark so it's readable on the yellow marker
-            duration: 0.6,
-            ease: "power2.out",
-          },
-          ">", // Run exactly when the previous animation finishes
-        );
-        // Fade in scroll indicator
-        tl.to(
-          [".s1-scroll-indicator", ".s1-desktop-scroll-indicator"],
-          { autoAlpha: 1, duration: 0.8, ease: "power2.out" },
-          "+=0.2", // Wait a tiny bit after marker sweep
+        // 4. Explore Button fade up
+        tl.fromTo(
+          [".s1-explore-btn", ".s1-desktop-explore-btn"],
+          { autoAlpha: 0, y: 12 },
+          { autoAlpha: 1, y: 0, duration: 0.9, ease: "power2.out" },
+          0.8,
         );
       }
     },
@@ -722,40 +790,36 @@ export default function Home() {
 
             {/* Mobile UI Overlay Sections */}
             {/* Section 1: Hero */}
-            <div className="ui-section-1 absolute inset-0 flex flex-col justify-end pb-[15vh] px-6 text-white opacity-0 invisible">
-              <div className="flex flex-col items-center">
-                <h1 className="s1-title font-serif text-[5rem] leading-none tracking-tight m-0 p-0 font-medium drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)]">
-                  <SplitText text="VOYA" />
-                </h1>
-                <div className="s1-subtitle-wrapper mt-4 flex opacity-0 invisible">
-                  <p
-                    className="s1-subtitle-marker text-xs font-bold uppercase tracking-widest px-2 py-1"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(120deg, #F1E6C3 0%, #F1E6C3 100%)",
-                      backgroundRepeat: "no-repeat",
-                      backgroundSize: "0% 100%",
-                      backgroundPosition: "0 100%",
-                      color: "rgba(255, 255, 255, 0.9)",
-                      display: "inline-block",
-                    }}
-                  >
+            <div className="ui-section-1 absolute inset-0 flex flex-col items-center justify-center px-6 text-[#080907] opacity-0 invisible pointer-events-none pb-[28vh]">
+              {/* Main Brand & Editorial Group — Placed peacefully in the sky */}
+              <div className="flex flex-col items-center text-center gap-2">
+                {/* Horizontal Luxury Brand Masthead */}
+                <div className="s1-logo drop-shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                  <Image
+                    src="/assets/logos/Asset 26.svg"
+                    alt="Voya House"
+                    width={230}
+                    height={50}
+                    priority
+                    style={{ width: "215px", height: "auto" }}
+                    className="object-contain"
+                  />
+                </div>
+
+                {/* Primary Tagline */}
+                <div className="s1-subtitle-wrapper flex flex-col items-center opacity-0 invisible">
+                  <p className="text-[12px] font-sans font-semibold uppercase tracking-[0.24em] text-[#080907] drop-shadow-[0_1px_2px_rgba(255,255,255,0.7)]">
                     Where people come together
                   </p>
                 </div>
-              </div>
 
-              {/* Scroll Indicator */}
-              <div className="s1-scroll-indicator absolute bottom-[1%] left-1/2 -translate-x-1/2 flex flex-col items-center opacity-0 invisible">
-                <span className="text-[10px] uppercase tracking-[0.3em] font-medium text-white/70 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                  Scroll
-                </span>
-                <div className="w-[1px] h-10 bg-white/20 relative rounded-full">
-                  <div
-                    className="scroll-dot-anim absolute w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_#fff]"
-                    style={{ left: "50%", marginLeft: "-3px", top: 0 }}
-                  />
-                </div>
+                {/* Explore The House Button */}
+                <button
+                  onClick={handleExploreHouse}
+                  className="s1-explore-btn mt-5 px-7 py-2.5 border border-[#080907]/40 bg-white/20 hover:bg-white/40 active:scale-95 transition-all text-[#080907] font-sans font-medium text-[11px] uppercase tracking-[0.25em] cursor-pointer pointer-events-auto backdrop-blur-sm shadow-sm opacity-0 invisible"
+                >
+                  Explore the House
+                </button>
               </div>
             </div>
 
@@ -908,40 +972,31 @@ export default function Home() {
           </div>
 
           {/* ─── DESKTOP / TABLET (md: and up) HERO SECTION 1 ─── */}
-          <div className="desktop-hero-stage hidden md:flex absolute inset-0 z-30 flex-col items-center justify-between pb-12 pt-28 px-12 bg-[#080907] text-white opacity-0 invisible">
-            <div className="my-auto flex flex-col items-center text-center">
-              <h1 className="s1-desktop-title font-serif text-[6.5rem] lg:text-[9.5rem] leading-none tracking-tight font-medium drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]">
-                <SplitText text="VOYA" />
-              </h1>
-              <div className="s1-desktop-subtitle-wrapper mt-6 flex opacity-0 invisible">
-                <p
-                  className="s1-desktop-subtitle text-xs lg:text-sm font-mono font-bold uppercase tracking-[0.25em] px-4 py-2 rounded-full"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(120deg, #F1E6C3 0%, #F1E6C3 100%)",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "0% 100%",
-                    backgroundPosition: "0 100%",
-                    color: "rgba(255, 255, 255, 0.9)",
-                    display: "inline-block",
-                  }}
-                >
+          <div className="desktop-hero-stage hidden md:flex absolute inset-0 z-30 flex-col items-center justify-center p-12 bg-[#080907]/90 backdrop-blur-sm text-white opacity-0 invisible">
+            {/* Main Center Stage */}
+            <div className="flex flex-col items-center text-center">
+              <div className="s1-desktop-logo mb-6 drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
+                <Image
+                  src="/assets/logos/Asset 26.svg"
+                  alt="Voya House"
+                  width={340}
+                  height={75}
+                  priority
+                  style={{ width: "320px", height: "auto" }}
+                  className="object-contain invert brightness-200"
+                />
+              </div>
+              <div className="s1-desktop-subtitle-wrapper flex flex-col items-center opacity-0 invisible">
+                <p className="text-sm font-sans font-medium uppercase tracking-[0.3em] text-[#F4EFE9] mb-6 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
                   Where people come together
                 </p>
               </div>
-            </div>
-
-            {/* Scroll Indicator */}
-            <div className="s1-desktop-scroll-indicator flex flex-col items-center opacity-0 invisible mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-[0.3em] font-medium text-white/70 mb-2 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
-                Scroll to Enter
-              </span>
-              <div className="w-[1px] h-10 bg-white/20 relative rounded-full">
-                <div
-                  className="scroll-dot-anim absolute w-1.5 h-1.5 bg-[#F1E6C3] rounded-full shadow-[0_0_8px_#F1E6C3]"
-                  style={{ left: "50%", marginLeft: "-3px", top: 0 }}
-                />
-              </div>
+              <button
+                onClick={handleExploreHouse}
+                className="s1-desktop-explore-btn px-9 py-3.5 rounded-lg border border-white/40 bg-white/10 hover:bg-white/25 active:scale-95 transition-all text-white font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-pointer backdrop-blur-sm shadow-lg opacity-0 invisible"
+              >
+                Explore the House
+              </button>
             </div>
           </div>
 
@@ -1522,7 +1577,10 @@ export default function Home() {
               src="/assets/logos/Asset 11.svg"
               alt="Voya"
               width={140}
-              height={140}
+              height={203}
+              priority
+              loading="eager"
+              style={{ width: "auto", height: "100px" }}
               className="drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
             />
           </div>

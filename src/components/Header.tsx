@@ -127,7 +127,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
           {/* Logo / Brand Name */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="font-serif text-2xl tracking-[0.1em] flex items-center gap-3 font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)] cursor-pointer group"
+            className="header-brand-logo font-serif text-2xl tracking-[0.1em] flex items-center gap-3 font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] cursor-pointer group transition-opacity duration-300"
           >
             <span>VOYA</span>
             <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#F1E6C3] px-2 py-0.5 rounded-full border border-white/15 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-block">
@@ -155,7 +155,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
             <button
               onClick={handleCartClick}
               aria-label={`Table Cart (${totalItems} items)`}
-              className="relative inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-full bg-[#F1E6C3] hover:bg-white text-black font-mono text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-sm active:scale-95 cursor-pointer"
+              className="relative inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-full bg-[#F1E6C3] hover:bg-white text-black font-mono text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.25)] active:scale-95 cursor-pointer"
             >
               {/* Glowing Pulsing Dot when Cart is Not Empty */}
               {totalItems > 0 && (
@@ -174,14 +174,14 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               </span>
             </button>
 
-            {/* Hamburger Button */}
+            {/* Hamburger Button with Frosted Capsule */}
             <button
               onClick={() => setIsOpen(true)}
               aria-label="Open Navigation Menu"
-              className="flex flex-col items-end space-y-[5px] p-2.5 rounded-2xl border border-white/10 bg-white/5 hover:bg-white/15 active:scale-95 group cursor-pointer transition-all duration-300"
+              className="flex flex-col items-end space-y-[5px] p-2.5 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:bg-black/60 active:scale-95 group cursor-pointer transition-all duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.25)]"
             >
-              <span className="block w-6 h-[2px] bg-white transition-all duration-300 group-hover:w-7 group-hover:bg-[#F1E6C3]"></span>
-              <span className="block w-4 h-[2px] bg-white transition-all duration-300 group-hover:w-7 group-hover:bg-[#F1E6C3]"></span>
+              <span className="block w-5 h-[2px] bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#F1E6C3]"></span>
+              <span className="block w-3.5 h-[2px] bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#F1E6C3]"></span>
             </button>
           </div>
 
