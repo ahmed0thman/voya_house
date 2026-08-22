@@ -15,7 +15,7 @@ export default function HeroFlashlightEffect() {
     if (bgRef.current) {
       const radius = maskRadius.current.value;
       const maskStr = `radial-gradient(circle ${radius}px at ${mousePos.current.x}px ${mousePos.current.y}px, black 10%, rgba(0,0,0,0.5) 50%, transparent 100%)`;
-      bgRef.current.style.WebkitMaskImage = maskStr;
+      bgRef.current.style.webkitMaskImage = maskStr;
       bgRef.current.style.maskImage = maskStr;
     }
   };
