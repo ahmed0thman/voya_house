@@ -87,7 +87,9 @@ const CARDS: CardData[] = [
   },
 ];
 
-export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps) {
+export default function BookletShowroom({
+  onOpenBooklet,
+}: BookletShowroomProps) {
   // centerIndex: 0 = Papa, 1 = Coffee (default center), 2 = Mama
   const [centerIndex, setCenterIndex] = useState<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -107,7 +109,7 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
       if (diff === 1) return 1;
       return -1;
     },
-    [centerIndex]
+    [centerIndex],
   );
 
   // Smoothly update card positions with GSAP
@@ -185,7 +187,7 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
         });
       });
     },
-    [getRelPos]
+    [getRelPos],
   );
 
   // Trigger position updates when centerIndex changes (after entrance)
@@ -216,7 +218,7 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
       tl.fromTo(
         ".booklet-showroom-header",
         { y: 35, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" }
+        { y: 0, opacity: 1, duration: 0.65, ease: "power3.out" },
       );
 
       const isMobile = window.innerWidth < 768;
@@ -228,7 +230,15 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
       // Cards initial reveal (Deck fan out)
       tl.fromTo(
         cardsRef.current[0], // Papa
-        { y: 130, opacity: 0, scale: 0.88, xPercent: -50, yPercent: -50, x: 0, rotateZ: 0 },
+        {
+          y: 130,
+          opacity: 0,
+          scale: 0.88,
+          xPercent: -50,
+          yPercent: -50,
+          x: 0,
+          rotateZ: 0,
+        },
         {
           xPercent: -50,
           yPercent: -50,
@@ -240,12 +250,20 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
           duration: 0.9,
           ease: "back.out(1.25)",
         },
-        "-=0.2"
+        "-=0.2",
       );
 
       tl.fromTo(
         cardsRef.current[1], // Coffee
-        { y: 130, opacity: 0, scale: 0.88, xPercent: -50, yPercent: -50, x: 0, rotateZ: 0 },
+        {
+          y: 130,
+          opacity: 0,
+          scale: 0.88,
+          xPercent: -50,
+          yPercent: -50,
+          x: 0,
+          rotateZ: 0,
+        },
         {
           xPercent: -50,
           yPercent: -50,
@@ -257,12 +275,20 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
           duration: 0.9,
           ease: "back.out(1.25)",
         },
-        "-=0.75"
+        "-=0.75",
       );
 
       tl.fromTo(
         cardsRef.current[2], // Mama
-        { y: 130, opacity: 0, scale: 0.88, xPercent: -50, yPercent: -50, x: 0, rotateZ: 0 },
+        {
+          y: 130,
+          opacity: 0,
+          scale: 0.88,
+          xPercent: -50,
+          yPercent: -50,
+          x: 0,
+          rotateZ: 0,
+        },
         {
           xPercent: -50,
           yPercent: -50,
@@ -274,10 +300,10 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
           duration: 0.9,
           ease: "back.out(1.25)",
         },
-        "-=0.75"
+        "-=0.75",
       );
     },
-    { scope: containerRef }
+    { scope: containerRef },
   );
 
   // Swipe & Pointer Gesture Handlers
@@ -311,7 +337,16 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
           const relPos = getRelPos(idx);
 
           const baseX = relPos === 0 ? 0 : relPos === -1 ? -spread : spread;
-          const baseRot = relPos === 0 ? 0 : relPos === -1 ? (isMobile ? -10 : -12) : isMobile ? 10 : 12;
+          const baseRot =
+            relPos === 0
+              ? 0
+              : relPos === -1
+                ? isMobile
+                  ? -10
+                  : -12
+                : isMobile
+                  ? 10
+                  : 12;
 
           gsap.set(cardEl, {
             x: baseX + deltaX * 0.4,
@@ -379,7 +414,9 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
             Three Flavors. One House.
           </h2>
           <p className="font-sans text-sm md:text-base text-white/70 mt-3 md:mt-4 leading-relaxed">
-            Explore our complete trilogy of crafted menus. Swipe or select any booklet to unveil our curated roasts, mindful wellness recipes, and comforting home classics.
+            Explore our complete trilogy of crafted menus. Swipe or select any
+            booklet to unveil our curated roasts, mindful wellness recipes, and
+            comforting home classics.
           </p>
         </div>
 
@@ -411,7 +448,7 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
               >
                 {/* Inner Ornamental Border */}
                 <div
-                  className={`relative w-full h-full rounded-[1.2rem] md:rounded-[1.4rem] border ${card.borderTone} p-2.5 sm:p-3 md:p-4 flex flex-col justify-between items-center overflow-hidden`}
+                  className={`relative w-full h-full rounded-[1.2rem] md:rounded-[1.4rem] border ${card.borderTone} px-2 py-8 flex flex-col justify-between items-center overflow-hidden`}
                 >
                   {/* Radial Ambient Glow */}
                   <div
@@ -422,29 +459,41 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
                   />
 
                   {/* Corner Indices */}
-                  <div className={`absolute top-2.5 left-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}>
+                  <div
+                    className={`absolute top-2.5 left-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                  >
                     <span>{card.num}</span>
                     <IconComponent size={12} />
                   </div>
-                  <div className={`absolute top-2.5 right-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}>
+                  <div
+                    className={`absolute top-2.5 right-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                  >
                     <IconComponent size={12} />
                     <span>{card.num}</span>
                   </div>
-                  <div className={`absolute bottom-2.5 left-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}>
+                  <div
+                    className={`absolute bottom-2.5 left-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                  >
                     <span>{card.num}</span>
                     <IconComponent size={12} />
                   </div>
-                  <div className={`absolute bottom-2.5 right-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}>
+                  <div
+                    className={`absolute bottom-2.5 right-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                  >
                     <IconComponent size={12} />
                     <span>{card.num}</span>
                   </div>
 
                   {/* Card Title & Subtitle */}
-                  <div className="flex flex-col items-center text-center mt-1 z-10">
-                    <span className={`font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.25em] font-bold ${card.textColor} opacity-60`}>
+                  <div className="flex flex-col items-center text-center  z-10">
+                    <span
+                      className={`font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.25em] font-bold ${card.textColor} opacity-60`}
+                    >
                       {card.tag}
                     </span>
-                    <h3 className={`font-serif text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mt-0.5 ${card.textColor}`}>
+                    <h3
+                      className={`font-serif text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mt-0.5 ${card.textColor}`}
+                    >
                       {card.title}
                     </h3>
                   </div>
@@ -464,7 +513,9 @@ export default function BookletShowroom({ onOpenBooklet }: BookletShowroomProps)
 
                   {/* Card Footer & Action Button */}
                   <div className="flex flex-col items-center text-center z-10 w-full mb-0.5">
-                    <p className={`font-serif italic text-[10px] sm:text-[11px] md:text-xs ${card.textColor} opacity-80 leading-relaxed mb-2 line-clamp-2`}>
+                    <p
+                      className={`font-serif italic text-[10px] sm:text-[11px] md:text-xs ${card.textColor} opacity-80 leading-relaxed mb-2 line-clamp-2`}
+                    >
                       {card.desc}
                     </p>
                     <div

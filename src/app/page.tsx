@@ -8,6 +8,7 @@ import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useGSAP } from "@gsap/react";
 import Header from "@/components/Header";
 import SplitText from "@/components/SplitText";
+import HighlighterSweep from "@/components/HighlighterSweep";
 import SoundToggle from "@/components/SoundToggle";
 import { useAmbientSound } from "@/components/useAmbientSound";
 import {
@@ -51,6 +52,7 @@ export default function Home() {
 
   // Loading state
   const [isLoaded, setIsLoaded] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
   const [hasEntered, setHasEntered] = useState(false);
 
   // Ambient sound engine
@@ -129,47 +131,27 @@ export default function Home() {
     if (isAnimating.current) return;
     enableSound();
 
-    // Smooth upward float & fade out for logo, text, and button
-    gsap.to(
-      [
-        ".s1-logo",
-        ".s1-subtitle-wrapper",
-        ".s1-explore-btn",
-        ".s1-desktop-logo",
-        ".s1-desktop-subtitle-wrapper",
-        ".s1-desktop-explore-btn",
-      ],
-      {
-        y: -45,
-        autoAlpha: 0,
-        duration: 0.65,
-        stagger: 0.04,
-        ease: "power2.inOut",
-        onComplete: () => {
-          setHasEntered(true);
-          document.body.style.overflow = "";
-          setTimeout(() => {
-            const st = ScrollTrigger.getAll().find(
-              (s) => s.vars?.trigger === container.current,
-            );
-            const totalDist = st ? st.end - st.start : 5 * window.innerHeight;
-            const targetScroll = (st ? st.start : 0) + 0.34 * totalDist; // Exact last frame of Section 2 (Family)
+    // 1. Instantly unlock scroll & mark entered
+    setHasEntered(true);
+    document.body.style.overflow = "";
+    isAnimating.current = true;
+    currentIndex.current = 1;
 
-            isAnimating.current = true;
-            currentIndex.current = 1;
-
-            gsap.to(window, {
-              scrollTo: { y: targetScroll, autoKill: false },
-              duration: 2.2,
-              ease: "power2.inOut",
-              onComplete: () => {
-                isAnimating.current = false;
-              },
-            });
-          }, 40);
-        },
-      },
+    const st = ScrollTrigger.getAll().find(
+      (s) => s.vars?.trigger === container.current,
     );
+    const totalDist = st ? st.end - st.start : 5 * window.innerHeight;
+    const targetScroll = (st ? st.start : 0) + 0.34 * totalDist; // Exact last frame of Section 2 (Family)
+
+    // 2. Auto-scroll: masterTl automatically animates hero elements in sync with scroll
+    gsap.to(window, {
+      scrollTo: { y: targetScroll, autoKill: false },
+      duration: 2.5,
+      ease: "power2.inOut",
+      onComplete: () => {
+        isAnimating.current = false;
+      },
+    });
   }, [enableSound]);
 
   // ─── Reset Scroll Position on Mount ───────────────────────────────────────────
@@ -219,10 +201,15 @@ export default function Home() {
     imagesRef.current = images;
     let loadedCount = 0;
 
+    const isDesktop = window.innerWidth >= 768;
     for (let i = 1; i <= frameCount; i++) {
       const img = new window.Image();
       const paddedIndex = i.toString().padStart(4, "0");
-      img.src = `/assets/frames/frame_${paddedIndex}.jpg`;
+      if (isDesktop && i >= 140) {
+        img.src = `/assets/frames-web/frame_${paddedIndex}.png`;
+      } else {
+        img.src = `/assets/frames/frame_${paddedIndex}.jpg`;
+      }
       images.push(img);
 
       img.onload = () => {
@@ -233,13 +220,19 @@ export default function Home() {
             const ctx = canvasRef.current.getContext("2d");
             canvasRef.current.width = 720;
             canvasRef.current.height = 1280;
-            if (ctx) ctx.drawImage(img, 0, 0);
+            if (ctx) {
+              ctx.clearRect(0, 0, 720, 1280);
+              ctx.drawImage(img, 0, 0);
+            }
           }
           if (canvasMobileRef.current) {
             const ctxMobile = canvasMobileRef.current.getContext("2d");
             canvasMobileRef.current.width = 720;
             canvasMobileRef.current.height = 1280;
-            if (ctxMobile) ctxMobile.drawImage(img, 0, 0);
+            if (ctxMobile) {
+              ctxMobile.clearRect(0, 0, 720, 1280);
+              ctxMobile.drawImage(img, 0, 0);
+            }
           }
           videoReady.current = true;
           tryDismiss();
@@ -315,6 +308,7 @@ export default function Home() {
   // ─── GSAP Animation Timeline ──────────────────────────────
   useGSAP(
     () => {
+      if (!introDone) return;
       gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
       const el = container.current;
@@ -348,11 +342,17 @@ export default function Home() {
             if (img && img.complete) {
               if (canvasRef.current) {
                 const ctx = canvasRef.current.getContext("2d");
-                if (ctx) ctx.drawImage(img, 0, 0);
+                if (ctx) {
+                  ctx.clearRect(0, 0, 720, 1280);
+                  ctx.drawImage(img, 0, 0);
+                }
               }
               if (canvasMobileRef.current) {
                 const ctxMobile = canvasMobileRef.current.getContext("2d");
-                if (ctxMobile) ctxMobile.drawImage(img, 0, 0);
+                if (ctxMobile) {
+                  ctxMobile.clearRect(0, 0, 720, 1280);
+                  ctxMobile.drawImage(img, 0, 0);
+                }
               }
             }
 
@@ -413,17 +413,36 @@ export default function Home() {
       // Section 1: Hero (0 to 0.2)
       // ==========================================
       masterTl
+        // Fully visible at 0, smoothly dissolves & floats up to 0.15, fully restores on reverse scroll to 0
+        .fromTo(
+          [".ui-section-1", ".desktop-hero-stage"],
+          { autoAlpha: 1, pointerEvents: "auto" },
+          { autoAlpha: 0, pointerEvents: "none", duration: 0.04 },
+          0.14,
+        )
+        .fromTo(
+          [".s1-logo", ".s1-desktop-logo"],
+          { autoAlpha: 1, y: 0, scale: 1 },
+          { autoAlpha: 0, y: -45, scale: 0.95, duration: 0.12 },
+          0.02,
+        )
+        .fromTo(
+          [".s1-subtitle-wrapper", ".s1-desktop-subtitle-wrapper"],
+          { autoAlpha: 1, y: 0 },
+          { autoAlpha: 0, y: -40, duration: 0.1 },
+          0.04,
+        )
+        .fromTo(
+          [".s1-explore-btn", ".s1-desktop-explore-btn"],
+          { autoAlpha: 1, y: 0 },
+          { autoAlpha: 0, y: -35, duration: 0.08 },
+          0.06,
+        )
         .fromTo(
           ".header-brand-logo",
           { autoAlpha: 0, y: -6 },
           { autoAlpha: 1, y: 0, duration: 0.04 },
           0.12,
-        )
-        .to(".ui-section-1", { autoAlpha: 0, y: -40, duration: 0.05 }, 0.15)
-        .to(
-          ".desktop-hero-stage",
-          { autoAlpha: 0, y: -40, duration: 0.05 },
-          0.15,
         )
         .fromTo(
           ".desktop-editorial-stage",
@@ -491,16 +510,20 @@ export default function Home() {
           0.41,
         )
         .fromTo(
-          ".s3-title .char",
-          { opacity: 0, scale: 1.2, color: "#fff" },
-          {
-            opacity: 1,
-            scale: 1,
-            color: "#F1E6C3",
-            duration: 0.02,
-            stagger: 0.002,
-          },
+          ".s3-title",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.02, ease: "power2.out" },
           0.42,
+        )
+        .fromTo(
+          ".s3-highlight",
+          { clipPath: "inset(0% 100% 0% 0%)" },
+          {
+            clipPath: "inset(0% 0% 0% 0%)",
+            duration: 0.05,
+            ease: "power2.inOut",
+          },
+          0.43,
         )
         .fromTo(
           ".s3-desc .char",
@@ -513,17 +536,6 @@ export default function Home() {
           { opacity: 0, y: 10 },
           { opacity: 1, y: 0, duration: 0.01 },
           0.46,
-        )
-        .to(
-          ".s3-title .char",
-          {
-            textShadow:
-              "0 0 20px #F1E6C3, 0 0 40px #F1E6C3, 0 0 80px rgba(241,230,195,0.4)",
-            duration: 0.015,
-            stagger: 0.001,
-            ease: "power2.out",
-          },
-          0.47,
         )
         .to(".ui-section-3", { autoAlpha: 0, duration: 0.05 }, 0.55)
         // Desktop Experience 2 (Coffee)
@@ -561,16 +573,20 @@ export default function Home() {
           0.61,
         )
         .fromTo(
-          ".s4-title .char",
-          { opacity: 0, scale: 1.2, color: "#fff" },
-          {
-            opacity: 1,
-            scale: 1,
-            color: "#B7D39A",
-            duration: 0.02,
-            stagger: 0.002,
-          },
+          ".s4-title",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.02, ease: "power2.out" },
           0.62,
+        )
+        .fromTo(
+          ".s4-highlight",
+          { clipPath: "inset(0% 100% 0% 0%)" },
+          {
+            clipPath: "inset(0% 0% 0% 0%)",
+            duration: 0.05,
+            ease: "power2.inOut",
+          },
+          0.63,
         )
         .fromTo(
           ".s4-desc .char",
@@ -583,17 +599,6 @@ export default function Home() {
           { opacity: 0, y: 10 },
           { opacity: 1, y: 0, duration: 0.01 },
           0.66,
-        )
-        .to(
-          ".s4-title .char",
-          {
-            textShadow:
-              "0 0 20px #B7D39A, 0 0 40px #B7D39A, 0 0 80px rgba(183,211,154,0.4)",
-            duration: 0.015,
-            stagger: 0.001,
-            ease: "power2.out",
-          },
-          0.67,
         )
         .to(".ui-section-4", { autoAlpha: 0, duration: 0.05 }, 0.75)
         // Desktop Experience 3 (Papa)
@@ -631,16 +636,20 @@ export default function Home() {
           0.81,
         )
         .fromTo(
-          ".s5-title .char",
-          { opacity: 0, scale: 1.2, color: "#fff" },
-          {
-            opacity: 1,
-            scale: 1,
-            color: "#D8A98F",
-            duration: 0.02,
-            stagger: 0.002,
-          },
+          ".s5-title",
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.02, ease: "power2.out" },
           0.82,
+        )
+        .fromTo(
+          ".s5-highlight",
+          { clipPath: "inset(0% 100% 0% 0%)" },
+          {
+            clipPath: "inset(0% 0% 0% 0%)",
+            duration: 0.05,
+            ease: "power2.inOut",
+          },
+          0.83,
         )
         .fromTo(
           ".s5-desc .char",
@@ -653,17 +662,6 @@ export default function Home() {
           { opacity: 0, y: 10 },
           { opacity: 1, y: 0, duration: 0.01 },
           0.86,
-        )
-        .to(
-          ".s5-title .char",
-          {
-            textShadow:
-              "0 0 20px #D8A98F, 0 0 40px #D8A98F, 0 0 80px rgba(216,169,143,0.4)",
-            duration: 0.015,
-            stagger: 0.001,
-            ease: "power2.out",
-          },
-          0.87,
         )
         .to(".ui-section-5", { autoAlpha: 0, duration: 0.05 }, 0.95)
         // Desktop Experience 4 (Mama)
@@ -686,7 +684,7 @@ export default function Home() {
         0.15,
       );
     },
-    { scope: pageRef },
+    { scope: pageRef, dependencies: [introDone] },
   );
 
   // Cleanup sound engine on unmount
@@ -699,8 +697,12 @@ export default function Home() {
   // ─── Hero Entrance Animation ────────────────────────────────
   useGSAP(
     () => {
-      if (isLoaded) {
-        const tl = gsap.timeline();
+      if (isLoaded && !introDone) {
+        const tl = gsap.timeline({
+          onComplete: () => {
+            setIntroDone(true);
+          },
+        });
 
         // 1. Fade in header & hero section containers
         tl.to(
@@ -727,9 +729,9 @@ export default function Home() {
         // 2. Logo smooth scale and graceful dissolve
         tl.fromTo(
           [".s1-logo", ".s1-desktop-logo"],
-          { opacity: 0, scale: 0.94, y: 15 },
+          { autoAlpha: 0, scale: 0.94, y: 15 },
           {
-            opacity: 1,
+            autoAlpha: 1,
             scale: 1,
             y: 0,
             duration: 1.2,
@@ -755,7 +757,7 @@ export default function Home() {
         );
       }
     },
-    { scope: pageRef, dependencies: [isLoaded] },
+    { scope: pageRef, dependencies: [isLoaded, introDone] },
   );
 
   return (
@@ -790,11 +792,11 @@ export default function Home() {
 
             {/* Mobile UI Overlay Sections */}
             {/* Section 1: Hero */}
-            <div className="ui-section-1 absolute inset-0 flex flex-col items-center justify-center px-6 text-[#080907] opacity-0 invisible pointer-events-none pb-[28vh]">
+            <div className="ui-section-1 absolute inset-0 flex flex-col items-center justify-center px-6 text-[#080907] pb-[28vh] opacity-0 invisible">
               {/* Main Brand & Editorial Group — Placed peacefully in the sky */}
               <div className="flex flex-col items-center text-center gap-2">
                 {/* Horizontal Luxury Brand Masthead */}
-                <div className="s1-logo drop-shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+                <div className="s1-logo opacity-0">
                   <Image
                     src="/assets/logos/Asset 26.svg"
                     alt="Voya House"
@@ -807,8 +809,8 @@ export default function Home() {
                 </div>
 
                 {/* Primary Tagline */}
-                <div className="s1-subtitle-wrapper flex flex-col items-center opacity-0 invisible">
-                  <p className="text-[12px] font-sans font-semibold uppercase tracking-[0.24em] text-[#080907] drop-shadow-[0_1px_2px_rgba(255,255,255,0.7)]">
+                <div className="s1-subtitle-wrapper flex flex-col items-center opacity-0">
+                  <p className="text-[12px] font-sans font-semibold uppercase tracking-[0.24em] text-[#080907]">
                     Where people come together
                   </p>
                 </div>
@@ -816,7 +818,7 @@ export default function Home() {
                 {/* Explore The House Button */}
                 <button
                   onClick={handleExploreHouse}
-                  className="s1-explore-btn mt-5 px-7 py-2.5 border border-[#080907]/40 bg-white/20 hover:bg-white/40 active:scale-95 transition-all text-[#080907] font-sans font-medium text-[11px] uppercase tracking-[0.25em] cursor-pointer pointer-events-auto backdrop-blur-sm shadow-sm opacity-0 invisible"
+                  className="s1-explore-btn mt-5 px-7 py-2.5 border border-[#080907]/40 bg-white/20 hover:bg-white/40 active:scale-95 transition-all text-[#080907] font-sans font-medium text-[11px] uppercase tracking-[0.25em] cursor-pointer pointer-events-auto backdrop-blur-sm shadow-sm opacity-0"
                 >
                   Explore the House
                 </button>
@@ -825,15 +827,15 @@ export default function Home() {
 
             {/* Section 2: Family Reveal */}
             <div className="ui-section-2 absolute inset-0 text-white opacity-0 invisible">
-              <div className="absolute top-[10%] left-0 w-full text-center px-6">
-                <h2 className="s2-title font-serif text-5xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(255,255,255,0.2)] whitespace-break-spaces">
+              <div className="absolute top-30 left-0 w-full text-center px-6">
+                <h2 className="s2-title font-serif text-4xl sm:text-5xl font-medium leading-[1.15] whitespace-break-spaces">
                   <SplitText text="A Modern Family" />
                   <br />
                   <SplitText text="Experience" />
                 </h2>
               </div>
-              <div className="absolute top-[40%] left-0 w-full flex flex-col items-center text-center px-6">
-                <p className="s2-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] whitespace-break-spaces">
+              <div className="absolute top-72 left-0 w-full flex flex-col items-center text-center px-6">
+                <p className="s2-desc max-w-lg text-sm text-white/90 font-medium mb-8 whitespace-break-spaces">
                   <SplitText text="Everyday rituals, mindful choices, and sweet moments made for sharing." />
                 </p>
               </div>
@@ -841,26 +843,34 @@ export default function Home() {
 
             {/* Section 3: Voya Coffee */}
             <div className="ui-section-3 absolute inset-0 text-white opacity-0 invisible">
-              <div
-                className="absolute left-[5%] flex flex-col items-center top-[96px]"
-                style={{ top: "6rem" }}
-              >
+              <div className="absolute left-2 top-24 flex flex-col items-center">
                 <div className="s3-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                   <Coffee01Icon size={32} className="text-[#F1E6C3]" />
                 </div>
-                <div className="s3-vertical-text mt-6 font-mono uppercase text-[10px] text-[#F1E6C3] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
+                <div className="s3-vertical-text mt-6 font-mono uppercase text-[12px] text-[#F1E6C3] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
                   <SplitText text="VOYA " />
                 </div>
               </div>
               <div className="absolute top-[20%] left-0 w-full text-center">
-                <h2 className="s3-title font-serif text-4xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
-                  <SplitText text="Quality in" />
-                  <br />
-                  <SplitText text="everyday rituals." />
+                <h2 className="s3-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center">
+                  <HighlighterSweep
+                    text="Quality in"
+                    highlightBg="#F1E6C3"
+                    highlightText="#080907"
+                    baseText="#FFFFFF"
+                    highlightLayerClassName="s3-highlight"
+                  />
+                  <HighlighterSweep
+                    text="everyday rituals."
+                    highlightBg="#F1E6C3"
+                    highlightText="#080907"
+                    baseText="#FFFFFF"
+                    highlightLayerClassName="s3-highlight"
+                  />
                 </h2>
               </div>
               <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-                <p className="s3-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                <p className="s3-desc max-w-lg text-sm text-white/90 font-medium mb-8">
                   <SplitText text="A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup." />
                 </p>
                 <button
@@ -884,26 +894,34 @@ export default function Home() {
 
             {/* Section 4: Papa Voya */}
             <div className="ui-section-4 absolute inset-0 text-white opacity-0 invisible">
-              <div
-                className="absolute left-[5%] flex flex-col items-center top-[96px]"
-                style={{ top: "6rem" }}
-              >
+              <div className="absolute left-[5%] top-24 flex flex-col items-center">
                 <div className="s4-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                   <Leaf01Icon size={32} className="text-[#B7D39A]" />
                 </div>
-                <div className="s4-vertical-text mt-6 font-mono uppercase text-[10px] text-[#B7D39A] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
+                <div className="s4-vertical-text mt-6 font-mono uppercase text-[12px] text-[#B7D39A] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
                   <SplitText text="PAPA VOYA" />
                 </div>
               </div>
               <div className="absolute top-[20%] left-0 w-full text-center">
-                <h2 className="s4-title font-serif text-4xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
-                  <SplitText text="Nourishment" />
-                  <br />
-                  <SplitText text="and strength." />
+                <h2 className="s4-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center">
+                  <HighlighterSweep
+                    text="Nourishment"
+                    highlightBg="#B7D39A"
+                    highlightText="#080907"
+                    baseText="#FFFFFF"
+                    highlightLayerClassName="s4-highlight"
+                  />
+                  <HighlighterSweep
+                    text="and strength."
+                    highlightBg="#B7D39A"
+                    highlightText="#080907"
+                    baseText="#FFFFFF"
+                    highlightLayerClassName="s4-highlight"
+                  />
                 </h2>
               </div>
               <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-                <p className="s4-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                <p className="s4-desc max-w-lg text-sm text-white/90 font-medium mb-8">
                   <SplitText text="Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence." />
                 </p>
                 <button
@@ -928,26 +946,34 @@ export default function Home() {
 
             {/* Section 5: Mama Voya */}
             <div className="ui-section-5 absolute inset-0 text-white opacity-0 invisible">
-              <div
-                className="absolute left-[5%] flex flex-col items-center top-[96px]"
-                style={{ top: "6rem" }}
-              >
+              <div className="absolute left-[5%] top-24 flex flex-col items-center">
                 <div className="s5-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
                   <Pizza01Icon size={32} className="text-[#D8A98F]" />
                 </div>
-                <div className="s5-vertical-text mt-6 font-mono uppercase text-[10px] text-[#D8A98F] drop-shadow-[0_2px_4px_rgba(0,0,0,1)] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
+                <div className="s5-vertical-text mt-6 font-mono uppercase text-[12px] text-[#D8A98F] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
                   <SplitText text="MAMA VOYA" />
                 </div>
               </div>
               <div className="absolute top-[20%] left-0 w-full text-center">
-                <h2 className="s5-title font-serif text-4xl font-medium leading-[1.05] drop-shadow-[0_8px_24px_rgba(0,0,0,0.8)]">
-                  <SplitText text="Warmth &" />
-                  <br />
-                  <SplitText text="Hospitality." />
+                <h2 className="s5-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center">
+                  <HighlighterSweep
+                    text="Warmth &"
+                    highlightBg="#D8A98F"
+                    highlightText="#080907"
+                    baseText="#FFFFFF"
+                    highlightLayerClassName="s5-highlight"
+                  />
+                  <HighlighterSweep
+                    text="Hospitality."
+                    highlightBg="#D8A98F"
+                    highlightText="#080907"
+                    baseText="#FFFFFF"
+                    highlightLayerClassName="s5-highlight"
+                  />
                 </h2>
               </div>
               <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
-                <p className="s5-desc max-w-lg text-sm text-white/90 font-medium mb-8 drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]">
+                <p className="s5-desc max-w-lg text-sm text-white/90 font-medium mb-8">
                   <SplitText text="Nurturing flavors and generous portions. Comfort food that feels like coming home." />
                 </p>
                 <button
@@ -975,7 +1001,7 @@ export default function Home() {
           <div className="desktop-hero-stage hidden md:flex absolute inset-0 z-30 flex-col items-center justify-center p-12 bg-[#080907]/90 backdrop-blur-sm text-white opacity-0 invisible">
             {/* Main Center Stage */}
             <div className="flex flex-col items-center text-center">
-              <div className="s1-desktop-logo mb-6 drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)]">
+              <div className="s1-desktop-logo mb-6 opacity-0">
                 <Image
                   src="/assets/logos/Asset 26.svg"
                   alt="Voya House"
@@ -986,14 +1012,14 @@ export default function Home() {
                   className="object-contain invert brightness-200"
                 />
               </div>
-              <div className="s1-desktop-subtitle-wrapper flex flex-col items-center opacity-0 invisible">
-                <p className="text-sm font-sans font-medium uppercase tracking-[0.3em] text-[#F4EFE9] mb-6 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
+              <div className="s1-desktop-subtitle-wrapper flex flex-col items-center opacity-0">
+                <p className="text-sm font-sans font-medium uppercase tracking-[0.3em] text-[#F4EFE9] mb-6">
                   Where people come together
                 </p>
               </div>
               <button
                 onClick={handleExploreHouse}
-                className="s1-desktop-explore-btn px-9 py-3.5 rounded-lg border border-white/40 bg-white/10 hover:bg-white/25 active:scale-95 transition-all text-white font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-pointer backdrop-blur-sm shadow-lg opacity-0 invisible"
+                className="s1-desktop-explore-btn opacity-0 px-9 py-3.5 rounded-lg border border-white/40 bg-white/10 hover:bg-white/25 active:scale-95 transition-all text-white font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-pointer backdrop-blur-sm shadow-lg"
               >
                 Explore the House
               </button>
@@ -1581,7 +1607,6 @@ export default function Home() {
               priority
               loading="eager"
               style={{ width: "auto", height: "100px" }}
-              className="drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
             />
           </div>
 

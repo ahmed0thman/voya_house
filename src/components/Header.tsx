@@ -111,7 +111,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
 
   return (
     <>
-      <header className="voya-header fixed top-0 left-0 w-full z-40 px-4 sm:px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300">
+      <header className="voya-header fixed top-0 left-0 w-full z-40 px-4 sm:px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300 opacity-0">
         {/* Dynamic Glassy Background & Glowing Bottom Border */}
         <div className="header-bg absolute inset-0 pointer-events-none opacity-0 invisible bg-[#080907]/45 backdrop-blur-xl" />
         <div
@@ -127,9 +127,15 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
           {/* Logo / Brand Name */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="header-brand-logo font-serif text-2xl tracking-[0.1em] flex items-center gap-3 font-medium text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] cursor-pointer group transition-opacity duration-300"
+            className="header-brand-logo font-serif text-2xl tracking-[0.1em] flex items-center gap-3 font-medium text-white cursor-pointer group transition-opacity duration-300 opacity-0 invisible"
           >
-            <span>VOYA</span>
+            <Image
+              src="/assets/logos/Asset 26.svg"
+              alt="Voya Logo"
+              width={80}
+              height={24}
+              className="object-contain invert brightness-200"
+            />
             <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#F1E6C3] px-2 py-0.5 rounded-full border border-white/15 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-block">
               House
             </span>
