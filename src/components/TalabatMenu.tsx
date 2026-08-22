@@ -52,7 +52,6 @@ interface TalabatMenuProps {
 
 export default function TalabatMenu({ menu, autoHintFirstItem = false }: TalabatMenuProps) {
   const [activeCategory, setActiveCategory] = useState<string>(menu.categories[0].id);
-  const [activeDialItem, setActiveDialItem] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   
@@ -165,14 +164,12 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
                 <div 
                   key={item.id} 
                   className="bg-white/40 backdrop-blur-md rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-white/40 overflow-visible relative"
-                  style={{ zIndex: activeDialItem === item.id ? 50 : 'auto' }}
                 >
                   {/* Top: Image + Text */}
                   <div className="flex items-start gap-4">
-                    {/* The Hold to Peek Image Dial */}
+                    {/* Simple Auto Image Gallery */}
                     <HoldImageDial 
                       images={item.images} 
-                      onHoldChange={(holding) => setActiveDialItem(holding ? item.id : null)}
                       autoHint={autoHintFirstItem && categoryIndex === 0 && itemIndex === 0}
                     />
 

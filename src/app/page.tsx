@@ -205,7 +205,10 @@ export default function Home() {
     for (let i = 1; i <= frameCount; i++) {
       const img = new window.Image();
       const paddedIndex = i.toString().padStart(4, "0");
-      if (isDesktop && i >= 140) {
+      // Frame 64 is where the editorial stage starts fading in (progress
+      // 0.18), so that is the first frame the right-hand panel actually
+      // shows. Everything from there on needs the transparent PNGs.
+      if (isDesktop && i >= 64) {
         img.src = `/assets/frames-web/frame_${paddedIndex}.png`;
       } else {
         img.src = `/assets/frames/frame_${paddedIndex}.jpg`;
@@ -818,9 +821,10 @@ export default function Home() {
                 {/* Explore The House Button */}
                 <button
                   onClick={handleExploreHouse}
-                  className="s1-explore-btn mt-5 px-7 py-2.5 border border-[#080907]/40 bg-white/20 hover:bg-white/40 active:scale-95 transition-all text-[#080907] font-sans font-medium text-[11px] uppercase tracking-[0.25em] cursor-pointer pointer-events-auto backdrop-blur-sm shadow-sm opacity-0"
+                  className="s1-explore-btn group flex items-center gap-2 mt-8 px-7 py-2.5 rounded-lg border border-black/20 bg-[#F1E6C3] hover:bg-white active:scale-95 transition-all text-black font-sans font-medium text-[11px] uppercase tracking-[0.25em] cursor-pointer pointer-events-auto shadow-sm opacity-0"
                 >
-                  Explore the House
+                  <span>Explore the House</span>
+                  <ArrowRight01Icon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
@@ -1019,15 +1023,16 @@ export default function Home() {
               </div>
               <button
                 onClick={handleExploreHouse}
-                className="s1-desktop-explore-btn opacity-0 px-9 py-3.5 rounded-lg border border-white/40 bg-white/10 hover:bg-white/25 active:scale-95 transition-all text-white font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-pointer backdrop-blur-sm shadow-lg"
+                className="s1-desktop-explore-btn group flex items-center gap-2 mt-8 opacity-0 px-9 py-3.5 rounded-lg border border-[#F1E6C3] bg-[#F1E6C3] hover:bg-white active:scale-95 transition-all text-black font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-pointer shadow-lg"
               >
-                Explore the House
+                <span>Explore the House</span>
+                <ArrowRight01Icon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
           </div>
 
           {/* ─── DESKTOP / TABLET (md: and up) EDITORIAL SCROLLYTELLING (Sections 2–5) ─── */}
-          <div className="desktop-editorial-stage hidden md:flex flex-row absolute inset-0 w-full h-full pointer-events-none opacity-0 invisible z-20">
+          <div className="desktop-editorial-stage hidden md:flex flex-row gap-20 absolute inset-0 w-full h-full pointer-events-none opacity-0 invisible z-20">
             {/* LEFT COLUMN: Dark editorial pane */}
             <div
               className="h-full relative z-20 flex flex-col pointer-events-auto overflow-hidden"
@@ -1506,7 +1511,7 @@ export default function Home() {
 
             {/* RIGHT COLUMN: 9:16 canvas centered in a background-matched container */}
             <div
-              className="h-full relative overflow-hidden flex items-center justify-center"
+              className="h-full relative overflow-hidden flex items-center justify-center ps-16"
               style={{
                 width: "58%",
                 background:
@@ -1520,9 +1525,9 @@ export default function Home() {
                   top: 0,
                   bottom: 0,
                   left: 0,
-                  width: "35%",
+                  width: "45%",
                   background:
-                    "linear-gradient(to right, #080907 0%, rgba(8,9,7,0.85) 30%, rgba(8,9,7,0.4) 60%, transparent 100%)",
+                    "linear-gradient(to right, rgba(8,9,7,1) 0%, rgba(8,9,7,0.9) 10%, rgba(8,9,7,0.7) 25%, rgba(8,9,7,0.4) 45%, rgba(8,9,7,0.15) 70%, rgba(8,9,7,0.02) 90%, transparent 100%)",
                   zIndex: 10,
                   pointerEvents: "none" as const,
                 }}
@@ -1534,9 +1539,9 @@ export default function Home() {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  height: "25%",
+                  height: "35%",
                   background:
-                    "linear-gradient(to top, rgba(8,9,7,0.6) 0%, transparent 100%)",
+                    "linear-gradient(to top, rgba(8,9,7,0.75) 0%, rgba(8,9,7,0.4) 30%, rgba(8,9,7,0.15) 65%, rgba(8,9,7,0.02) 90%, transparent 100%)",
                   zIndex: 10,
                   pointerEvents: "none" as const,
                 }}
@@ -1549,10 +1554,10 @@ export default function Home() {
                   className="w-full h-full object-cover"
                 />
                 {/* Edge blurring inset shadow to perfectly blend video edges into the container background (#E5E1DA) */}
-                <div
+                {/* <div
                   className="absolute inset-0 pointer-events-none"
                   style={{ boxShadow: "inset 0 0 60px 40px #E5E1DA" }}
-                />
+                /> */}
               </div>
             </div>
           </div>
