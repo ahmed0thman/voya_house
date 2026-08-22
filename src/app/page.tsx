@@ -24,6 +24,7 @@ import ContactSection from "@/components/ContactSection";
 import CinematicFooter from "@/components/CinematicFooter";
 import CartSheet from "@/components/CartSheet";
 import TableParamSync from "@/components/TableParamSync";
+import HeroFlashlightEffect from "@/components/HeroFlashlightEffect";
 
 // Section snap points as scroll progress (0–1)
 const SNAP_POINTS = [0, 0.3, 0.55, 0.74, 0.95];
@@ -1002,9 +1003,10 @@ export default function Home() {
           </div>
 
           {/* ─── DESKTOP / TABLET (md: and up) HERO SECTION 1 ─── */}
-          <div className="desktop-hero-stage hidden md:flex absolute inset-0 z-30 flex-col items-center justify-center p-12 bg-[#080907]/90 backdrop-blur-sm text-white opacity-0 invisible">
+          <div className="desktop-hero-stage hidden md:flex absolute inset-0 z-30 flex-col items-center justify-center p-12 text-white opacity-0 invisible overflow-hidden cursor-none">
+            <HeroFlashlightEffect />
             {/* Main Center Stage */}
-            <div className="flex flex-col items-center text-center">
+            <div className="flex flex-col items-center text-center relative z-40 pointer-events-none">
               <div className="s1-desktop-logo mb-6 opacity-0">
                 <Image
                   src="/assets/logos/Asset 26.svg"
@@ -1023,7 +1025,7 @@ export default function Home() {
               </div>
               <button
                 onClick={handleExploreHouse}
-                className="s1-desktop-explore-btn group flex items-center gap-2 mt-8 opacity-0 px-9 py-3.5 rounded-lg border border-[#F1E6C3] bg-[#F1E6C3] hover:bg-white active:scale-95 transition-all text-black font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-pointer shadow-lg"
+                className="s1-desktop-explore-btn pointer-events-auto group flex items-center gap-2 mt-8 opacity-0 px-9 py-3.5 rounded-lg border border-[#F1E6C3] bg-[#F1E6C3] hover:bg-white active:scale-95 transition-all text-black font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-none shadow-lg"
               >
                 <span>Explore the House</span>
                 <ArrowRight01Icon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -1516,6 +1518,7 @@ export default function Home() {
                 width: "58%",
                 background:
                   "radial-gradient(ellipse at 50% 60%, #F0ECE7 0%, #E5E1DA 100%)",
+                boxShadow: "inset -80px 0 120px 40px rgba(0,0,0,0.5)",
               }}
             >
               {/* Smooth gradient shadow fading from the dark left into the background */}
