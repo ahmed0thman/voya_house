@@ -43,7 +43,6 @@ export default function Home() {
   // Loading state
   const [isLoaded, setIsLoaded] = useState(false);
   const [introDone, setIntroDone] = useState(false);
-  const [hasEntered, setHasEntered] = useState(false);
 
   // Viewport detection — conditionally renders mobile or desktop stage
   const viewport = useViewport();
@@ -124,9 +123,7 @@ export default function Home() {
     if (isAnimating.current) return;
     enableSound();
 
-    // 1. Instantly unlock scroll & mark entered
-    setHasEntered(true);
-    document.body.style.overflow = "";
+    // 1. Mark animation state
     isAnimating.current = true;
     currentIndex.current = 1;
 
@@ -225,9 +222,9 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Lock scroll while loading OR until user clicks "Explore the House"
+  // Lock scroll while loading OR during the entrance animation
   useEffect(() => {
-    if (!isLoaded || !hasEntered) {
+    if (!introDone) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -235,26 +232,7 @@ export default function Home() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isLoaded, hasEntered]);
-
-  // Prevent wheel & touch gestures until "Explore the House" is clicked
-  useEffect(() => {
-    if (hasEntered || !isLoaded) return;
-
-    const preventScroll = (e: Event) => {
-      if (!hasEntered) {
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener("wheel", preventScroll, { passive: false });
-    window.addEventListener("touchmove", preventScroll, { passive: false });
-
-    return () => {
-      window.removeEventListener("wheel", preventScroll);
-      window.removeEventListener("touchmove", preventScroll);
-    };
-  }, [hasEntered, isLoaded]);
+  }, [introDone]);
 
   // ─── Auto-unmute on first interaction ─────────────────────────────────
   useEffect(() => {

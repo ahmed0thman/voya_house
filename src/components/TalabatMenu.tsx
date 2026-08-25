@@ -5,7 +5,7 @@ import { BrandMenu, MenuItem } from '@/data/mockMenu';
 import { useCartStore } from '@/store/useCartStore';
 import { formatPrice } from '@/constants/config';
 import MorphingCartButton from './MorphingCartButton';
-import HoldImageDial from './HoldImageDial';
+
 
 function MenuItemCartButton({
   item,
@@ -25,14 +25,14 @@ function MenuItemCartButton({
       initialQuantity={quantity}
       onQuantityChange={(qty) => {
         if (qty > 0 && quantity === 0) {
-          addItem({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            description: item.description,
-            image: item.images?.[0],
-            brandId,
-          });
+            addItem({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              description: item.description,
+              image: item.image,
+              brandId,
+            });
           if (qty > 1) {
             updateQuantity(item.id, qty);
           }
@@ -167,11 +167,20 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
                 >
                   {/* Top: Image + Text */}
                   <div className="flex items-start gap-4">
-                    {/* Simple Auto Image Gallery */}
-                    <HoldImageDial 
-                      images={item.images} 
-                      autoHint={autoHintFirstItem && categoryIndex === 0 && itemIndex === 0}
-                    />
+                    {/* Single Normal Image */}
+                    <div 
+                      className="relative shrink-0 rounded-[16px] overflow-hidden bg-white/70 backdrop-blur-2xl border border-white/30 shadow-[0_4px_10px_rgba(0,0,0,0.1)]"
+                      style={{ width: 100, height: 100 }}
+                    >
+                      {item.image && (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          draggable={false}
+                        />
+                      )}
+                    </div>
 
                     <div className="flex-1 min-w-0 py-1">
                       <h4 className="font-bold text-base text-black mb-1">{item.name}</h4>

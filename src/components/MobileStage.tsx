@@ -7,7 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useGSAP } from "@gsap/react";
 import SplitText from "@/components/SplitText";
-import HighlighterSweep from "@/components/HighlighterSweep";
+
 import {
   Coffee01Icon,
   Leaf01Icon,
@@ -228,20 +228,16 @@ export default function MobileStage({
           0.41,
         )
         .fromTo(
-          ".s3-title",
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.02, ease: "power2.out" },
-          0.42,
-        )
-        .fromTo(
-          ".s3-highlight",
-          { clipPath: "inset(0% 100% 0% 0%)" },
+          ".s3-title .char",
+          { opacity: 0, scale: 1.2, color: "#ffffff" },
           {
-            clipPath: "inset(0% 0% 0% 0%)",
-            duration: 0.05,
-            ease: "power2.inOut",
+            opacity: 1,
+            scale: 1,
+            color: "#F1E6C3",
+            duration: 0.02,
+            stagger: 0.002,
           },
-          0.43,
+          0.42,
         )
         .fromTo(
           ".s3-desc .char",
@@ -275,20 +271,16 @@ export default function MobileStage({
           0.61,
         )
         .fromTo(
-          ".s4-title",
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.02, ease: "power2.out" },
-          0.62,
-        )
-        .fromTo(
-          ".s4-highlight",
-          { clipPath: "inset(0% 100% 0% 0%)" },
+          ".s4-title .char",
+          { opacity: 0, scale: 1.2, color: "#ffffff" },
           {
-            clipPath: "inset(0% 0% 0% 0%)",
-            duration: 0.05,
-            ease: "power2.inOut",
+            opacity: 1,
+            scale: 1,
+            color: "#B7D39A",
+            duration: 0.02,
+            stagger: 0.002,
           },
-          0.63,
+          0.62,
         )
         .fromTo(
           ".s4-desc .char",
@@ -322,20 +314,16 @@ export default function MobileStage({
           0.81,
         )
         .fromTo(
-          ".s5-title",
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 0.02, ease: "power2.out" },
-          0.82,
-        )
-        .fromTo(
-          ".s5-highlight",
-          { clipPath: "inset(0% 100% 0% 0%)" },
+          ".s5-title .char",
+          { opacity: 0, scale: 1.2, color: "#ffffff" },
           {
-            clipPath: "inset(0% 0% 0% 0%)",
-            duration: 0.05,
-            ease: "power2.inOut",
+            opacity: 1,
+            scale: 1,
+            color: "#D8A98F",
+            duration: 0.02,
+            stagger: 0.002,
           },
-          0.83,
+          0.82,
         )
         .fromTo(
           ".s5-desc .char",
@@ -511,21 +499,9 @@ export default function MobileStage({
           </div>
         </div>
         <div className="absolute top-[20%] left-0 w-full text-center">
-          <h2 className="s3-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center">
-            <HighlighterSweep
-              text="Quality in"
-              highlightBg="#F1E6C3"
-              highlightText="#080907"
-              baseText="#FFFFFF"
-              highlightLayerClassName="s3-highlight"
-            />
-            <HighlighterSweep
-              text="everyday rituals."
-              highlightBg="#F1E6C3"
-              highlightText="#080907"
-              baseText="#FFFFFF"
-              highlightLayerClassName="s3-highlight"
-            />
+          <h2 className="s3-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center whitespace-break-spaces">
+            <SplitText text="Quality in" />
+            <SplitText text="everyday rituals." />
           </h2>
         </div>
         <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
@@ -562,21 +538,9 @@ export default function MobileStage({
           </div>
         </div>
         <div className="absolute top-[20%] left-0 w-full text-center">
-          <h2 className="s4-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center">
-            <HighlighterSweep
-              text="Nourishment"
-              highlightBg="#B7D39A"
-              highlightText="#080907"
-              baseText="#FFFFFF"
-              highlightLayerClassName="s4-highlight"
-            />
-            <HighlighterSweep
-              text="and strength."
-              highlightBg="#B7D39A"
-              highlightText="#080907"
-              baseText="#FFFFFF"
-              highlightLayerClassName="s4-highlight"
-            />
+          <h2 className="s4-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center whitespace-break-spaces">
+            <SplitText text="Nourishment" />
+            <SplitText text="and strength." />
           </h2>
         </div>
         <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
@@ -614,21 +578,9 @@ export default function MobileStage({
           </div>
         </div>
         <div className="absolute top-[20%] left-0 w-full text-center">
-          <h2 className="s5-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center">
-            <HighlighterSweep
-              text="Warmth &"
-              highlightBg="#D8A98F"
-              highlightText="#080907"
-              baseText="#FFFFFF"
-              highlightLayerClassName="s5-highlight"
-            />
-            <HighlighterSweep
-              text="Hospitality."
-              highlightBg="#D8A98F"
-              highlightText="#080907"
-              baseText="#FFFFFF"
-              highlightLayerClassName="s5-highlight"
-            />
+          <h2 className="s5-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center whitespace-break-spaces">
+            <SplitText text="Warmth &" />
+            <SplitText text="Hospitality." />
           </h2>
         </div>
         <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
