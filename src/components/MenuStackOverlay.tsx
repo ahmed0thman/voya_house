@@ -12,6 +12,7 @@ import {
 } from "hugeicons-react";
 import BookletCard from "./BookletCard";
 import { useCartStore } from "@/store/useCartStore";
+import { useGuestOrders } from "@/hooks/use-table-orders";
 import { formatPrice } from "@/constants/config";
 
 type BrandId = "coffee" | "papa" | "mama";
@@ -34,7 +35,7 @@ export default function MenuStackOverlay({
     s.items.reduce((acc, i) => acc + i.quantity, 0),
   );
   const totalPrice = useCartStore((s) => s.getTotalPrice());
-  const activeOrdersCount = useCartStore((s) => s.activeOrders.length);
+  const activeOrdersCount = useGuestOrders().data?.length ?? 0;
   const openCart = useCartStore((s) => s.openCart);
 
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -393,7 +394,7 @@ export default function MenuStackOverlay({
             <span className="text-white font-bold tracking-wide">
               {totalItems > 0
                 ? `${totalItems} Item${totalItems > 1 ? "s" : ""}`
-                : `${activeOrdersCount} in Kitchen`}
+                : `${activeOrdersCount} Order${activeOrdersCount > 1 ? "s" : ""}`}
             </span>
             {totalItems > 0 && (
               <>

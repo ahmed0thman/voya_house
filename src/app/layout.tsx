@@ -3,6 +3,8 @@ import { Inter, Outfit, Cormorant_Garamond } from "next/font/google";
 // Global styles
 import "./globals.css";
 import GlobalCursor from "@/components/GlobalCursor";
+import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -26,7 +28,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${outfit.variable} ${cormorant.variable} font-sans antialiased bg-white text-black whitespace-break-spaces`}>
         <GlobalCursor />
-        {children}
+        <QueryProvider>
+          {children}
+          <Toaster />
+        </QueryProvider>
       </body>
     </html>
   );

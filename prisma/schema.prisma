@@ -1,0 +1,243 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A house/booklet (Voya Coffee, Papa Voya, Mama Voya). Seeded directly for
+/// now — the control board only manages categories & items in this pass.
+model Brand {
+  id        String   @id @default(uuid(7))
+  slug      String   @unique
+  name      String
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  categories Category[]
+
+  @@map("brands")
+}
+
+model Category {
+  id        String   @id @default(uuid(7))
+  brandId   String   @map("brand_id")
+  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  title     String
+  /// URL-safe anchor, unique per brand (e.g. "signature-roasts")
+  slug      String
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items Item[]
+
+  @@unique([brandId, slug])
+  @@index([brandId, sortOrder])
+  @@map("categories")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+/// Control-board accounts. No login/session system yet — see AGENTS docs and
+/// README-BACKEND.md; this table exists so accounts can be managed ahead of
+/// that landing.
+model User {
+  id           String   @id @default(uuid(7))
+  name         String
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(STAFF)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  sessions Session[]
+
+  @@map("users")
+}
+
+/// Server-side session store — the browser only ever holds an opaque token;
+/// its hash is what's stored here so a leaked DB row can't be replayed as a
+/// cookie. expiresAt is the real, sliding-window source of truth for how long
+/// a session stays valid (see src/lib/session.ts).
+model Session {
+  id        String   @id @default(uuid(7))
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Item {
+  id          String   @id @default(uuid(7))
+  categoryId  String   @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  /// Cloudflare R2 object keys — resolved to public URLs at read time via R2_PUBLIC_URL
+  images      String[] @default([])
+  isAvailable Boolean  @default(true) @map("is_available")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@index([categoryId, sortOrder])
+  @@map("items")
+}
+
+/// A physical table in the dining area. Just reference data for now — the
+/// admin only defines which table numbers exist; a guest links to one by
+/// scanning its printed QR code.
+model RestaurantTable {
+  id        String   @id @default(uuid(7))
+  number    Int      @unique
+  label     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tableSessions TableSession[]
+
+  @@map("restaurant_tables")
+}
+
+enum TableSessionStatus {
+  OPEN
+  SETTLED
+}
+
+/// One seating at a table, from the first order placed to the bill being
+/// settled. Opens automatically on that first order (no separate "seat
+/// table" step) and owns every ticket the guest sends during the visit —
+/// including already-served ones, which the guest keeps seeing until the
+/// table is settled. Only dine-in (`OrderType.ON_TABLE`) orders ever belong
+/// to one; takeaway/delivery orders stand alone.
+model TableSession {
+  id        String              @id @default(uuid(7))
+  tableId   String              @map("table_id")
+  table     RestaurantTable     @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  status    TableSessionStatus  @default(OPEN)
+  openedAt  DateTime            @default(now()) @map("opened_at")
+  settledAt DateTime?           @map("settled_at")
+
+  orders Order[]
+
+  @@index([tableId, status])
+  @@map("table_sessions")
+}
+
+enum OrderStatus {
+  RECEIVED
+  PREPARING
+  SERVED
+  /// Staff declined the ticket before starting on it (mistake / change of mind).
+  /// Never billed — excluded from a table session's settle total.
+  REJECTED
+}
+
+enum OrderType {
+  ON_TABLE
+  TAKEAWAY
+  DELIVERY
+}
+
+/// One order ticket / round sent to the kitchen. A single table visit can
+/// have several — the guest keeps browsing and sends another round while an
+/// earlier one is still being prepared or served. `status` tracks kitchen
+/// prep and is independent of the table session's own OPEN/SETTLED state:
+/// a SERVED ticket stays on an OPEN session's tab until the whole table
+/// settles up.
+model Order {
+  id             String        @id @default(uuid(7))
+  type           OrderType     @default(ON_TABLE)
+  /// Only set for `ON_TABLE` orders — takeaway/delivery tickets aren't part of a table visit.
+  tableSessionId String?       @map("table_session_id")
+  tableSession   TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: Restrict)
+  status         OrderStatus   @default(RECEIVED)
+  /// TAKEAWAY/DELIVERY only — an ON_TABLE guest is identified by their table instead.
+  customerName   String?       @map("customer_name")
+  customerPhone  String?       @map("customer_phone")
+  /// DELIVERY only — where the rider is taking it.
+  deliveryAddress String?      @map("delivery_address")
+  specialNotes   String?       @map("special_notes")
+  /// Set only when `status` is REJECTED — why staff declined the ticket.
+  rejectionReason String?      @map("rejection_reason")
+  /// Sum of item snapshots at order time, before any discount.
+  subtotal       Decimal       @db.Decimal(10, 2)
+  /// The `CodeOffer.code` applied at checkout, if any — stored uppercased, independent
+  /// of whether that offer is later edited or deactivated (this ticket's discount is locked in).
+  offerCode      String?       @map("offer_code")
+  discountAmount Decimal       @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  /// subtotal - discountAmount — the amount actually owed for this ticket.
+  totalPrice     Decimal       @map("total_price") @db.Decimal(10, 2)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  items OrderItem[]
+
+  @@index([tableSessionId, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id      String  @id @default(uuid(7))
+  orderId String  @map("order_id")
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// Kept for traceability, but every field actually rendered on the ticket is
+  /// snapshotted below — so a later price change, 86'ing, or deletion of the
+  /// menu item never rewrites history.
+  itemId  String? @map("item_id")
+  item    Item?   @relation(fields: [itemId], references: [id], onDelete: SetNull)
+
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  quantity  Int
+  /// Which of the three houses this item belongs to — items from all three
+  /// can land on the same ticket.
+  brandSlug String  @map("brand_slug")
+  /// R2 object key, same convention as Item.images — resolved to a URL at read time.
+  image     String?
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+model CodeOffer {
+  id            String       @id @default(uuid(7))
+  /// Always stored uppercased so lookups are case-insensitive by construction.
+  code          String       @unique
+  name          String?
+  description   String?
+  discountType  DiscountType @map("discount_type")
+  /// A percentage (0–100) when discountType is PERCENT, an EGP amount when FIXED.
+  discountValue Decimal      @map("discount_value") @db.Decimal(10, 2)
+  validFrom     DateTime     @map("valid_from")
+  validUntil    DateTime     @map("valid_until")
+  isActive      Boolean      @default(true) @map("is_active")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@map("code_offers")
+}

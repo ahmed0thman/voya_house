@@ -14,7 +14,7 @@ import BrandStorySection from "@/components/BrandStorySection";
 import ContactSection from "@/components/ContactSection";
 import CinematicFooter from "@/components/CinematicFooter";
 import CartSheet from "@/components/CartSheet";
-import TableParamSync from "@/components/TableParamSync";
+import OrderModeSync from "@/components/OrderModeSync";
 import { useViewport } from "@/hooks/useViewport";
 import MobileStage from "@/components/MobileStage";
 import DesktopStage from "@/components/DesktopStage";
@@ -325,7 +325,7 @@ export default function Home() {
       />
 
       {/* ─── Table Param Sync (QR Code) & Table Cart Sheet Overlay ─── */}
-      <TableParamSync />
+      <OrderModeSync />
       <CartSheet />
 
       {/* ─── Loading Screen ─── */}

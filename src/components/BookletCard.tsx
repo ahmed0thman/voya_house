@@ -3,7 +3,8 @@
 import React, { forwardRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { Coffee01Icon, Leaf01Icon, Pizza01Icon } from "hugeicons-react";
-import { menuData } from "@/data/mockMenu";
+import { usePublicMenu } from "@/hooks/use-public-menu";
+import type { BrandMenu } from "@/data/mockMenu";
 import TalabatMenu from "./TalabatMenu";
 
 interface BookletCardProps {
@@ -52,13 +53,22 @@ const BRAND_COVERS = {
   },
 };
 
+// Brand presentation (bg/text/accent) isn't managed by the control board yet —
+// only categories & items are DB-backed for now — so it stays static here.
+const BRAND_THEME: Record<BookletCardProps["brandId"], BrandMenu["colors"]> = {
+  coffee: { bg: "bg-[#F1E6C3]", text: "text-[#3E3424]", accent: "bg-[#D8C7A0]" },
+  papa: { bg: "bg-[#B7D39A]", text: "text-[#2D421A]", accent: "bg-[#98B878]" },
+  mama: { bg: "bg-[#D8A98F]", text: "text-[#4A2E1B]", accent: "bg-[#C18C70]" },
+};
+
 const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
   (
     { brandId, isActive, isInitialActive = false, style, className = "" },
     ref,
   ) => {
-    const menu = menuData[brandId];
+    const { data: categories, isLoading, isError } = usePublicMenu(brandId);
     const cover = BRAND_COVERS[brandId];
+    const colors = BRAND_THEME[brandId];
     const [hasBeenActive, setHasBeenActive] = useState(isActive);
 
     useEffect(() => {
@@ -67,8 +77,15 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
       }
     }, [isActive, hasBeenActive]);
 
-    if (!menu || !cover) return null;
+    if (!cover) return null;
     const IconComponent = cover.icon;
+
+    const menu: BrandMenu = {
+      brandId,
+      title: cover.title,
+      colors,
+      categories: categories ?? [],
+    };
 
     return (
       <div
@@ -184,7 +201,19 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
                 : "opacity-0 pointer-events-none"
             }`}
           >
-            <TalabatMenu menu={menu} autoHintFirstItem={isInitialActive} />
+            {menu.categories.length > 0 ? (
+              <TalabatMenu menu={menu} autoHintFirstItem={isInitialActive} />
+            ) : (
+              <div
+                className={`w-full h-full flex items-center justify-center px-8 text-center font-mono text-sm ${colors.text} opacity-70`}
+              >
+                {isLoading
+                  ? "Loading menu…"
+                  : isError
+                    ? "Couldn't load the menu. Please try again."
+                    : "No items available yet."}
+              </div>
+            )}
           </div>
         )}
       </div>
