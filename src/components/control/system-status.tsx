@@ -38,23 +38,37 @@ export function SystemStatus() {
     );
   }
 
-  const { storage } = data;
+  const { storage, database } = data;
   const usedFraction = storage.usedBytes != null ? storage.usedBytes / storage.maxBytes : null;
+  const dbUsedFraction = database.usedBytes != null ? database.usedBytes / database.maxBytes : null;
+  const dbFreeBytes = database.usedBytes != null ? Math.max(0, database.maxBytes - database.usedBytes) : null;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Database</CardTitle>
+            <CardTitle>Database (Supabase)</CardTitle>
           </CardHeader>
-          <CardContent className="flex items-center gap-2">
-            <Badge variant={data.database.connected ? "secondary" : "destructive"}>
-              {data.database.connected ? "Connected" : "Unreachable"}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              {data.database.brandCount} brand(s) configured
-            </span>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={database.connected ? "secondary" : "destructive"}>
+                {database.connected ? "Connected" : "Unreachable"}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {database.brandCount} brand(s) configured
+              </span>
+            </div>
+
+            {dbUsedFraction != null && database.usedBytes != null && dbFreeBytes != null && (
+              <div className="flex flex-col gap-1.5">
+                <Progress value={Math.min(100, dbUsedFraction * 100)} />
+                <span className="text-xs text-muted-foreground">
+                  {formatGiB(database.usedBytes)} used · {formatGiB(dbFreeBytes)} free of{" "}
+                  {formatGiB(database.maxBytes)} (Free plan)
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 

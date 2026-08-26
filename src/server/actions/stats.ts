@@ -59,15 +59,24 @@ export const getDashboardStats = defineAction({
 });
 
 export type SystemStatusDTO = {
-  database: { connected: boolean; brandCount: number };
+  database: { connected: boolean; brandCount: number; usedBytes?: number; maxBytes: number };
   storage: StorageStatusDTO;
   brands: { id: string; slug: string; name: string; categoryCount: number; itemCount: number }[];
 };
 
+/**
+ * The Postgres connection this app holds (DATABASE_URL/DIRECT_URL) can report actual
+ * bytes used (`pg_database_size`), but Supabase's storage *quota* is a plan-level fact
+ * only the Management API exposes, which needs a personal access token this app isn't
+ * configured with — hardcoded to the project's current plan (Free = 500 MiB) instead.
+ * Update this if the plan changes.
+ */
+const DATABASE_MAX_BYTES = 0.5 * 1024 ** 3;
+
 export const getSystemStatus = defineAction({
   auth: "admin",
   handler: async (): Promise<SystemStatusDTO> => {
-  const [dbResult, storage] = await Promise.all([
+  const [dbResult, storage, dbUsedBytes] = await Promise.all([
     prisma.brand
       .findMany({
         orderBy: { sortOrder: "asc" },
@@ -76,6 +85,10 @@ export const getSystemStatus = defineAction({
       .then((brands) => ({ ok: true as const, brands }))
       .catch(() => ({ ok: false as const, brands: [] })),
     getStorageStatus(),
+    prisma
+      .$queryRaw<{ size: bigint }[]>`SELECT pg_database_size(current_database()) AS size`
+      .then(([row]) => Number(row.size))
+      .catch(() => undefined),
   ]);
 
   const brandsWithCounts = await Promise.all(
@@ -89,7 +102,12 @@ export const getSystemStatus = defineAction({
   );
 
   return {
-    database: { connected: dbResult.ok, brandCount: dbResult.brands.length },
+    database: {
+      connected: dbResult.ok,
+      brandCount: dbResult.brands.length,
+      usedBytes: dbUsedBytes,
+      maxBytes: DATABASE_MAX_BYTES,
+    },
     storage,
     brands: brandsWithCounts,
   };
