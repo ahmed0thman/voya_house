@@ -146,6 +146,9 @@ model TableSession {
 enum OrderStatus {
   RECEIVED
   PREPARING
+  /// Off the pass and waiting to be handed over — served to the table, collected
+  /// at the counter, or picked up by the rider, depending on the order type.
+  READY
   SERVED
   /// Staff declined the ticket before starting on it (mistake / change of mind).
   /// Never billed — excluded from a table session's settle total.
@@ -171,9 +174,12 @@ model Order {
   tableSessionId String?       @map("table_session_id")
   tableSession   TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: Restrict)
   status         OrderStatus   @default(RECEIVED)
-  /// TAKEAWAY/DELIVERY only — an ON_TABLE guest is identified by their table instead.
+  /// Captured on every order type. Nullable only because tickets placed before
+  /// this was required still exist — new orders always carry both.
   customerName   String?       @map("customer_name")
   customerPhone  String?       @map("customer_phone")
+  /// Optional, date-only (no time, no timezone) — a service cue, not an identifier.
+  customerBirthday DateTime?   @map("customer_birthday") @db.Date
   /// DELIVERY only — where the rider is taking it.
   deliveryAddress String?      @map("delivery_address")
   specialNotes   String?       @map("special_notes")

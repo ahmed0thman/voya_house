@@ -10,6 +10,11 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Prisma 7 dropped the schema-level `directUrl` field — the CLI (migrate, studio,
+    // seed) now just uses whatever `url` resolves to here. Point it at the session
+    // pooler, not DATABASE_URL's transaction pooler, since migrations run DDL that
+    // transaction-mode pgbouncer doesn't handle well. The running app still reads
+    // DATABASE_URL directly (see src/lib/prisma.ts), independent of this file.
+    url: process.env["DIRECT_URL"],
   },
 });
