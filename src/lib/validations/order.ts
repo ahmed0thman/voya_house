@@ -92,6 +92,16 @@ export type EditOrderInput = z.infer<typeof editOrderSchema>;
 /** The guest tracks their own takeaway/delivery tickets by id — capped so a scraped list can't fan out. */
 export const listGuestOrdersSchema = z.array(z.uuid()).max(20);
 
+/**
+ * A table's public-facing number, as scanned from a QR code. A number that's
+ * well-formed but unknown is still a miss, not an error — see
+ * `listSessionOrdersForTable`.
+ */
+export const tableNumberSchema = z.number().int().positive();
+
+/** The two order types the control board lists as standalone tickets. */
+export const orderTypeFilterSchema = z.enum(["TAKEAWAY", "DELIVERY"]);
+
 export const updateOrderStatusSchema = z.object({
   id: z.uuid(),
   status: z.enum(["RECEIVED", "PREPARING", "READY", "SERVED"]),

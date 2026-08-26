@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const discountTypeSchema = z.enum(["PERCENT", "FIXED"]);
 
-const codeSchema = z
+export const codeSchema = z
   .string()
   .trim()
   .min(3, "Code must be at least 3 characters")

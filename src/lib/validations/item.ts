@@ -16,6 +16,9 @@ const descriptionSchema = z
   .optional()
   .or(z.literal(""));
 
+/** Which category's items to list. */
+export const listItemsSchema = z.uuid();
+
 export const createItemSchema = z.object({
   categoryId: z.uuid(),
   name: z.string().trim().min(1, "Name is required").max(160),
