@@ -1,7 +1,19 @@
 import "dotenv/config";
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient, OrderStatus, OrderType, TableSessionStatus } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import { slugify } from "../src/lib/slug";
+
+// Duplicated from src/lib/password.ts (must match verifyPassword's format
+// exactly) rather than imported — that module is `server-only`-guarded, which
+// throws when run outside Next's build pipeline, same reason this script uses
+// its own standalone PrismaClient above instead of src/lib/prisma.ts.
+const PASSWORD_KEY_LENGTH = 64;
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, PASSWORD_KEY_LENGTH).toString("hex");
+  return `${salt}:${hash}`;
+}
 
 // A standalone client, deliberately not the app's `src/lib/prisma.ts`
 // singleton — that one is `server-only`-guarded (correctly, to stop it being
@@ -134,6 +146,17 @@ const MENU: SeedBrand[] = [
 ];
 
 async function main() {
+  await prisma.user.upsert({
+    where: { username: "admin" },
+    update: {},
+    create: {
+      name: "Admin",
+      username: "admin",
+      passwordHash: hashPassword("1234qwer"),
+      role: "ADMIN",
+    },
+  });
+
   const brandIds = new Map<string, string>();
 
   for (const brand of BRANDS) {
