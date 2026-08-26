@@ -2,16 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { ActionError } from "@/lib/action-error";
-import { requireAdmin } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import {
   createTableSchema,
   updateTableSchema,
   deleteTableSchema,
   createTablesRangeSchema,
-  type CreateTableInput,
-  type UpdateTableInput,
-  type DeleteTableInput,
-  type CreateTablesRangeInput,
 } from "@/lib/validations/table";
 
 export type TableDTO = {
@@ -30,16 +26,18 @@ function toTableDTO(table: {
   return { id: table.id, number: table.number, label: table.label, isActive: table.isActive };
 }
 
-export async function listTables(): Promise<TableDTO[]> {
-  await requireAdmin();
-  const tables = await prisma.restaurantTable.findMany({ orderBy: { number: "asc" } });
-  return tables.map(toTableDTO);
-}
+export const listTables = defineAction({
+  auth: "admin",
+  handler: async (): Promise<TableDTO[]> => {
+    const tables = await prisma.restaurantTable.findMany({ orderBy: { number: "asc" } });
+    return tables.map(toTableDTO);
+  },
+});
 
-export async function createTable(rawInput: CreateTableInput): Promise<TableDTO> {
-  await requireAdmin();
-  const input = createTableSchema.parse(rawInput);
-
+export const createTable = defineAction({
+  auth: "admin",
+  schema: createTableSchema,
+  handler: async (input): Promise<TableDTO> => {
   const existing = await prisma.restaurantTable.findUnique({
     where: { number: input.number },
   });
@@ -52,7 +50,8 @@ export async function createTable(rawInput: CreateTableInput): Promise<TableDTO>
   });
 
   return toTableDTO(table);
-}
+  },
+});
 
 export type CreateTablesRangeResult = {
   created: TableDTO[];
@@ -60,12 +59,10 @@ export type CreateTablesRangeResult = {
 };
 
 /** Creates every table number in [start, end] that doesn't already exist; existing numbers are skipped, not treated as an error. */
-export async function createTablesRange(
-  rawInput: CreateTablesRangeInput,
-): Promise<CreateTablesRangeResult> {
-  await requireAdmin();
-  const input = createTablesRangeSchema.parse(rawInput);
-
+export const createTablesRange = defineAction({
+  auth: "admin",
+  schema: createTablesRangeSchema,
+  handler: async (input): Promise<CreateTablesRangeResult> => {
   const numbers = Array.from(
     { length: input.end - input.start + 1 },
     (_, i) => input.start + i,
@@ -87,12 +84,13 @@ export async function createTablesRange(
     created: created.map(toTableDTO),
     skipped: numbers.filter((number) => existingSet.has(number)),
   };
-}
+  },
+});
 
-export async function updateTable(rawInput: UpdateTableInput): Promise<TableDTO> {
-  await requireAdmin();
-  const input = updateTableSchema.parse(rawInput);
-
+export const updateTable = defineAction({
+  auth: "admin",
+  schema: updateTableSchema,
+  handler: async (input): Promise<TableDTO> => {
   const existing = await prisma.restaurantTable.findUnique({ where: { id: input.id } });
   if (!existing) throw new ActionError("Table not found.", "NOT_FOUND");
 
@@ -111,15 +109,17 @@ export async function updateTable(rawInput: UpdateTableInput): Promise<TableDTO>
   });
 
   return toTableDTO(table);
-}
+  },
+});
 
-export async function deleteTable(rawInput: DeleteTableInput): Promise<{ id: string }> {
-  await requireAdmin();
-  const input = deleteTableSchema.parse(rawInput);
+export const deleteTable = defineAction({
+  auth: "admin",
+  schema: deleteTableSchema,
+  handler: async (input): Promise<{ id: string }> => {
+    const existing = await prisma.restaurantTable.findUnique({ where: { id: input.id } });
+    if (!existing) throw new ActionError("Table not found.", "NOT_FOUND");
 
-  const existing = await prisma.restaurantTable.findUnique({ where: { id: input.id } });
-  if (!existing) throw new ActionError("Table not found.", "NOT_FOUND");
-
-  await prisma.restaurantTable.delete({ where: { id: input.id } });
-  return { id: input.id };
-}
+    await prisma.restaurantTable.delete({ where: { id: input.id } });
+    return { id: input.id };
+  },
+});

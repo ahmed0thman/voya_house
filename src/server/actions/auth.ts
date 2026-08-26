@@ -11,7 +11,8 @@ import {
   invalidateSessionByToken,
 } from "@/lib/session";
 import { getCurrentSession } from "@/lib/dal";
-import { loginSchema, type LoginInput } from "@/lib/validations/auth";
+import { defineAction } from "@/server/define-action";
+import { loginSchema } from "@/lib/validations/auth";
 
 export type AuthUserDTO = {
   id: string;
@@ -20,36 +21,44 @@ export type AuthUserDTO = {
   role: "ADMIN" | "STAFF";
 };
 
-export async function login(rawInput: LoginInput): Promise<AuthUserDTO> {
-  const input = loginSchema.parse(rawInput);
+export const login = defineAction({
+  auth: "public",
+  schema: loginSchema,
+  handler: async (input): Promise<AuthUserDTO> => {
+    const user = await prisma.user.findUnique({ where: { username: input.username } });
+    if (!user || !verifyPassword(input.password, user.passwordHash)) {
+      // Deliberately generic — don't reveal whether the username exists.
+      throw new ActionError("Invalid username or password.", "UNAUTHORIZED");
+    }
 
-  const user = await prisma.user.findUnique({ where: { username: input.username } });
-  if (!user || !verifyPassword(input.password, user.passwordHash)) {
-    // Deliberately generic — don't reveal whether the username exists.
-    throw new ActionError("Invalid username or password.", "UNAUTHORIZED");
-  }
+    const { token } = await createSession(user.id);
+    await setSessionCookie(token);
 
-  const { token } = await createSession(user.id);
-  await setSessionCookie(token);
+    return { id: user.id, name: user.name, username: user.username, role: user.role };
+  },
+});
 
-  return { id: user.id, name: user.name, username: user.username, role: user.role };
-}
+export const logout = defineAction({
+  auth: "public",
+  handler: async (): Promise<{ ok: true }> => {
+    const token = await getSessionTokenFromCookies();
+    if (token) await invalidateSessionByToken(token);
+    await clearSessionCookie();
+    return { ok: true };
+  },
+});
 
-export async function logout(): Promise<{ ok: true }> {
-  const token = await getSessionTokenFromCookies();
-  if (token) await invalidateSessionByToken(token);
-  await clearSessionCookie();
-  return { ok: true };
-}
+export const getCurrentUser = defineAction({
+  auth: "public",
+  handler: async (): Promise<AuthUserDTO | null> => {
+    const session = await getCurrentSession();
+    if (!session) return null;
 
-export async function getCurrentUser(): Promise<AuthUserDTO | null> {
-  const session = await getCurrentSession();
-  if (!session) return null;
-
-  return {
-    id: session.user.id,
-    name: session.user.name,
-    username: session.user.username,
-    role: session.user.role,
-  };
-}
+    return {
+      id: session.user.id,
+      name: session.user.name,
+      username: session.user.username,
+      role: session.user.role,
+    };
+  },
+});

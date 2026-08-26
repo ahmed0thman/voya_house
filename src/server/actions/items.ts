@@ -4,16 +4,14 @@ import { prisma } from "@/lib/prisma";
 import type { Item } from "@/generated/prisma/client";
 import { ActionError } from "@/lib/action-error";
 import { requireUser } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import { resolveImageUrl, deleteObject } from "@/lib/storage/r2";
 import {
   createItemSchema,
   updateItemSchema,
   deleteItemSchema,
   reorderItemsSchema,
-  type CreateItemInput,
-  type UpdateItemInput,
-  type DeleteItemInput,
-  type ReorderItemsInput,
+  listItemsSchema,
 } from "@/lib/validations/item";
 
 export type ItemImageDTO = {
@@ -65,8 +63,9 @@ export type OrderableItemDTO = {
  * a few dozen rows, so it ships in one query and gets filtered in the browser —
  * far better than a round trip per keystroke while a customer waits on the phone.
  */
-export async function listOrderableItems(): Promise<OrderableItemDTO[]> {
-  await requireUser();
+export const listOrderableItems = defineAction({
+  auth: "user",
+  handler: async (): Promise<OrderableItemDTO[]> => {
   const items = await prisma.item.findMany({
     where: { isAvailable: true },
     include: { category: { include: { brand: true } } },
@@ -79,21 +78,25 @@ export async function listOrderableItems(): Promise<OrderableItemDTO[]> {
     brandSlug: item.category.brand.slug,
     categoryTitle: item.category.title,
   }));
-}
+  },
+});
 
-export async function listItems(categoryId: string): Promise<ItemDTO[]> {
-  await requireUser();
-  const items = await prisma.item.findMany({
-    where: { categoryId },
-    orderBy: { sortOrder: "asc" },
-  });
-  return items.map(toItemDTO);
-}
+export const listItems = defineAction({
+  auth: "user",
+  schema: listItemsSchema,
+  handler: async (categoryId): Promise<ItemDTO[]> => {
+    const items = await prisma.item.findMany({
+      where: { categoryId },
+      orderBy: { sortOrder: "asc" },
+    });
+    return items.map(toItemDTO);
+  },
+});
 
-export async function createItem(rawInput: CreateItemInput): Promise<ItemDTO> {
-  await requireUser();
-  const input = createItemSchema.parse(rawInput);
-
+export const createItem = defineAction({
+  auth: "user",
+  schema: createItemSchema,
+  handler: async (input): Promise<ItemDTO> => {
   const category = await prisma.category.findUnique({
     where: { id: input.categoryId },
   });
@@ -119,12 +122,13 @@ export async function createItem(rawInput: CreateItemInput): Promise<ItemDTO> {
   });
 
   return toItemDTO(item);
-}
+  },
+});
 
-export async function updateItem(rawInput: UpdateItemInput): Promise<ItemDTO> {
-  await requireUser();
-  const input = updateItemSchema.parse(rawInput);
-
+export const updateItem = defineAction({
+  auth: "user",
+  schema: updateItemSchema,
+  handler: async (input): Promise<ItemDTO> => {
   const existing = await prisma.item.findUnique({ where: { id: input.id } });
   if (!existing) throw new ActionError("Item not found.", "NOT_FOUND");
 
@@ -157,28 +161,28 @@ export async function updateItem(rawInput: UpdateItemInput): Promise<ItemDTO> {
   }
 
   return toItemDTO(item);
-}
+  },
+});
 
-export async function deleteItem(rawInput: DeleteItemInput): Promise<{ id: string }> {
-  await requireUser();
-  const input = deleteItemSchema.parse(rawInput);
+export const deleteItem = defineAction({
+  auth: "user",
+  schema: deleteItemSchema,
+  handler: async (input): Promise<{ id: string }> => {
+    const existing = await prisma.item.findUnique({ where: { id: input.id } });
+    if (!existing) throw new ActionError("Item not found.", "NOT_FOUND");
 
-  const existing = await prisma.item.findUnique({ where: { id: input.id } });
-  if (!existing) throw new ActionError("Item not found.", "NOT_FOUND");
+    await prisma.item.delete({ where: { id: input.id } });
+    if (existing.images.length > 0) {
+      await deleteImagesBestEffort(existing.images);
+    }
+    return { id: input.id };
+  },
+});
 
-  await prisma.item.delete({ where: { id: input.id } });
-  if (existing.images.length > 0) {
-    await deleteImagesBestEffort(existing.images);
-  }
-  return { id: input.id };
-}
-
-export async function reorderItems(
-  rawInput: ReorderItemsInput,
-): Promise<{ categoryId: string; orderedIds: string[] }> {
-  await requireUser();
-  const input = reorderItemsSchema.parse(rawInput);
-
+export const reorderItems = defineAction({
+  auth: "user",
+  schema: reorderItemsSchema,
+  handler: async (input): Promise<{ categoryId: string; orderedIds: string[] }> => {
   const items = await prisma.item.findMany({
     where: { categoryId: input.categoryId },
     select: { id: true },
@@ -200,4 +204,5 @@ export async function reorderItems(
   );
 
   return { categoryId: input.categoryId, orderedIds: validOrderedIds };
-}
+  },
+});

@@ -2,15 +2,12 @@
 
 import { prisma } from "@/lib/prisma";
 import { ActionError } from "@/lib/action-error";
-import { requireAdmin } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import { hashPassword } from "@/lib/password";
 import {
   createUserSchema,
   updateUserSchema,
   deleteUserSchema,
-  type CreateUserInput,
-  type UpdateUserInput,
-  type DeleteUserInput,
 } from "@/lib/validations/user";
 
 export type UserDTO = {
@@ -37,16 +34,18 @@ function toUserDTO(user: {
   };
 }
 
-export async function listUsers(): Promise<UserDTO[]> {
-  await requireAdmin();
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
-  return users.map(toUserDTO);
-}
+export const listUsers = defineAction({
+  auth: "admin",
+  handler: async (): Promise<UserDTO[]> => {
+    const users = await prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+    return users.map(toUserDTO);
+  },
+});
 
-export async function createUser(rawInput: CreateUserInput): Promise<UserDTO> {
-  await requireAdmin();
-  const input = createUserSchema.parse(rawInput);
-
+export const createUser = defineAction({
+  auth: "admin",
+  schema: createUserSchema,
+  handler: async (input): Promise<UserDTO> => {
   const existing = await prisma.user.findUnique({
     where: { username: input.username },
   });
@@ -64,12 +63,13 @@ export async function createUser(rawInput: CreateUserInput): Promise<UserDTO> {
   });
 
   return toUserDTO(user);
-}
+  },
+});
 
-export async function updateUser(rawInput: UpdateUserInput): Promise<UserDTO> {
-  await requireAdmin();
-  const input = updateUserSchema.parse(rawInput);
-
+export const updateUser = defineAction({
+  auth: "admin",
+  schema: updateUserSchema,
+  handler: async (input): Promise<UserDTO> => {
   const existing = await prisma.user.findUnique({ where: { id: input.id } });
   if (!existing) throw new ActionError("User not found.", "NOT_FOUND");
 
@@ -93,15 +93,17 @@ export async function updateUser(rawInput: UpdateUserInput): Promise<UserDTO> {
   });
 
   return toUserDTO(user);
-}
+  },
+});
 
-export async function deleteUser(rawInput: DeleteUserInput): Promise<{ id: string }> {
-  await requireAdmin();
-  const input = deleteUserSchema.parse(rawInput);
+export const deleteUser = defineAction({
+  auth: "admin",
+  schema: deleteUserSchema,
+  handler: async (input): Promise<{ id: string }> => {
+    const existing = await prisma.user.findUnique({ where: { id: input.id } });
+    if (!existing) throw new ActionError("User not found.", "NOT_FOUND");
 
-  const existing = await prisma.user.findUnique({ where: { id: input.id } });
-  if (!existing) throw new ActionError("User not found.", "NOT_FOUND");
-
-  await prisma.user.delete({ where: { id: input.id } });
-  return { id: input.id };
-}
+    await prisma.user.delete({ where: { id: input.id } });
+    return { id: input.id };
+  },
+});

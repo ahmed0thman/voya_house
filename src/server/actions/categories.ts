@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { ActionError } from "@/lib/action-error";
-import { requireUser } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import { slugify } from "@/lib/slug";
 import { deleteImagesBestEffort } from "@/server/actions/items";
 import {
@@ -11,10 +11,7 @@ import {
   updateCategorySchema,
   deleteCategorySchema,
   reorderCategoriesSchema,
-  type CreateCategoryInput,
-  type UpdateCategoryInput,
-  type DeleteCategoryInput,
-  type ReorderCategoriesInput,
+  listCategoriesSchema,
 } from "@/lib/validations/category";
 
 export type CategoryDTO = {
@@ -65,22 +62,23 @@ async function generateUniqueCategorySlug(
   );
 }
 
-export async function listCategories(brandId?: string): Promise<CategoryDTO[]> {
-  await requireUser();
-  const categories = await prisma.category.findMany({
-    where: brandId ? { brandId } : undefined,
-    include: { _count: { select: { items: true } } },
-    orderBy: [{ brandId: "asc" }, { sortOrder: "asc" }],
-  });
-  return categories.map(toCategoryDTO);
-}
+export const listCategories = defineAction({
+  auth: "user",
+  schema: listCategoriesSchema,
+  handler: async (brandId): Promise<CategoryDTO[]> => {
+    const categories = await prisma.category.findMany({
+      where: brandId ? { brandId } : undefined,
+      include: { _count: { select: { items: true } } },
+      orderBy: [{ brandId: "asc" }, { sortOrder: "asc" }],
+    });
+    return categories.map(toCategoryDTO);
+  },
+});
 
-export async function createCategory(
-  rawInput: CreateCategoryInput,
-): Promise<CategoryDTO> {
-  await requireUser();
-  const input = createCategorySchema.parse(rawInput);
-
+export const createCategory = defineAction({
+  auth: "user",
+  schema: createCategorySchema,
+  handler: async (input): Promise<CategoryDTO> => {
   const brand = await prisma.brand.findUnique({ where: { id: input.brandId } });
   if (!brand) throw new ActionError("Brand not found.", "NOT_FOUND");
 
@@ -104,14 +102,13 @@ export async function createCategory(
   });
 
   return toCategoryDTO(category);
-}
+  },
+});
 
-export async function updateCategory(
-  rawInput: UpdateCategoryInput,
-): Promise<CategoryDTO> {
-  await requireUser();
-  const input = updateCategorySchema.parse(rawInput);
-
+export const updateCategory = defineAction({
+  auth: "user",
+  schema: updateCategorySchema,
+  handler: async (input): Promise<CategoryDTO> => {
   const existing = await prisma.category.findUnique({ where: { id: input.id } });
   if (!existing) throw new ActionError("Category not found.", "NOT_FOUND");
 
@@ -125,12 +122,13 @@ export async function updateCategory(
   });
 
   return toCategoryDTO(category);
-}
+  },
+});
 
-export async function deleteCategory(rawInput: DeleteCategoryInput): Promise<{ id: string }> {
-  await requireUser();
-  const input = deleteCategorySchema.parse(rawInput);
-
+export const deleteCategory = defineAction({
+  auth: "user",
+  schema: deleteCategorySchema,
+  handler: async (input): Promise<{ id: string }> => {
   const existing = await prisma.category.findUnique({
     where: { id: input.id },
     include: { _count: { select: { items: true } } },
@@ -163,14 +161,13 @@ export async function deleteCategory(rawInput: DeleteCategoryInput): Promise<{ i
   }
 
   return { id: input.id };
-}
+  },
+});
 
-export async function reorderCategories(
-  rawInput: ReorderCategoriesInput,
-): Promise<{ brandId: string; orderedIds: string[] }> {
-  await requireUser();
-  const input = reorderCategoriesSchema.parse(rawInput);
-
+export const reorderCategories = defineAction({
+  auth: "user",
+  schema: reorderCategoriesSchema,
+  handler: async (input): Promise<{ brandId: string; orderedIds: string[] }> => {
   const categories = await prisma.category.findMany({
     where: { brandId: input.brandId },
     select: { id: true },
@@ -192,4 +189,5 @@ export async function reorderCategories(
   );
 
   return { brandId: input.brandId, orderedIds: validOrderedIds };
-}
+  },
+});

@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, OrderStatus, OrderType, TableSessionStatus } from "@/generated/prisma/client";
 import { ActionError } from "@/lib/action-error";
-import { requireUser } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import { resolveImageUrl } from "@/lib/storage/r2";
 import { findActiveOfferByCode } from "@/server/actions/offers";
 import {
@@ -13,11 +13,8 @@ import {
   updateOrderStatusSchema,
   rejectOrderSchema,
   settleTableSessionSchema,
-  type CreateOrderInput,
-  type EditOrderInput,
-  type UpdateOrderStatusInput,
-  type RejectOrderInput,
-  type SettleTableSessionInput,
+  tableNumberSchema,
+  orderTypeFilterSchema,
 } from "@/lib/validations/order";
 
 export type OrderItemDTO = {
@@ -110,9 +107,10 @@ function toOrderDTO(order: OrderWithItems, tableNumber: number | null): OrderDTO
  * re-read/recomputed from the DB here so a tampered request can't undercharge
  * the order, order a non-existent item, or apply a fake/expired code.
  */
-export async function createOrder(rawInput: CreateOrderInput): Promise<OrderDTO> {
-  const input = createOrderSchema.parse(rawInput);
-
+export const createOrder = defineAction({
+  auth: "public",
+  schema: createOrderSchema,
+  handler: async (input): Promise<OrderDTO> => {
   // Only a dine-in ticket is tied to a physical table (and therefore to a session).
   const table =
     input.type === "ON_TABLE"
@@ -219,8 +217,9 @@ export async function createOrder(rawInput: CreateOrderInput): Promise<OrderDTO>
     });
   });
 
-  return toOrderDTO(order, dineInTable.number);
-}
+    return toOrderDTO(order, dineInTable.number);
+  },
+});
 
 /**
  * Public on purpose — feeds the guest's own "Table Orders" status view.
@@ -229,18 +228,22 @@ export async function createOrder(rawInput: CreateOrderInput): Promise<OrderDTO>
  * An unknown table or one with no open session simply has no orders rather
  * than erroring, since a stale/garbled URL param shouldn't crash the page.
  */
-export async function listSessionOrdersForTable(tableNumber: number): Promise<OrderDTO[]> {
-  const table = await prisma.restaurantTable.findUnique({ where: { number: tableNumber } });
-  if (!table) return [];
+export const listSessionOrdersForTable = defineAction({
+  auth: "public",
+  schema: tableNumberSchema,
+  handler: async (tableNumber): Promise<OrderDTO[]> => {
+    const table = await prisma.restaurantTable.findUnique({ where: { number: tableNumber } });
+    if (!table) return [];
 
-  const session = await prisma.tableSession.findFirst({
-    where: { tableId: table.id, status: TableSessionStatus.OPEN },
-    include: { orders: { include: { items: true }, orderBy: { createdAt: "desc" } } },
-  });
-  if (!session) return [];
+    const session = await prisma.tableSession.findFirst({
+      where: { tableId: table.id, status: TableSessionStatus.OPEN },
+      include: { orders: { include: { items: true }, orderBy: { createdAt: "desc" } } },
+    });
+    if (!session) return [];
 
-  return session.orders.map((order) => toOrderDTO(order, table.number));
-}
+    return session.orders.map((order) => toOrderDTO(order, table.number));
+  },
+});
 
 /**
  * Public on purpose — the takeaway/delivery counterpart to
@@ -250,18 +253,21 @@ export async function listSessionOrdersForTable(tableNumber: number): Promise<Or
  * only someone who placed the order (or was shown it) ever holds one. Dine-in
  * tickets are excluded — they belong to a table session and are read through it.
  */
-export async function listGuestOrders(rawIds: string[]): Promise<OrderDTO[]> {
-  const ids = listGuestOrdersSchema.parse(rawIds);
-  if (ids.length === 0) return [];
+export const listGuestOrders = defineAction({
+  auth: "public",
+  schema: listGuestOrdersSchema,
+  handler: async (ids): Promise<OrderDTO[]> => {
+    if (ids.length === 0) return [];
 
-  const orders = await prisma.order.findMany({
-    where: { id: { in: ids }, type: { in: [OrderType.TAKEAWAY, OrderType.DELIVERY] } },
-    include: { items: true },
-    orderBy: { createdAt: "desc" },
-  });
+    const orders = await prisma.order.findMany({
+      where: { id: { in: ids }, type: { in: [OrderType.TAKEAWAY, OrderType.DELIVERY] } },
+      include: { items: true },
+      orderBy: { createdAt: "desc" },
+    });
 
-  return orders.map((order) => toOrderDTO(order, null));
-}
+    return orders.map((order) => toOrderDTO(order, null));
+  },
+});
 
 /**
  * Control-board view — every table currently mid-visit, with all of its
@@ -270,73 +276,80 @@ export async function listGuestOrders(rawIds: string[]): Promise<OrderDTO[]> {
  * Sorted by each table's most recent ticket, newest first — a table that
  * just sent a new round should jump to the top even if it's been seated a while.
  */
-export async function listOpenTableSessions(): Promise<TableSessionDTO[]> {
-  await requireUser();
+export const listOpenTableSessions = defineAction({
+  auth: "user",
+  handler: async (): Promise<TableSessionDTO[]> => {
+    const sessions = await prisma.tableSession.findMany({
+      where: { status: TableSessionStatus.OPEN },
+      include: {
+        table: true,
+        orders: { include: { items: true }, orderBy: { createdAt: "desc" } },
+      },
+    });
 
-  const sessions = await prisma.tableSession.findMany({
-    where: { status: TableSessionStatus.OPEN },
-    include: {
-      table: true,
-      orders: { include: { items: true }, orderBy: { createdAt: "desc" } },
-    },
-  });
+    const dtos = sessions.map((session) => {
+      const orders = session.orders.map((order) => toOrderDTO(order, session.table.number));
+      return {
+        id: session.id,
+        tableNumber: session.table.number,
+        status: session.status,
+        openedAt: session.openedAt.toISOString(),
+        totalPrice: orders
+          .filter((order) => order.status !== OrderStatus.REJECTED)
+          .reduce((sum, order) => sum + order.totalPrice, 0),
+        orders,
+      };
+    });
 
-  const dtos = sessions.map((session) => {
-    const orders = session.orders.map((order) => toOrderDTO(order, session.table.number));
-    return {
-      id: session.id,
-      tableNumber: session.table.number,
-      status: session.status,
-      openedAt: session.openedAt.toISOString(),
-      totalPrice: orders
-        .filter((order) => order.status !== OrderStatus.REJECTED)
-        .reduce((sum, order) => sum + order.totalPrice, 0),
-      orders,
-    };
-  });
-
-  return dtos.sort((a, b) => {
-    const aLatest = a.orders[0]?.createdAt ?? a.openedAt;
-    const bLatest = b.orders[0]?.createdAt ?? b.openedAt;
-    return bLatest.localeCompare(aLatest);
-  });
-}
+    return dtos.sort((a, b) => {
+      const aLatest = a.orders[0]?.createdAt ?? a.openedAt;
+      const bLatest = b.orders[0]?.createdAt ?? b.openedAt;
+      return bLatest.localeCompare(aLatest);
+    });
+  },
+});
 
 /**
  * Control-board view for the two order types that don't go through a table
  * session — each ticket stands alone, so once it's SERVED (picked up /
  * handed to the courier) or REJECTED it's simply done and drops off here.
  */
-export async function listOrdersByType(type: "TAKEAWAY" | "DELIVERY"): Promise<OrderDTO[]> {
-  await requireUser();
+export const listOrdersByType = defineAction({
+  auth: "user",
+  schema: orderTypeFilterSchema,
+  handler: async (type): Promise<OrderDTO[]> => {
+    const orders = await prisma.order.findMany({
+      where: {
+        type: OrderType[type],
+        status: { notIn: [OrderStatus.SERVED, OrderStatus.REJECTED] },
+      },
+      include: { items: true },
+      orderBy: { createdAt: "asc" },
+    });
 
-  const orders = await prisma.order.findMany({
-    where: { type: OrderType[type], status: { notIn: [OrderStatus.SERVED, OrderStatus.REJECTED] } },
-    include: { items: true },
-    orderBy: { createdAt: "asc" },
-  });
+    return orders.map((order) => toOrderDTO(order, null));
+  },
+});
 
-  return orders.map((order) => toOrderDTO(order, null));
-}
+export const updateOrderStatus = defineAction({
+  auth: "user",
+  schema: updateOrderStatusSchema,
+  handler: async (input): Promise<OrderDTO> => {
+    const existing = await prisma.order.findUnique({
+      where: { id: input.id },
+      include: { tableSession: { include: { table: true } } },
+    });
+    if (!existing) throw new ActionError("Order not found.", "NOT_FOUND");
 
-export async function updateOrderStatus(rawInput: UpdateOrderStatusInput): Promise<OrderDTO> {
-  await requireUser();
-  const input = updateOrderStatusSchema.parse(rawInput);
+    const order = await prisma.order.update({
+      where: { id: input.id },
+      data: { status: input.status },
+      include: { items: true },
+    });
 
-  const existing = await prisma.order.findUnique({
-    where: { id: input.id },
-    include: { tableSession: { include: { table: true } } },
-  });
-  if (!existing) throw new ActionError("Order not found.", "NOT_FOUND");
-
-  const order = await prisma.order.update({
-    where: { id: input.id },
-    data: { status: input.status },
-    include: { items: true },
-  });
-
-  return toOrderDTO(order, existing.tableSession?.table.number ?? null);
-}
+    return toOrderDTO(order, existing.tableSession?.table.number ?? null);
+  },
+});
 
 /** Up to the moment it changes hands, a standalone ticket is still correctable. */
 const EDITABLE_STATUSES: OrderStatus[] = [
@@ -357,10 +370,10 @@ const EDITABLE_STATUSES: OrderStatus[] = [
  * whose offer has since expired is still honoured (capped at the new subtotal)
  * rather than yanked from under a customer who already agreed to it.
  */
-export async function editOrder(rawInput: EditOrderInput): Promise<OrderDTO> {
-  await requireUser();
-  const input = editOrderSchema.parse(rawInput);
-
+export const editOrder = defineAction({
+  auth: "user",
+  schema: editOrderSchema,
+  handler: async (input): Promise<OrderDTO> => {
   const existing = await prisma.order.findUnique({
     where: { id: input.id },
     include: { items: true },
@@ -379,7 +392,9 @@ export async function editOrder(rawInput: EditOrderInput): Promise<OrderDTO> {
     );
   }
   if (existing.type === OrderType.DELIVERY && !input.deliveryAddress) {
-    throw new ActionError("A delivery order needs an address.", "VALIDATION");
+    throw new ActionError("A delivery order needs an address.", "VALIDATION", {
+      deliveryAddress: ["A delivery order needs an address."],
+    });
   }
 
   const items = await prisma.item.findMany({
@@ -455,8 +470,9 @@ export async function editOrder(rawInput: EditOrderInput): Promise<OrderDTO> {
     });
   });
 
-  return toOrderDTO(order, null);
-}
+    return toOrderDTO(order, null);
+  },
+});
 
 /**
  * Staff decline a ticket before the kitchen has started on it — a mistake or
@@ -464,61 +480,67 @@ export async function editOrder(rawInput: EditOrderInput): Promise<OrderDTO> {
  * it's too late to just cancel it. The guest's client watches for this
  * transition and moves the ticket's items back into their cart.
  */
-export async function rejectOrder(rawInput: RejectOrderInput): Promise<OrderDTO> {
-  await requireUser();
-  const input = rejectOrderSchema.parse(rawInput);
+export const rejectOrder = defineAction({
+  auth: "user",
+  schema: rejectOrderSchema,
+  handler: async (input): Promise<OrderDTO> => {
+    const existing = await prisma.order.findUnique({
+      where: { id: input.id },
+      include: { tableSession: { include: { table: true } } },
+    });
+    if (!existing) throw new ActionError("Order not found.", "NOT_FOUND");
+    if (existing.status !== OrderStatus.RECEIVED) {
+      throw new ActionError(
+        "Only tickets that haven't started preparing yet can be rejected.",
+        "CONFLICT",
+      );
+    }
 
-  const existing = await prisma.order.findUnique({
-    where: { id: input.id },
-    include: { tableSession: { include: { table: true } } },
-  });
-  if (!existing) throw new ActionError("Order not found.", "NOT_FOUND");
-  if (existing.status !== OrderStatus.RECEIVED) {
-    throw new ActionError(
-      "Only tickets that haven't started preparing yet can be rejected.",
-      "CONFLICT",
-    );
-  }
+    const order = await prisma.order.update({
+      where: { id: input.id },
+      data: { status: OrderStatus.REJECTED, rejectionReason: input.reason || null },
+      include: { items: true },
+    });
 
-  const order = await prisma.order.update({
-    where: { id: input.id },
-    data: { status: OrderStatus.REJECTED, rejectionReason: input.reason || null },
-    include: { items: true },
-  });
-
-  return toOrderDTO(order, existing.tableSession?.table.number ?? null);
-}
+    return toOrderDTO(order, existing.tableSession?.table.number ?? null);
+  },
+});
 
 /**
  * Closes out a table's tab — the guest's ticket history for this visit
  * disappears once this runs. Every ticket must be resolved first (served or
  * rejected) so nothing still cooking gets silently written off.
  */
-export async function settleTableSession(rawInput: SettleTableSessionInput): Promise<{ id: string }> {
-  await requireUser();
-  const input = settleTableSessionSchema.parse(rawInput);
+export const settleTableSession = defineAction({
+  auth: "user",
+  schema: settleTableSessionSchema,
+  handler: async (input): Promise<{ id: string }> => {
+    const session = await prisma.tableSession.findUnique({
+      where: { id: input.id },
+      include: { orders: true },
+    });
+    if (!session) throw new ActionError("Table session not found.", "NOT_FOUND");
+    if (session.status === TableSessionStatus.SETTLED) {
+      throw new ActionError("This table has already been settled.", "CONFLICT");
+    }
+    const UNFINISHED: OrderStatus[] = [
+      OrderStatus.RECEIVED,
+      OrderStatus.PREPARING,
+      OrderStatus.READY,
+    ];
+    const unresolved = session.orders.some((order) => UNFINISHED.includes(order.status));
+    if (unresolved) {
+      throw new ActionError(
+        "Every ticket must be served or rejected before this table can be settled.",
+        "CONFLICT",
+      );
+    }
 
-  const session = await prisma.tableSession.findUnique({
-    where: { id: input.id },
-    include: { orders: true },
-  });
-  if (!session) throw new ActionError("Table session not found.", "NOT_FOUND");
-  if (session.status === TableSessionStatus.SETTLED) {
-    throw new ActionError("This table has already been settled.", "CONFLICT");
-  }
-  const UNFINISHED: OrderStatus[] = [OrderStatus.RECEIVED, OrderStatus.PREPARING, OrderStatus.READY];
-  const unresolved = session.orders.some((order) => UNFINISHED.includes(order.status));
-  if (unresolved) {
-    throw new ActionError(
-      "Every ticket must be served or rejected before this table can be settled.",
-      "CONFLICT",
-    );
-  }
+    await prisma.tableSession.update({
+      where: { id: input.id },
+      data: { status: TableSessionStatus.SETTLED, settledAt: new Date() },
+    });
 
-  await prisma.tableSession.update({
-    where: { id: input.id },
-    data: { status: TableSessionStatus.SETTLED, settledAt: new Date() },
-  });
-
-  return { id: input.id };
-}
+    return { id: input.id };
+  },
+});

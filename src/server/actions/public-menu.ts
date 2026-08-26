@@ -2,6 +2,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { resolveImageUrl } from "@/lib/storage/r2";
+import { defineAction } from "@/server/define-action";
+import { brandSlugSchema } from "@/lib/validations/menu";
 
 export type PublicMenuItem = {
   id: string;
@@ -23,7 +25,10 @@ export type PublicMenuCategory = {
  * categories and available items are returned; hidden/86'd stock never
  * reaches the client.
  */
-export async function getPublicMenu(brandSlug: string): Promise<PublicMenuCategory[]> {
+export const getPublicMenu = defineAction({
+  auth: "public",
+  schema: brandSlugSchema,
+  handler: async (brandSlug): Promise<PublicMenuCategory[]> => {
   const categories = await prisma.category.findMany({
     where: { brand: { slug: brandSlug }, isActive: true },
     orderBy: { sortOrder: "asc" },
@@ -46,4 +51,5 @@ export async function getPublicMenu(brandSlug: string): Promise<PublicMenuCatego
       image: item.images[0] ? resolveImageUrl(item.images[0]) : "",
     })),
   }));
-}
+  },
+});

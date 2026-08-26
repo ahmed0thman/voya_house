@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, requireAdmin } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import { getStorageStatus, type StorageStatusDTO } from "@/lib/storage/r2";
 
 export type DashboardStatsDTO = {
@@ -20,8 +20,9 @@ export type DashboardStatsDTO = {
   }[];
 };
 
-export async function getDashboardStats(): Promise<DashboardStatsDTO> {
-  await requireUser();
+export const getDashboardStats = defineAction({
+  auth: "user",
+  handler: async (): Promise<DashboardStatsDTO> => {
   const [totalCategories, totalItems, availableItems, itemsWithoutImages, priceAgg, brands] =
     await Promise.all([
       prisma.category.count(),
@@ -54,7 +55,8 @@ export async function getDashboardStats(): Promise<DashboardStatsDTO> {
     totalCatalogValue: priceAgg._sum.price?.toNumber() ?? 0,
     perBrand,
   };
-}
+  },
+});
 
 export type SystemStatusDTO = {
   database: { connected: boolean; brandCount: number };
@@ -62,8 +64,9 @@ export type SystemStatusDTO = {
   brands: { id: string; slug: string; name: string; categoryCount: number; itemCount: number }[];
 };
 
-export async function getSystemStatus(): Promise<SystemStatusDTO> {
-  await requireAdmin();
+export const getSystemStatus = defineAction({
+  auth: "admin",
+  handler: async (): Promise<SystemStatusDTO> => {
   const [dbResult, storage] = await Promise.all([
     prisma.brand
       .findMany({
@@ -90,4 +93,5 @@ export async function getSystemStatus(): Promise<SystemStatusDTO> {
     storage,
     brands: brandsWithCounts,
   };
-}
+  },
+});

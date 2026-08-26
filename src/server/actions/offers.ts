@@ -3,14 +3,12 @@
 import { prisma } from "@/lib/prisma";
 import type { CodeOffer } from "@/generated/prisma/client";
 import { ActionError } from "@/lib/action-error";
-import { requireAdmin } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import {
   createOfferSchema,
   updateOfferSchema,
   deleteOfferSchema,
-  type CreateOfferInput,
-  type UpdateOfferInput,
-  type DeleteOfferInput,
+  codeSchema,
 } from "@/lib/validations/offer";
 
 export type OfferDTO = {
@@ -39,11 +37,13 @@ function toOfferDTO(offer: CodeOffer): OfferDTO {
   };
 }
 
-export async function listOffers(): Promise<OfferDTO[]> {
-  await requireAdmin();
-  const offers = await prisma.codeOffer.findMany({ orderBy: { createdAt: "desc" } });
-  return offers.map(toOfferDTO);
-}
+export const listOffers = defineAction({
+  auth: "admin",
+  handler: async (): Promise<OfferDTO[]> => {
+    const offers = await prisma.codeOffer.findMany({ orderBy: { createdAt: "desc" } });
+    return offers.map(toOfferDTO);
+  },
+});
 
 /** Shared by the guest's live "Apply" preview and the authoritative check inside `createOrder`. */
 export async function findActiveOfferByCode(rawCode: string): Promise<CodeOffer | null> {
@@ -72,23 +72,27 @@ export type OfferPreviewDTO = {
  * `findActiveOfferByCode` itself before computing the real discount, so a
  * tampered client can't apply an expired or fabricated code.
  */
-export async function validateOfferCode(rawCode: string): Promise<OfferPreviewDTO> {
-  const offer = await findActiveOfferByCode(rawCode);
-  if (!offer) {
-    throw new ActionError("This code isn't valid or has expired.", "NOT_FOUND");
-  }
-  return {
-    code: offer.code,
-    name: offer.name,
-    discountType: offer.discountType,
-    discountValue: offer.discountValue.toNumber(),
-  };
-}
+export const validateOfferCode = defineAction({
+  auth: "public",
+  schema: codeSchema,
+  handler: async (code): Promise<OfferPreviewDTO> => {
+    const offer = await findActiveOfferByCode(code);
+    if (!offer) {
+      throw new ActionError("This code isn't valid or has expired.", "NOT_FOUND");
+    }
+    return {
+      code: offer.code,
+      name: offer.name,
+      discountType: offer.discountType,
+      discountValue: offer.discountValue.toNumber(),
+    };
+  },
+});
 
-export async function createOffer(rawInput: CreateOfferInput): Promise<OfferDTO> {
-  await requireAdmin();
-  const input = createOfferSchema.parse(rawInput);
-
+export const createOffer = defineAction({
+  auth: "admin",
+  schema: createOfferSchema,
+  handler: async (input): Promise<OfferDTO> => {
   const existing = await prisma.codeOffer.findUnique({ where: { code: input.code } });
   if (existing) {
     throw new ActionError(`Code "${input.code}" is already in use.`, "CONFLICT");
@@ -107,12 +111,13 @@ export async function createOffer(rawInput: CreateOfferInput): Promise<OfferDTO>
   });
 
   return toOfferDTO(offer);
-}
+  },
+});
 
-export async function updateOffer(rawInput: UpdateOfferInput): Promise<OfferDTO> {
-  await requireAdmin();
-  const input = updateOfferSchema.parse(rawInput);
-
+export const updateOffer = defineAction({
+  auth: "admin",
+  schema: updateOfferSchema,
+  handler: async (input): Promise<OfferDTO> => {
   const existing = await prisma.codeOffer.findUnique({ where: { id: input.id } });
   if (!existing) throw new ActionError("Offer not found.", "NOT_FOUND");
 
@@ -138,15 +143,17 @@ export async function updateOffer(rawInput: UpdateOfferInput): Promise<OfferDTO>
   });
 
   return toOfferDTO(offer);
-}
+  },
+});
 
-export async function deleteOffer(rawInput: DeleteOfferInput): Promise<{ id: string }> {
-  await requireAdmin();
-  const input = deleteOfferSchema.parse(rawInput);
+export const deleteOffer = defineAction({
+  auth: "admin",
+  schema: deleteOfferSchema,
+  handler: async (input): Promise<{ id: string }> => {
+    const existing = await prisma.codeOffer.findUnique({ where: { id: input.id } });
+    if (!existing) throw new ActionError("Offer not found.", "NOT_FOUND");
 
-  const existing = await prisma.codeOffer.findUnique({ where: { id: input.id } });
-  if (!existing) throw new ActionError("Offer not found.", "NOT_FOUND");
-
-  await prisma.codeOffer.delete({ where: { id: input.id } });
-  return { id: input.id };
-}
+    await prisma.codeOffer.delete({ where: { id: input.id } });
+    return { id: input.id };
+  },
+});

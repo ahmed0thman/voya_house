@@ -1,6 +1,6 @@
 "use server";
 
-import { requireUser } from "@/lib/dal";
+import { defineAction } from "@/server/define-action";
 import {
   generateItemImageKey,
   createPresignedUploadUrl,
@@ -11,8 +11,6 @@ import {
 import {
   requestItemImageUploadSchema,
   deleteItemImageSchema,
-  type RequestItemImageUploadInput,
-  type DeleteItemImageInput,
 } from "@/lib/validations/upload";
 
 export type PresignedUploadDTO = {
@@ -27,11 +25,10 @@ export type PresignedUploadDTO = {
  * The client must PUT the file to `uploadUrl` with a `Content-Type` header
  * that exactly matches `contentType` (it's part of the signed request).
  */
-export async function requestItemImageUpload(
-  rawInput: RequestItemImageUploadInput,
-): Promise<PresignedUploadDTO> {
-  await requireUser();
-  const input = requestItemImageUploadSchema.parse(rawInput);
+export const requestItemImageUpload = defineAction({
+  auth: "user",
+  schema: requestItemImageUploadSchema,
+  handler: async (input): Promise<PresignedUploadDTO> => {
   await assertStorageBudget(input.fileSize);
   const key = generateItemImageKey(input.fileName);
   const uploadUrl = await createPresignedUploadUrl({
@@ -45,13 +42,14 @@ export async function requestItemImageUpload(
     publicUrl: resolveImageUrl(key),
     contentType: input.contentType,
   };
-}
+  },
+});
 
-export async function deleteItemImage(
-  rawInput: DeleteItemImageInput,
-): Promise<{ key: string }> {
-  await requireUser();
-  const input = deleteItemImageSchema.parse(rawInput);
-  await deleteObject(input.key);
-  return { key: input.key };
-}
+export const deleteItemImage = defineAction({
+  auth: "user",
+  schema: deleteItemImageSchema,
+  handler: async (input): Promise<{ key: string }> => {
+    await deleteObject(input.key);
+    return { key: input.key };
+  },
+});
