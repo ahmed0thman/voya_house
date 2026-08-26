@@ -11,6 +11,7 @@ import {
 } from "@/server/actions/orders";
 import { listOrderableItems } from "@/server/actions/items";
 import { queryKeys } from "@/lib/query-keys";
+import { unwrap } from "@/lib/action-result";
 import type {
   EditOrderInput,
   UpdateOrderStatusInput,
@@ -24,7 +25,7 @@ const POLL_INTERVAL_MS = 10_000;
 export function useTableSessions() {
   return useQuery({
     queryKey: queryKeys.orders.sessions,
-    queryFn: () => listOpenTableSessions(),
+    queryFn: () => unwrap(listOpenTableSessions()),
     refetchInterval: POLL_INTERVAL_MS,
   });
 }
@@ -32,7 +33,7 @@ export function useTableSessions() {
 export function useOrdersByType(type: "TAKEAWAY" | "DELIVERY") {
   return useQuery({
     queryKey: queryKeys.orders.byType(type),
-    queryFn: () => listOrdersByType(type),
+    queryFn: () => unwrap(listOrdersByType(type)),
     refetchInterval: POLL_INTERVAL_MS,
   });
 }
@@ -41,7 +42,7 @@ export function useOrdersByType(type: "TAKEAWAY" | "DELIVERY") {
 export function useOrderableItems(enabled: boolean) {
   return useQuery({
     queryKey: queryKeys.items.orderable,
-    queryFn: () => listOrderableItems(),
+    queryFn: () => unwrap(listOrderableItems()),
     enabled,
     staleTime: 5 * 60 * 1000,
   });
@@ -50,7 +51,7 @@ export function useOrderableItems(enabled: boolean) {
 export function useEditOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: EditOrderInput) => editOrder(input),
+    mutationFn: (input: EditOrderInput) => unwrap(editOrder(input)),
     onSuccess: (order) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.orders.byType(order.type === "DELIVERY" ? "DELIVERY" : "TAKEAWAY"),
@@ -62,7 +63,7 @@ export function useEditOrder() {
 export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateOrderStatusInput) => updateOrderStatus(input),
+    mutationFn: (input: UpdateOrderStatusInput) => unwrap(updateOrderStatus(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.sessions });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.byType("TAKEAWAY") });
@@ -74,7 +75,7 @@ export function useUpdateOrderStatus() {
 export function useRejectOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: RejectOrderInput) => rejectOrder(input),
+    mutationFn: (input: RejectOrderInput) => unwrap(rejectOrder(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.sessions });
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.byType("TAKEAWAY") });
@@ -86,7 +87,7 @@ export function useRejectOrder() {
 export function useSettleTableSession() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: SettleTableSessionInput) => settleTableSession(input),
+    mutationFn: (input: SettleTableSessionInput) => unwrap(settleTableSession(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.orders.sessions });
     },

@@ -9,6 +9,7 @@ import {
   reorderCategories,
 } from "@/server/actions/categories";
 import { queryKeys } from "@/lib/query-keys";
+import { unwrap } from "@/lib/action-result";
 import type {
   CreateCategoryInput,
   UpdateCategoryInput,
@@ -19,14 +20,14 @@ import type {
 export function useCategories(brandId?: string) {
   return useQuery({
     queryKey: queryKeys.categories.list(brandId),
-    queryFn: () => listCategories(brandId),
+    queryFn: () => unwrap(listCategories(brandId)),
   });
 }
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateCategoryInput) => createCategory(input),
+    mutationFn: (input: CreateCategoryInput) => unwrap(createCategory(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.dashboard });
@@ -38,7 +39,7 @@ export function useCreateCategory() {
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateCategoryInput) => updateCategory(input),
+    mutationFn: (input: UpdateCategoryInput) => unwrap(updateCategory(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
     },
@@ -48,7 +49,7 @@ export function useUpdateCategory() {
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: DeleteCategoryInput) => deleteCategory(input),
+    mutationFn: (input: DeleteCategoryInput) => unwrap(deleteCategory(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
@@ -61,7 +62,7 @@ export function useDeleteCategory() {
 export function useReorderCategories() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: ReorderCategoriesInput) => reorderCategories(input),
+    mutationFn: (input: ReorderCategoriesInput) => unwrap(reorderCategories(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
     },

@@ -9,6 +9,7 @@ import {
   reorderItems,
 } from "@/server/actions/items";
 import { queryKeys } from "@/lib/query-keys";
+import { unwrap } from "@/lib/action-result";
 import type {
   CreateItemInput,
   UpdateItemInput,
@@ -19,7 +20,7 @@ import type {
 export function useItems(categoryId: string | undefined) {
   return useQuery({
     queryKey: queryKeys.items.list(categoryId ?? ""),
-    queryFn: () => listItems(categoryId as string),
+    queryFn: () => unwrap(listItems(categoryId as string)),
     enabled: Boolean(categoryId),
   });
 }
@@ -27,7 +28,7 @@ export function useItems(categoryId: string | undefined) {
 export function useCreateItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateItemInput) => createItem(input),
+    mutationFn: (input: CreateItemInput) => unwrap(createItem(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
       // categories carry an `itemCount` that just changed too
@@ -41,7 +42,7 @@ export function useCreateItem() {
 export function useUpdateItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateItemInput) => updateItem(input),
+    mutationFn: (input: UpdateItemInput) => unwrap(updateItem(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.stats.dashboard });
@@ -52,7 +53,7 @@ export function useUpdateItem() {
 export function useDeleteItem() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: DeleteItemInput) => deleteItem(input),
+    mutationFn: (input: DeleteItemInput) => unwrap(deleteItem(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
       // categories carry an `itemCount` that just changed too
@@ -66,7 +67,7 @@ export function useDeleteItem() {
 export function useReorderItems() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: ReorderItemsInput) => reorderItems(input),
+    mutationFn: (input: ReorderItemsInput) => unwrap(reorderItems(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.items.all });
     },

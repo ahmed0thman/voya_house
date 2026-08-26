@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listUsers, createUser, updateUser, deleteUser } from "@/server/actions/users";
 import { queryKeys } from "@/lib/query-keys";
+import { unwrap } from "@/lib/action-result";
 import type {
   CreateUserInput,
   UpdateUserInput,
@@ -12,14 +13,14 @@ import type {
 export function useUsers() {
   return useQuery({
     queryKey: queryKeys.users.all,
-    queryFn: () => listUsers(),
+    queryFn: () => unwrap(listUsers()),
   });
 }
 
 export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateUserInput) => createUser(input),
+    mutationFn: (input: CreateUserInput) => unwrap(createUser(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
@@ -29,7 +30,7 @@ export function useCreateUser() {
 export function useUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpdateUserInput) => updateUser(input),
+    mutationFn: (input: UpdateUserInput) => unwrap(updateUser(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },
@@ -39,7 +40,7 @@ export function useUpdateUser() {
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: DeleteUserInput) => deleteUser(input),
+    mutationFn: (input: DeleteUserInput) => unwrap(deleteUser(input)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users.all });
     },

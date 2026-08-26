@@ -9,6 +9,7 @@ import {
 } from "@/server/actions/orders";
 import { validateOfferCode } from "@/server/actions/offers";
 import { queryKeys } from "@/lib/query-keys";
+import { unwrap } from "@/lib/action-result";
 import { useCartStore } from "@/store/useCartStore";
 import type { CreateOrderInput } from "@/lib/validations/order";
 
@@ -19,7 +20,7 @@ const POLL_INTERVAL_MS = 15_000;
 export function useTableOrders(tableNumber: number) {
   return useQuery({
     queryKey: queryKeys.orders.table(tableNumber),
-    queryFn: () => listSessionOrdersForTable(tableNumber),
+    queryFn: () => unwrap(listSessionOrdersForTable(tableNumber)),
     refetchInterval: POLL_INTERVAL_MS,
   });
 }
@@ -28,7 +29,7 @@ export function useTableOrders(tableNumber: number) {
 export function useGuestTicketOrders(orderIds: string[]) {
   return useQuery({
     queryKey: queryKeys.orders.guest(orderIds),
-    queryFn: () => listGuestOrders(orderIds),
+    queryFn: () => unwrap(listGuestOrders(orderIds)),
     enabled: orderIds.length > 0,
     refetchInterval: POLL_INTERVAL_MS,
   });
@@ -54,7 +55,7 @@ export function useGuestOrders() {
 /** A one-off "Apply" click, not a background query — the real check happens again in `createOrder`. */
 export function useValidateOfferCode() {
   return useMutation({
-    mutationFn: (code: string) => validateOfferCode(code),
+    mutationFn: (code: string) => unwrap(validateOfferCode(code)),
   });
 }
 
@@ -64,7 +65,7 @@ export function usePlaceOrder() {
   const guestOrderIds = useCartStore((s) => s.guestOrderIds);
 
   return useMutation({
-    mutationFn: (input: CreateOrderInput) => createOrder(input),
+    mutationFn: (input: CreateOrderInput) => unwrap(createOrder(input)),
     onSuccess: (order, variables) => {
       if (variables.type === "ON_TABLE") {
         queryClient.invalidateQueries({
