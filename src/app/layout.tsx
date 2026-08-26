@@ -5,6 +5,7 @@ import "./globals.css";
 import GlobalCursor from "@/components/GlobalCursor";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { AppToaster } from "@/components/app-toaster";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -32,6 +33,7 @@ export default function RootLayout({
           {children}
           <AppToaster />
         </QueryProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
