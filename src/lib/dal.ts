@@ -20,7 +20,10 @@ export const getCurrentSession = cache(async (): Promise<{ user: SessionUser } |
 
 export async function requireUser(): Promise<SessionUser> {
   const session = await getCurrentSession();
-  if (!session) redirect("/control/login");
+  // Route through /control/session-expired (not /control/login directly) so a
+  // stale cookie gets cleared — otherwise proxy.ts's optimistic cookie check
+  // just bounces the request back to /control in an infinite loop.
+  if (!session) redirect("/control/session-expired");
   return session.user;
 }
 
