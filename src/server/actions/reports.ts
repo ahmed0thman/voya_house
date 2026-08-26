@@ -219,8 +219,14 @@ export const getBusinessDashboard = defineAction({
         phoneOrderCounts.set(order.customerPhone, (phoneOrderCounts.get(order.customerPhone) ?? 0) + 1);
       }
 
+      // Per-order discount, prorated across its lines — so brand/item revenue
+      // sums back to `total` (net) instead of the pre-discount subtotal, which
+      // otherwise overstates revenue by-brand/by-item vs. the top-line KPI.
+      const orderSubtotal = order.subtotal.toNumber();
+      const discountRatio = orderSubtotal > 0 ? total / orderSubtotal : 1;
+
       for (const item of order.items) {
-        const lineRevenue = item.price.toNumber() * item.quantity;
+        const lineRevenue = item.price.toNumber() * item.quantity * discountRatio;
 
         const brandEntry = brandAgg.get(item.brandSlug) ?? { revenue: 0, itemsSold: 0 };
         brandEntry.revenue += lineRevenue;
