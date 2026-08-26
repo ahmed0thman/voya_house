@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import {
   rememberGuestOrder,
-  saveOrderContext,
+  rememberOrderMode,
   type OrderMode,
 } from "@/lib/guest-session";
 
@@ -28,14 +28,20 @@ export const ORDER_MODE_LABEL: Record<OrderMode, string> = {
   DELIVERY: "Delivery",
 };
 
+/** Safe to call before the guest has chosen — an unresolved mode is just "Order". */
+export function orderModeLabel(mode: OrderMode | null): string {
+  return mode ? ORDER_MODE_LABEL[mode] : "Order";
+}
+
 interface CartStore {
   items: CartItem[];
   /**
-   * How this guest is ordering — resolved from the URL they arrived on
-   * (`?table=N` → dine in, `?pickup=true` → pickup, otherwise delivery)
-   * and, for the two off-premise modes, switchable at checkout.
+   * How this guest is ordering. `?table=N` (a scanned QR) resolves it to dine in;
+   * anyone else arrives with it `null` and must pick pickup or delivery at
+   * checkout — there is deliberately no default, since guessing wrong sends
+   * someone's food to the wrong place.
    */
-  orderMode: OrderMode;
+  orderMode: OrderMode | null;
   tableNumber: number;
   /** Ids of the takeaway/delivery tickets this browser has placed — how those guests track their orders. */
   guestOrderIds: string[];
@@ -75,7 +81,7 @@ interface CartStore {
 
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
-  orderMode: "DELIVERY",
+  orderMode: null,
   tableNumber: DEFAULT_TABLE_NUMBER,
   guestOrderIds: [],
   isCartOpen: false,
@@ -85,11 +91,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   setOrderMode: (mode, options) => {
     set({ orderMode: mode });
-    if (options?.persist !== false) {
-      saveOrderContext({
-        mode,
-        tableNumber: mode === "ON_TABLE" ? get().tableNumber : null,
-      });
+    // Dine-in is never written down — the scan is the state, so a settled visit
+    // can't linger and reclaim a later param-less visit. Only the guest's own
+    // pickup/delivery choice is worth remembering.
+    if (options?.persist !== false && mode !== "ON_TABLE") {
+      rememberOrderMode(mode);
     }
   },
 

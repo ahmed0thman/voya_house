@@ -3,14 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCartStore } from "@/store/useCartStore";
-import { readGuestOrderIds, readOrderContext } from "@/lib/guest-session";
-
-/** `?pickup=true`, `?pickup=1` and a bare `?pickup` all mean the same thing; only an explicit no is a no. */
-function isFlagSet(value: string | null): boolean {
-  if (value === null) return false;
-  const normalized = value.trim().toLowerCase();
-  return normalized !== "false" && normalized !== "0" && normalized !== "no";
-}
+import { readGuestOrderIds, readRememberedMode } from "@/lib/guest-session";
 
 function OrderModeReader() {
   const searchParams = useSearchParams();
@@ -31,37 +24,25 @@ function OrderModeReader() {
       searchParams.get("tbl");
     const parsedTable = tableParam ? Number(tableParam) : NaN;
 
-    // 1. A scanned table QR wins outright — it's the strongest signal of where the guest is.
+    // 1. A scanned table QR is the only thing in a URL that decides how someone
+    //    is ordering — it's proof of where they physically are.
     if (Number.isInteger(parsedTable) && parsedTable > 0) {
       setTableNumber(parsedTable);
       setOrderMode("ON_TABLE");
       return;
     }
 
-    // 2. Explicit off-premise links. Pickup is opt-in via param; delivery is the
-    //    bare-URL default, so its param exists only to override a remembered mode.
-    if (isFlagSet(searchParams.get("pickup")) || isFlagSet(searchParams.get("takeaway"))) {
-      setOrderMode("TAKEAWAY");
-      return;
-    }
-    if (isFlagSet(searchParams.get("delivery"))) {
-      setOrderMode("DELIVERY");
-      return;
-    }
-
-    // 3. No param: keep whatever the guest was last doing, if it's still recent —
-    //    an in-house guest who taps a plain internal link stays at their table.
-    const remembered = readOrderContext();
+    // 2. Otherwise fall back to a recent pickup/delivery choice, so someone who
+    //    already told us once isn't asked again on every page. Dine-in is never
+    //    remembered: a table guest is sitting at the QR code, and a settled visit
+    //    must not follow them into the next param-less load.
+    const remembered = readRememberedMode();
     if (remembered) {
-      if (remembered.mode === "ON_TABLE" && remembered.tableNumber) {
-        setTableNumber(remembered.tableNumber);
-      }
-      setOrderMode(remembered.mode, { persist: false });
-      return;
+      setOrderMode(remembered, { persist: false });
     }
 
-    // 4. Nothing to go on — someone who found the site on their own is ordering delivery.
-    setOrderMode("DELIVERY", { persist: false });
+    // 3. Nothing scanned, nothing remembered: leave the mode unset. The guest
+    //    picks pickup or delivery at checkout rather than us guessing for them.
   }, [searchParams, setTableNumber, setOrderMode, setGuestOrderIds]);
 
   return null;

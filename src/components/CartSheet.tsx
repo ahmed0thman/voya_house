@@ -23,15 +23,26 @@ import {
   User03Icon,
   Call02Icon,
   MapPinpoint01Icon,
+  BirthdayCakeIcon,
 } from "hugeicons-react";
 import { toast } from "sonner";
+import DeliveryLocationPicker from "@/components/DeliveryLocationPicker";
 import { useCartStore, formatTableNumber, ORDER_MODE_LABEL } from "@/store/useCartStore";
 import { useGuestOrders, usePlaceOrder, useValidateOfferCode } from "@/hooks/use-table-orders";
 import { useRejectedOrderRecovery } from "@/hooks/use-rejected-order-recovery";
-import { readGuestContact, saveGuestContact, type OrderMode } from "@/lib/guest-session";
+import { useOrderUpdateNotice } from "@/hooks/use-order-update-notice";
+import {
+  EMPTY_CONTACT,
+  readGuestContact,
+  saveGuestContact,
+  type OrderMode,
+} from "@/lib/guest-session";
 import type { OrderDTO } from "@/server/actions/orders";
 import type { CreateOrderInput } from "@/lib/validations/order";
 import { formatPrice } from "@/constants/config";
+
+/** Bounds the birthday picker — nobody was born tomorrow. */
+const TODAY_ISO = new Date().toISOString().slice(0, 10);
 
 function formatOrderTime(iso: string): string {
   return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -54,8 +65,11 @@ const BRAND_CONFIG = {
  * destination block and the last tracker step actually differ, so those live
  * here rather than as branches sprinkled through the markup.
  */
+/** The sheet also has to render before the guest has told us how they want their order. */
+type SheetMode = OrderMode | "UNCHOSEN";
+
 const MODE_CONFIG: Record<
-  OrderMode,
+  SheetMode,
   {
     icon: typeof Location01Icon;
     cartTitle: string;
@@ -68,12 +82,37 @@ const MODE_CONFIG: Record<
     submitLabel: string;
     submitPendingLabel: string;
     submitNote: string;
-    /** Third and final step of the guest's live tracker. */
+    /** Third step: the kitchen is done, nobody has handed it over yet. */
+    readyStepLabel: string;
+    readyStepHint: string;
+    /** Fourth and final step — what "handed over" means for this order type. */
     finalStepLabel: string;
     finalStepHint: string;
+    readyLabel: string;
     servedLabel: string;
   }
 > = {
+  UNCHOSEN: {
+    icon: ShoppingBag01Icon,
+    cartTitle: "Your Order",
+    ordersTitle: "Your Orders",
+    subtitle: "Choose How to Receive It · Sanctuary",
+    cartTabLabel: "New Order",
+    emptyTitle: "Your Order is Empty",
+    emptyBody:
+      "Explore our 3D menu booklets to pick specialty coffee, healthy dishes, or comfort food — you'll choose pickup or delivery at checkout.",
+    destinationHeading: "How Would You Like It?",
+    submitLabel: "Choose Pickup or Delivery",
+    submitPendingLabel: "Sending...",
+    submitNote: "Pick a method above to continue",
+    // Never rendered: a placed ticket always carries a real order type.
+    readyStepLabel: "3. Ready",
+    readyStepHint: "Almost there",
+    finalStepLabel: "4. Handed Over",
+    finalStepHint: "All yours",
+    readyLabel: "Ready",
+    servedLabel: "Completed",
+  },
   ON_TABLE: {
     icon: Location01Icon,
     cartTitle: "Table Cart",
@@ -83,12 +122,15 @@ const MODE_CONFIG: Record<
     emptyTitle: "Your Table Order is Empty",
     emptyBody:
       "Explore our 3D menu booklets to select specialty coffee, healthy dishes, or comfort food for your table.",
-    destinationHeading: "Destination & Notes",
+    destinationHeading: "Your Table & Details",
     submitLabel: "Send Request to Kitchen",
     submitPendingLabel: "Transmitting...",
     submitNote: "No payment online · Settle at table",
-    finalStepLabel: "3. Serving",
-    finalStepHint: "To your table",
+    readyStepLabel: "3. Ready",
+    readyStepHint: "Plated up",
+    finalStepLabel: "4. Served",
+    finalStepHint: "At your table",
+    readyLabel: "Ready to Serve",
     servedLabel: "Served",
   },
   TAKEAWAY: {
@@ -104,9 +146,12 @@ const MODE_CONFIG: Record<
     submitLabel: "Send Pickup Order",
     submitPendingLabel: "Sending...",
     submitNote: "No payment online · Pay at the counter",
-    finalStepLabel: "3. Ready",
-    finalStepHint: "Collect at counter",
-    servedLabel: "Ready for Pickup",
+    readyStepLabel: "3. Ready",
+    readyStepHint: "Collect at counter",
+    finalStepLabel: "4. Picked Up",
+    finalStepHint: "Enjoy it",
+    readyLabel: "Ready for Pickup",
+    servedLabel: "Picked Up",
   },
   DELIVERY: {
     icon: DeliveryTruck01Icon,
@@ -121,11 +166,69 @@ const MODE_CONFIG: Record<
     submitLabel: "Send Delivery Order",
     submitPendingLabel: "Sending...",
     submitNote: "Cash on delivery · Pay the rider",
-    finalStepLabel: "3. On the Way",
+    readyStepLabel: "3. Ready",
+    readyStepHint: "Packed for the rider",
+    finalStepLabel: "4. On the Way",
     finalStepHint: "Out for delivery",
+    readyLabel: "Ready to Dispatch",
     servedLabel: "Out for Delivery",
   },
 };
+
+/** The guest's live tracker steps, in order — a status's index in here is its progress. */
+const PROGRESS_ORDER = ["RECEIVED", "PREPARING", "READY", "SERVED"] as const;
+
+function OrderProgressTracker({ order, tableNumber }: { order: OrderDTO; tableNumber: number }) {
+  const copy = MODE_CONFIG[order.type];
+  const steps = [
+    { label: "1. Received", hint: "Barista / Chef" },
+    { label: "2. Preparing", hint: "Crafting Order" },
+    { label: copy.readyStepLabel, hint: copy.readyStepHint },
+    {
+      label: copy.finalStepLabel,
+      hint: order.type === "ON_TABLE" ? `To ${formatTableNumber(tableNumber)}` : copy.finalStepHint,
+    },
+  ];
+  const currentIndex = PROGRESS_ORDER.indexOf(order.status as (typeof PROGRESS_ORDER)[number]);
+
+  return (
+    <div className="grid grid-cols-4 gap-1 sm:gap-2 relative mb-6">
+      {steps.map((step, index) => {
+        const isDone = index < currentIndex;
+        const isCurrent = index === currentIndex;
+        // The last step is terminal — landing on it is completion, not "in progress".
+        const isComplete = isDone || (isCurrent && index === steps.length - 1);
+
+        return (
+          <div
+            key={step.label}
+            className={`flex flex-col items-center text-center ${isDone || isCurrent ? "" : "opacity-40"}`}
+          >
+            <div
+              className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center mb-1.5 ${
+                isComplete
+                  ? "bg-[#B7D39A] text-black shadow-[0_0_15px_rgba(183,211,154,0.5)]"
+                  : isCurrent
+                    ? "bg-[#F1E6C3] text-black animate-bounce shadow-[0_0_15px_rgba(241,230,195,0.5)]"
+                    : "border border-white/30 text-white bg-transparent"
+              }`}
+            >
+              {isComplete ? "\u2713" : isCurrent ? "\u25cf" : index + 1}
+            </div>
+            <span
+              className={`font-mono text-[9px] sm:text-[10px] font-bold ${
+                isCurrent ? "text-[#F1E6C3]" : isDone ? "text-white/90" : "text-white/60"
+              }`}
+            >
+              {step.label}
+            </span>
+            <span className="font-mono text-[8px] sm:text-[9px] text-white/40">{step.hint}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function CartSheet() {
   const {
@@ -148,14 +251,16 @@ export default function CartSheet() {
   const placeOrderMutation = usePlaceOrder();
   const validateOfferMutation = useValidateOfferCode();
   useRejectedOrderRecovery(activeOrders);
+  useOrderUpdateNotice(activeOrders);
 
-  const copy = MODE_CONFIG[orderMode];
-  const isOffPremise = orderMode !== "ON_TABLE";
+  const copy = MODE_CONFIG[orderMode ?? "UNCHOSEN"];
+  // No table scanned and nothing remembered — we refuse to guess where the food goes.
+  const needsModeChoice = orderMode === null;
 
   // Seeded from the last order this browser placed, so a regular isn't retyping
   // their address every time. Lazy initializer — localStorage is client-only.
   const [contact, setContact] = useState(() =>
-    typeof window === "undefined" ? { name: "", phone: "", address: "" } : readGuestContact(),
+    typeof window === "undefined" ? EMPTY_CONTACT : readGuestContact(),
   );
   const [specialNotes, setSpecialNotes] = useState("");
   const [offerCodeInput, setOfferCodeInput] = useState("");
@@ -167,6 +272,7 @@ export default function CartSheet() {
   } | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "phone" | "address", string>>>({});
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -249,28 +355,36 @@ export default function CartSheet() {
     }
   };
 
-  /** Mirrors the server's schema so the guest gets a pointed message instead of a raw Zod error. */
-  const contactError = (): string | null => {
-    if (!isOffPremise) return null;
-    if (contact.name.trim().length < 2) return "Please enter your name.";
-    if ((contact.phone.match(/\d/g)?.length ?? 0) < 7) return "Please enter a valid phone number.";
+/** Mirrors the server's schema so the guest sees the same rule highlighted on the field, not a raw Zod error. */
+  const validateContact = (): typeof fieldErrors => {
+    const next: typeof fieldErrors = {};
+    if (contact.name.trim().length < 2) next.name = "Please enter your name.";
+    if ((contact.phone.match(/\d/g)?.length ?? 0) < 7) next.phone = "Please enter a valid phone number.";
     if (orderMode === "DELIVERY" && contact.address.trim().length < 10) {
-      return "Please enter a full delivery address.";
+      next.address = "Please enter a full delivery address.";
     }
-    return null;
+    return next;
   };
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) return;
-
-    const invalid = contactError();
-    if (invalid) {
-      toast.error(invalid);
+    if (orderMode === null) {
+      toast.error("Choose pickup or delivery first.");
       return;
     }
 
+    const invalid = validateContact();
+    if (Object.keys(invalid).length > 0) {
+      setFieldErrors(invalid);
+      return;
+    }
+    setFieldErrors({});
+
     const common = {
+      customerName: contact.name.trim(),
+      customerPhone: contact.phone.trim(),
+      customerBirthday: contact.birthday || undefined,
       specialNotes,
       offerCode: appliedOffer?.code,
       items: items.map((item) => ({ itemId: item.id, quantity: item.quantity })),
@@ -279,23 +393,12 @@ export default function CartSheet() {
       orderMode === "ON_TABLE"
         ? { type: "ON_TABLE", tableNumber, ...common }
         : orderMode === "TAKEAWAY"
-          ? {
-              type: "TAKEAWAY",
-              customerName: contact.name.trim(),
-              customerPhone: contact.phone.trim(),
-              ...common,
-            }
-          : {
-              type: "DELIVERY",
-              customerName: contact.name.trim(),
-              customerPhone: contact.phone.trim(),
-              deliveryAddress: contact.address.trim(),
-              ...common,
-            };
+          ? { type: "TAKEAWAY", ...common }
+          : { type: "DELIVERY", deliveryAddress: contact.address.trim(), ...common };
 
     placeOrderMutation.mutate(input, {
       onSuccess: (newOrder) => {
-        if (isOffPremise) saveGuestContact(contact);
+        saveGuestContact(contact);
         setSelectedOrderId(newOrder.id);
         setSpecialNotes("");
         setOfferCodeInput("");
@@ -356,9 +459,11 @@ export default function CartSheet() {
               <h2 className="font-serif text-lg sm:text-2xl text-white font-medium">
                 {showOrderStatus ? copy.ordersTitle : copy.cartTitle}
               </h2>
-              <span className="px-2 py-0.5 rounded-full border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 font-mono text-[9px] sm:text-[10px] text-[#F1E6C3] font-bold">
-                {orderMode === "ON_TABLE" ? formatTableNumber(tableNumber) : ORDER_MODE_LABEL[orderMode]}
-              </span>
+              {orderMode && (
+                <span className="px-2 py-0.5 rounded-full border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 font-mono text-[9px] sm:text-[10px] text-[#F1E6C3] font-bold">
+                  {orderMode === "ON_TABLE" ? formatTableNumber(tableNumber) : ORDER_MODE_LABEL[orderMode]}
+                </span>
+              )}
             </div>
             <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-white/50">
               {copy.subtitle}
@@ -476,16 +581,22 @@ export default function CartSheet() {
                     activeSelectedOrder.status === "REJECTED"
                       ? "bg-red-500/15 border border-red-500/40 text-red-400"
                       : activeSelectedOrder.status === "SERVED"
-                        ? "bg-white/10 border border-white/20 text-white/70"
-                        : activeSelectedOrder.status === "PREPARING"
-                          ? "bg-[#F1E6C3]/20 border border-[#F1E6C3]/40 text-[#F1E6C3]"
-                          : "bg-[#B7D39A]/20 border border-[#B7D39A]/40 text-[#B7D39A]"
+                        ? "bg-white/[0.06] border border-white/15 text-white/50"
+                        : activeSelectedOrder.status === "READY"
+                          ? "bg-[#B7D39A]/25 border border-[#B7D39A]/60 text-[#B7D39A]"
+                          : activeSelectedOrder.status === "PREPARING"
+                            ? "bg-[#F1E6C3]/20 border border-[#F1E6C3]/40 text-[#F1E6C3]"
+                            : "bg-white/10 border border-white/25 text-white/80"
                   }`}
                 >
                   {activeSelectedOrder.status !== "SERVED" && activeSelectedOrder.status !== "REJECTED" && (
                     <span
                       className={`w-1.5 h-1.5 rounded-full animate-ping ${
-                        activeSelectedOrder.status === "PREPARING" ? "bg-[#F1E6C3]" : "bg-[#B7D39A]"
+                        activeSelectedOrder.status === "READY"
+                          ? "bg-[#B7D39A]"
+                          : activeSelectedOrder.status === "PREPARING"
+                            ? "bg-[#F1E6C3]"
+                            : "bg-white/70"
                       }`}
                     />
                   )}
@@ -493,9 +604,11 @@ export default function CartSheet() {
                     ? "Rejected"
                     : activeSelectedOrder.status === "SERVED"
                       ? MODE_CONFIG[activeSelectedOrder.type].servedLabel
-                      : activeSelectedOrder.status === "PREPARING"
-                        ? "In Preparation"
-                        : "Order Received"}
+                      : activeSelectedOrder.status === "READY"
+                        ? MODE_CONFIG[activeSelectedOrder.type].readyLabel
+                        : activeSelectedOrder.status === "PREPARING"
+                          ? "In Preparation"
+                          : "Order Received"}
                 </span>
               </div>
 
@@ -512,62 +625,7 @@ export default function CartSheet() {
                   </p>
                 </div>
               ) : (
-                /* 3 Step Live Progress Tracker */
-                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 relative mb-6">
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-7 h-7 rounded-full bg-[#B7D39A] text-black font-bold text-xs flex items-center justify-center mb-1.5 shadow-[0_0_15px_rgba(183,211,154,0.5)]">
-                      ✓
-                    </div>
-                    <span className="font-mono text-[9px] sm:text-[10px] text-white/90 font-bold">1. Received</span>
-                    <span className="font-mono text-[8px] sm:text-[9px] text-white/40">Barista / Chef</span>
-                  </div>
-
-                  <div
-                    className={`flex flex-col items-center text-center ${
-                      activeSelectedOrder.status === "RECEIVED" ? "opacity-40" : ""
-                    }`}
-                  >
-                    <div
-                      className={`w-7 h-7 rounded-full text-black font-bold text-xs flex items-center justify-center mb-1.5 ${
-                        activeSelectedOrder.status === "PREPARING"
-                          ? "bg-[#F1E6C3] animate-bounce shadow-[0_0_15px_rgba(241,230,195,0.5)]"
-                          : activeSelectedOrder.status === "SERVED"
-                            ? "bg-[#B7D39A] shadow-[0_0_15px_rgba(183,211,154,0.5)]"
-                            : "border border-white/30 text-white! bg-transparent"
-                      }`}
-                    >
-                      {activeSelectedOrder.status === "PREPARING" ? "●" : activeSelectedOrder.status === "SERVED" ? "✓" : "2"}
-                    </div>
-                    <span
-                      className={`font-mono text-[9px] sm:text-[10px] font-bold ${
-                        activeSelectedOrder.status === "RECEIVED" ? "text-white/60" : "text-[#F1E6C3]"
-                      }`}
-                    >
-                      2. Preparing
-                    </span>
-                    <span className="font-mono text-[8px] sm:text-[9px] text-white/40">Crafting Order</span>
-                  </div>
-
-                  <div
-                    className={`flex flex-col items-center text-center ${
-                      activeSelectedOrder.status === "SERVED" ? "" : "opacity-40"
-                    }`}
-                  >
-                    <div
-                      className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center mb-1.5 ${
-                        activeSelectedOrder.status === "SERVED"
-                          ? "bg-[#B7D39A] text-black shadow-[0_0_15px_rgba(183,211,154,0.5)]"
-                          : "border border-white/30 text-white"
-                      }`}
-                    >
-                      {activeSelectedOrder.status === "SERVED" ? "✓" : "3"}
-                    </div>
-                    <span className="font-mono text-[9px] sm:text-[10px] text-white/60">{copy.finalStepLabel}</span>
-                    <span className="font-mono text-[8px] sm:text-[9px] text-white/40">
-                      {orderMode === "ON_TABLE" ? `To ${formatTableNumber(tableNumber)}` : copy.finalStepHint}
-                    </span>
-                  </div>
-                </div>
+                <OrderProgressTracker order={activeSelectedOrder} tableNumber={tableNumber} />
               )}
 
               {/* Items in this specific ticket */}
@@ -607,7 +665,7 @@ export default function CartSheet() {
               )}
 
               {/* Where it's going and who to call — reassurance that we got it right. */}
-              {activeSelectedOrder.type !== "ON_TABLE" && activeSelectedOrder.customerName && (
+              {activeSelectedOrder.customerName && (
                 <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5 text-[11px] text-white/60">
                   <div className="flex items-center gap-2">
                     <User03Icon size={12} className="text-white/30 shrink-0" />
@@ -630,7 +688,7 @@ export default function CartSheet() {
             {activeOrders.length > 1 && (
               <div className="w-full space-y-2.5 mb-6 text-left">
                 <span className="font-mono text-[9px] uppercase tracking-widest text-white/40 block px-1">
-                  All {ORDER_MODE_LABEL[orderMode]} Tickets ({activeOrders.length} sent):
+                  All {ORDER_MODE_LABEL[activeSelectedOrder.type]} Tickets ({activeOrders.length} sent):
                 </span>
 
                 {activeOrders.map((order, idx) => {
@@ -666,17 +724,23 @@ export default function CartSheet() {
                                   order.status === "REJECTED"
                                     ? "bg-red-500/15 text-red-400"
                                     : order.status === "SERVED"
-                                      ? "bg-white/10 text-white/60"
-                                      : "bg-[#B7D39A]/20 text-[#B7D39A]"
+                                      ? "bg-white/[0.06] text-white/50"
+                                      : order.status === "READY"
+                                        ? "bg-[#B7D39A]/25 text-[#B7D39A]"
+                                        : order.status === "PREPARING"
+                                          ? "bg-[#F1E6C3]/20 text-[#F1E6C3]"
+                                          : "bg-white/10 text-white/80"
                                 }`}
                               >
                                 {order.status === "REJECTED"
                                   ? "Rejected"
                                   : order.status === "SERVED"
                                     ? MODE_CONFIG[order.type].servedLabel
-                                    : order.status === "PREPARING"
-                                      ? "Preparing"
-                                      : "Received"}
+                                    : order.status === "READY"
+                                      ? MODE_CONFIG[order.type].readyLabel
+                                      : order.status === "PREPARING"
+                                        ? "Preparing"
+                                        : "Received"}
                               </span>
                             </div>
                             <span className="font-mono text-[10px] text-white/40">
@@ -877,86 +941,161 @@ export default function CartSheet() {
                   {copy.destinationHeading}
                 </span>
 
-                {orderMode === "ON_TABLE" ? (
-                  /* A scanned table is where the guest physically is — not something to pick from a list. */
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 mb-3">
-                    <div className="flex items-center gap-2">
-                      <Location01Icon size={15} className="text-[#F1E6C3]" />
-                      <span className="font-serif text-xs sm:text-sm text-white font-medium">Table</span>
-                    </div>
-                    <span className="font-mono text-xs font-bold text-[#F1E6C3]">
-                      {formatTableNumber(tableNumber)}
-                    </span>
+                {needsModeChoice ? (
+                  /* Nothing scanned and nothing remembered. The guest says where the order
+                     goes before anything else — a wrong guess sends someone's food astray. */
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {(["DELIVERY", "TAKEAWAY"] as const).map((mode) => {
+                      const ModeIcon = MODE_CONFIG[mode].icon;
+                      return (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setOrderMode(mode)}
+                          className="group flex flex-col items-center gap-1.5 rounded-xl border border-white/15 bg-black/30 px-3 py-4 text-center transition-all hover:border-[#F1E6C3]/60 hover:bg-white/[0.06] active:scale-95 cursor-pointer"
+                        >
+                          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F1E6C3]/10 text-[#F1E6C3] transition-colors group-hover:bg-[#F1E6C3] group-hover:text-black">
+                            <ModeIcon size={17} />
+                          </span>
+                          <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-white">
+                            {ORDER_MODE_LABEL[mode]}
+                          </span>
+                          <span className="font-sans text-[10px] leading-tight text-white/45">
+                            {mode === "DELIVERY" ? "Sent to your door" : "Collect at the counter"}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   <>
-                    {/* Both off-premise modes are a free choice — someone who landed on the
-                        site without a pickup link may still want to collect it themselves. */}
-                    <div className="p-1 rounded-xl bg-black/40 border border-white/10 grid grid-cols-2 gap-1 font-mono text-[10px] mb-3">
-                      {(["DELIVERY", "TAKEAWAY"] as const).map((mode) => {
-                        const ModeIcon = MODE_CONFIG[mode].icon;
-                        const isActive = orderMode === mode;
-                        return (
-                          <button
-                            key={mode}
-                            type="button"
-                            onClick={() => setOrderMode(mode)}
-                            className={`py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 uppercase tracking-wider transition-all cursor-pointer ${
-                              isActive
-                                ? "bg-[#F1E6C3] text-black font-bold"
-                                : "text-white/60 hover:text-white hover:bg-white/5"
-                            }`}
-                          >
-                            <ModeIcon size={13} />
-                            <span>{ORDER_MODE_LABEL[mode]}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    {orderMode === "ON_TABLE" ? (
+                      /* A scanned table is where the guest physically is — not something to pick from a list. */
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 mb-3">
+                        <div className="flex items-center gap-2">
+                          <Location01Icon size={15} className="text-[#F1E6C3]" />
+                          <span className="font-serif text-xs sm:text-sm text-white font-medium">Table</span>
+                        </div>
+                        <span className="font-mono text-xs font-bold text-[#F1E6C3]">
+                          {formatTableNumber(tableNumber)}
+                        </span>
+                      </div>
+                    ) : (
+                      /* Still a free choice after the fact — someone who picked delivery
+                         may decide to swing by and collect it instead. */
+                      <div className="p-1 rounded-xl bg-black/40 border border-white/10 grid grid-cols-2 gap-1 font-mono text-[10px] mb-3">
+                        {(["DELIVERY", "TAKEAWAY"] as const).map((mode) => {
+                          const ModeIcon = MODE_CONFIG[mode].icon;
+                          const isActive = orderMode === mode;
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => setOrderMode(mode)}
+                              className={`py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 uppercase tracking-wider transition-all cursor-pointer ${
+                                isActive
+                                  ? "bg-[#F1E6C3] text-black font-bold"
+                                  : "text-white/60 hover:text-white hover:bg-white/5"
+                              }`}
+                            >
+                              <ModeIcon size={13} />
+                              <span>{ORDER_MODE_LABEL[mode]}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
 
+                    {/* Asked of every guest now — a name and number to call, whether they're
+                        at table four or across town. */}
                     <div className="space-y-2 mb-3">
-                      <div className="flex items-center gap-2 px-3 rounded-xl bg-black/30 border border-white/10 focus-within:border-[#F1E6C3] transition-all">
-                        <User03Icon size={14} className="text-white/40 shrink-0" />
-                        <input
-                          type="text"
-                          value={contact.name}
-                          onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))}
-                          placeholder="Your name"
-                          autoComplete="name"
-                          className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none"
-                        />
+                      <div>
+                        <div
+                          className={`flex items-center gap-2 px-3 rounded-xl bg-black/30 border transition-all ${
+                            fieldErrors.name ? "border-red-500/60" : "border-white/10 focus-within:border-[#F1E6C3]"
+                          }`}
+                        >
+                          <User03Icon size={14} className="text-white/40 shrink-0" />
+                          <input
+                            type="text"
+                            value={contact.name}
+                            onChange={(e) => {
+                              setContact((c) => ({ ...c, name: e.target.value }));
+                              setFieldErrors((f) => ({ ...f, name: undefined }));
+                            }}
+                            placeholder="Your name"
+                            autoComplete="name"
+                            aria-invalid={!!fieldErrors.name}
+                            className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none"
+                          />
+                        </div>
+                        {fieldErrors.name && (
+                          <span className="block px-1 mt-1 text-[10px] text-red-400 font-mono">{fieldErrors.name}</span>
+                        )}
                       </div>
 
+                      <div>
+                        <div
+                          className={`flex items-center gap-2 px-3 rounded-xl bg-black/30 border transition-all ${
+                            fieldErrors.phone ? "border-red-500/60" : "border-white/10 focus-within:border-[#F1E6C3]"
+                          }`}
+                        >
+                          <Call02Icon size={14} className="text-white/40 shrink-0" />
+                          <input
+                            type="tel"
+                            inputMode="tel"
+                            value={contact.phone}
+                            onChange={(e) => {
+                              setContact((c) => ({ ...c, phone: e.target.value }));
+                              setFieldErrors((f) => ({ ...f, phone: undefined }));
+                            }}
+                            placeholder="Phone number"
+                            autoComplete="tel"
+                            aria-invalid={!!fieldErrors.phone}
+                            className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none"
+                          />
+                        </div>
+                        {fieldErrors.phone && (
+                          <span className="block px-1 mt-1 text-[10px] text-red-400 font-mono">{fieldErrors.phone}</span>
+                        )}
+                      </div>
+
+                      {/* A blank date input reads as broken without a label, and the native
+                          picker needs color-scheme:dark to not blind anyone on this sheet. */}
                       <div className="flex items-center gap-2 px-3 rounded-xl bg-black/30 border border-white/10 focus-within:border-[#F1E6C3] transition-all">
-                        <Call02Icon size={14} className="text-white/40 shrink-0" />
+                        <BirthdayCakeIcon size={14} className="text-white/40 shrink-0" />
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-white/35 shrink-0">
+                          Birthday
+                        </span>
                         <input
-                          type="tel"
-                          inputMode="tel"
-                          value={contact.phone}
-                          onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))}
-                          placeholder="Phone number"
-                          autoComplete="tel"
-                          className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none"
+                          type="date"
+                          value={contact.birthday}
+                          max={TODAY_ISO}
+                          onChange={(e) => setContact((c) => ({ ...c, birthday: e.target.value }))}
+                          aria-label="Birthday (optional)"
+                          className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white/80 outline-none [color-scheme:dark]"
                         />
+                        <span className="font-mono text-[9px] uppercase tracking-wider text-white/25 shrink-0">
+                          Optional
+                        </span>
                       </div>
 
                       {orderMode === "DELIVERY" && (
-                        <div className="flex items-start gap-2 px-3 rounded-xl bg-black/30 border border-white/10 focus-within:border-[#F1E6C3] transition-all">
-                          <MapPinpoint01Icon size={14} className="text-white/40 shrink-0 mt-3" />
-                          <textarea
-                            rows={2}
-                            value={contact.address}
-                            onChange={(e) => setContact((c) => ({ ...c, address: e.target.value }))}
-                            placeholder="Delivery address — building, floor, apartment, landmark"
-                            autoComplete="street-address"
-                            className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none resize-none"
-                          />
-                        </div>
+                        <DeliveryLocationPicker
+                          address={contact.address}
+                          onAddressChange={(address) => {
+                            setContact((c) => ({ ...c, address }));
+                            setFieldErrors((f) => ({ ...f, address: undefined }));
+                          }}
+                          error={fieldErrors.address}
+                        />
                       )}
                     </div>
                   </>
                 )}
 
+                {!needsModeChoice && (
+                  <>
                 {/* Special Kitchen Notes */}
                 <div className="mb-4">
                   <label className="block font-mono text-[9px] uppercase tracking-widest text-white/50 mb-1.5">
@@ -1023,6 +1162,8 @@ export default function CartSheet() {
                     </div>
                   )}
                 </div>
+                  </>
+                )}
 
                 {/* Bill Summary */}
                 <div className="space-y-1.5 pt-2.5 border-t border-white/10 text-xs text-white/70">
@@ -1054,7 +1195,7 @@ export default function CartSheet() {
                 <button
                   type="button"
                   onClick={handlePlaceOrder}
-                  disabled={placeOrderMutation.isPending}
+                  disabled={placeOrderMutation.isPending || needsModeChoice}
                   className="group relative w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-full bg-[#F1E6C3] text-black font-extrabold text-xs uppercase tracking-widest transition-all duration-300 hover:bg-white hover:scale-[1.02] active:scale-98 shadow-[0_4px_25px_rgba(241,230,195,0.35)] disabled:opacity-50 cursor-pointer overflow-hidden"
                 >
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 pointer-events-none" />

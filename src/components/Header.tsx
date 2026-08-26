@@ -15,7 +15,7 @@ import {
   ArrowRight01Icon,
   ShoppingBag01Icon,
 } from "hugeicons-react";
-import { useCartStore, ORDER_MODE_LABEL } from "@/store/useCartStore";
+import { useCartStore, orderModeLabel } from "@/store/useCartStore";
 import { useGuestOrders } from "@/hooks/use-table-orders";
 
 interface HeaderProps {
@@ -162,7 +162,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
             {/* Luxury Cart Button */}
             <button
               onClick={handleCartClick}
-              aria-label={`${ORDER_MODE_LABEL[orderMode]} Cart (${totalItems} items)`}
+              aria-label={`${orderModeLabel(orderMode)} Cart (${totalItems} items)`}
               className="relative inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-full bg-[#F1E6C3] hover:bg-white text-black font-mono text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.25)] active:scale-95 cursor-pointer"
             >
               {/* Glowing Pulsing Dot when Cart is Not Empty */}
@@ -316,7 +316,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                     </div>
                     <div>
                       <span className="font-mono text-xs font-bold text-white block">
-                        {ORDER_MODE_LABEL[orderMode]} Cart & Status
+                        {orderModeLabel(orderMode)} Cart & Status
                       </span>
                       <span className="font-sans text-[11px] text-white/60">
                         {totalItems > 0 ? `${totalItems} unplaced items` : activeOrdersCount > 0 ? `${activeOrdersCount} order${activeOrdersCount > 1 ? "s" : ""} in progress` : "No items yet"}
