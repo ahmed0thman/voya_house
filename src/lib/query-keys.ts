@@ -29,6 +29,11 @@ export const queryKeys = {
     dashboard: ["stats", "dashboard"] as const,
     system: ["stats", "system"] as const,
   },
+  reports: {
+    /** Serialized range input keeps a distinct cache entry per preset/custom dates. */
+    dashboard: (rangeKey: string) => ["reports", "dashboard", rangeKey] as const,
+    orders: (filtersKey: string) => ["reports", "orders", filtersKey] as const,
+  },
   users: {
     all: ["users"] as const,
   },
