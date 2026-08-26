@@ -1,5 +1,11 @@
 import "dotenv/config";
-import { PrismaClient, OrderStatus, OrderType, TableSessionStatus } from "../src/generated/prisma/client";
+import {
+  PrismaClient,
+  OrderStatus,
+  OrderType,
+  TableSessionStatus,
+  DiscountType,
+} from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import { slugify } from "../src/lib/slug";
@@ -145,6 +151,299 @@ const MENU: SeedBrand[] = [
   },
 ];
 
+function randomInt(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function pickOne<T>(items: readonly T[]): T {
+  return items[randomInt(0, items.length - 1)];
+}
+
+/** Samples `count` distinct items (no repeats within one draw) without mutating `items`. */
+function pickMany<T>(items: readonly T[], count: number): T[] {
+  const pool = [...items];
+  const picked: T[] = [];
+  for (let i = 0; i < count && pool.length; i++) {
+    picked.push(pool.splice(randomInt(0, pool.length - 1), 1)[0]);
+  }
+  return picked;
+}
+
+function weightedPick<T>(weights: [T, number][]): T {
+  const total = weights.reduce((sum, [, weight]) => sum + weight, 0);
+  let roll = Math.random() * total;
+  for (const [value, weight] of weights) {
+    if (roll < weight) return value;
+    roll -= weight;
+  }
+  return weights[weights.length - 1][0];
+}
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+const MOCK_ORDER_COUNT = 10_000;
+const MOCK_ORDER_DAYS_BACK = 90;
+const MOCK_TABLE_NUMBERS = Array.from({ length: 14 }, (_, i) => i + 1);
+
+const FIRST_NAMES = [
+  "Ahmed", "Mohamed", "Youssef", "Omar", "Ali", "Khaled", "Amr", "Karim", "Hassan", "Mostafa",
+  "Sara", "Mona", "Nour", "Yasmin", "Farida", "Laila", "Salma", "Aya", "Heba", "Dina", "Rana", "Mariam",
+] as const;
+const LAST_NAMES = [
+  "Hassan", "Mostafa", "Ibrahim", "El-Sayed", "Farouk", "Adel", "Fathy", "Kamal", "Nabil", "Zaki", "Ashraf", "Rady", "Sherif",
+] as const;
+const STREETS = [
+  "Tahrir St", "Nile Corniche", "26th of July St", "Salah Salem Rd", "Gameat El Dowal St",
+  "El Merghany St", "Abbas El Akkad St", "Mostafa El Nahas St", "Zahraa El Maadi St", "Sheikh Zayed Blvd",
+] as const;
+const AREAS = ["Nasr City", "Maadi", "Zamalek", "Dokki", "Heliopolis", "New Cairo", "6th of October", "Mohandessin"] as const;
+const SPECIAL_NOTES = [
+  "No onions please", "Extra spicy", "Allergic to nuts", "Birthday celebration - add a candle",
+  "Less sugar", "No dairy", "Extra napkins please", "Cutlery for 2 only", "Ring the bell twice",
+] as const;
+const REJECTION_REASONS = [
+  "Item out of stock", "Kitchen too busy right now", "Customer changed their mind",
+  "Duplicate order submitted", "Payment could not be verified", "Guest left before order was ready",
+] as const;
+const OFFER_CODES = [
+  { code: "WELCOME10", discountType: DiscountType.PERCENT, discountValue: 10 },
+  { code: "SAVE50", discountType: DiscountType.FIXED, discountValue: 50 },
+  { code: "VIP15", discountType: DiscountType.PERCENT, discountValue: 15 },
+  { code: "FIRSTORDER", discountType: DiscountType.FIXED, discountValue: 30 },
+] as const;
+
+function randomPhone(): string {
+  const prefix = pickOne(["010", "011", "012", "015"]);
+  const rest = Array.from({ length: 8 }, () => randomInt(0, 9)).join("");
+  return `${prefix}${rest}`;
+}
+
+function buildCustomerPool(size: number): { name: string; phone: string }[] {
+  const pool: { name: string; phone: string }[] = [];
+  const seenPhones = new Set<string>();
+  while (pool.length < size) {
+    const phone = randomPhone();
+    if (seenPhones.has(phone)) continue;
+    seenPhones.add(phone);
+    pool.push({ name: `${pickOne(FIRST_NAMES)} ${pickOne(LAST_NAMES)}`, phone });
+  }
+  return pool;
+}
+
+function randomAddress(): string {
+  return `${randomInt(1, 140)} ${pickOne(STREETS)}, ${pickOne(AREAS)}, Cairo`;
+}
+
+function randomBirthday(): Date {
+  const age = randomInt(18, 70);
+  const year = new Date().getUTCFullYear() - age;
+  return new Date(Date.UTC(year, randomInt(0, 11), randomInt(1, 28)));
+}
+
+/** Skews toward lunch (12-15) and dinner (18-22) rushes, quiet overnight, over the past `MOCK_ORDER_DAYS_BACK` days. */
+function randomOrderTimestamp(now: Date): Date {
+  const daysAgo = Math.random() * MOCK_ORDER_DAYS_BACK;
+  const hourWeights: [number, number][] = Array.from({ length: 24 }, (_, hour) => {
+    if (hour >= 18 && hour <= 22) return [hour, 6];
+    if (hour >= 12 && hour <= 15) return [hour, 5];
+    if (hour >= 7 && hour <= 11) return [hour, 2];
+    if (hour <= 5) return [hour, 0.3];
+    return [hour, 1];
+  });
+  const date = new Date(now.getTime() - daysAgo * 86_400_000);
+  date.setUTCHours(weightedPick(hourWeights), randomInt(0, 59), randomInt(0, 59), 0);
+  return date;
+}
+
+/** Orders more than a few hours old have obviously finished one way or another by now. */
+function randomOrderStatus(createdAt: Date, now: Date): OrderStatus {
+  if (now.getTime() - createdAt.getTime() > 3 * 60 * 60 * 1000) {
+    return weightedPick<OrderStatus>([
+      [OrderStatus.SERVED, 90],
+      [OrderStatus.REJECTED, 10],
+    ]);
+  }
+  return weightedPick<OrderStatus>([
+    [OrderStatus.SERVED, 55],
+    [OrderStatus.REJECTED, 8],
+    [OrderStatus.READY, 12],
+    [OrderStatus.PREPARING, 15],
+    [OrderStatus.RECEIVED, 10],
+  ]);
+}
+
+type ItemPoolEntry = { id: string; name: string; price: number; brandSlug: string };
+type TableRef = { id: string; number: number };
+
+/**
+ * Generates ~`MOCK_ORDER_COUNT` orders spread across the last `MOCK_ORDER_DAYS_BACK`
+ * days with randomized items/quantities/types/tables/customers, then bulk-inserts
+ * them. Wipes previously seeded orders first so re-running this script doesn't
+ * pile up duplicates — dev/local only, same as the rest of this seed file.
+ */
+async function seedMockOrders(itemPool: ItemPoolEntry[], tables: TableRef[]) {
+  for (const offer of OFFER_CODES) {
+    await prisma.codeOffer.upsert({
+      where: { code: offer.code },
+      update: {},
+      create: {
+        code: offer.code,
+        name: offer.code,
+        discountType: offer.discountType,
+        discountValue: offer.discountValue,
+        validFrom: new Date(Date.now() - (MOCK_ORDER_DAYS_BACK + 30) * 86_400_000),
+        validUntil: new Date(Date.now() + 365 * 86_400_000),
+        isActive: true,
+      },
+    });
+  }
+
+  await prisma.orderItem.deleteMany({});
+  await prisma.order.deleteMany({});
+  await prisma.tableSession.deleteMany({});
+
+  const now = new Date();
+  const customerPool = buildCustomerPool(600);
+
+  // One table can host several sittings across a day, and several orders
+  // within one sitting — reuse an existing same-table/same-day session ~60%
+  // of the time instead of opening a fresh one for every order.
+  type SessionRecord = { id: string; tableId: string; openedAt: Date; lastOrderAt: Date };
+  const sessionByKey = new Map<string, SessionRecord>();
+  const allSessions: SessionRecord[] = [];
+
+  function resolveTableSession(table: TableRef, createdAt: Date): string {
+    const key = `${table.number}:${createdAt.toISOString().slice(0, 10)}`;
+    const existing = sessionByKey.get(key);
+    if (existing && Math.random() < 0.6) {
+      if (createdAt < existing.openedAt) existing.openedAt = createdAt;
+      if (createdAt > existing.lastOrderAt) existing.lastOrderAt = createdAt;
+      return existing.id;
+    }
+    const record: SessionRecord = { id: randomUUID(), tableId: table.id, openedAt: createdAt, lastOrderAt: createdAt };
+    sessionByKey.set(key, record);
+    allSessions.push(record);
+    return record.id;
+  }
+
+  const orders: {
+    id: string;
+    type: OrderType;
+    tableSessionId: string | null;
+    status: OrderStatus;
+    customerName: string;
+    customerPhone: string;
+    customerBirthday: Date | null;
+    deliveryAddress: string | null;
+    specialNotes: string | null;
+    rejectionReason: string | null;
+    subtotal: number;
+    offerCode: string | null;
+    discountAmount: number;
+    totalPrice: number;
+    createdAt: Date;
+  }[] = [];
+
+  const orderItems: {
+    id: string;
+    orderId: string;
+    itemId: string;
+    name: string;
+    price: number;
+    quantity: number;
+    brandSlug: string;
+  }[] = [];
+
+  for (let i = 0; i < MOCK_ORDER_COUNT; i++) {
+    const createdAt = randomOrderTimestamp(now);
+    const type = weightedPick<OrderType>([
+      [OrderType.ON_TABLE, 55],
+      [OrderType.TAKEAWAY, 30],
+      [OrderType.DELIVERY, 15],
+    ]);
+
+    const lines = pickMany(itemPool, randomInt(1, 5)).map((item) => ({ item, quantity: randomInt(1, 3) }));
+    const subtotal = round2(lines.reduce((sum, { item, quantity }) => sum + item.price * quantity, 0));
+
+    const offer = Math.random() < 0.18 ? pickOne(OFFER_CODES) : null;
+    const discountAmount = offer
+      ? round2(
+          offer.discountType === DiscountType.PERCENT
+            ? subtotal * (offer.discountValue / 100)
+            : Math.min(offer.discountValue, subtotal),
+        )
+      : 0;
+
+    const status = randomOrderStatus(createdAt, now);
+    const customer =
+      Math.random() < 0.7
+        ? pickOne(customerPool)
+        : { name: `${pickOne(FIRST_NAMES)} ${pickOne(LAST_NAMES)}`, phone: randomPhone() };
+
+    const orderId = randomUUID();
+    orders.push({
+      id: orderId,
+      type,
+      tableSessionId: type === OrderType.ON_TABLE ? resolveTableSession(pickOne(tables), createdAt) : null,
+      status,
+      customerName: customer.name,
+      customerPhone: customer.phone,
+      customerBirthday: Math.random() < 0.25 ? randomBirthday() : null,
+      deliveryAddress: type === OrderType.DELIVERY ? randomAddress() : null,
+      specialNotes: Math.random() < 0.12 ? pickOne(SPECIAL_NOTES) : null,
+      rejectionReason: status === OrderStatus.REJECTED ? pickOne(REJECTION_REASONS) : null,
+      subtotal,
+      offerCode: offer?.code ?? null,
+      discountAmount,
+      totalPrice: round2(subtotal - discountAmount),
+      createdAt,
+    });
+
+    for (const { item, quantity } of lines) {
+      orderItems.push({
+        id: randomUUID(),
+        orderId,
+        itemId: item.id,
+        name: item.name,
+        price: item.price,
+        quantity,
+        brandSlug: item.brandSlug,
+      });
+    }
+  }
+
+  // Most recently opened sittings are left OPEN, simulating tables currently occupied.
+  const sortedSessions = [...allSessions].sort((a, b) => a.openedAt.getTime() - b.openedAt.getTime());
+  const OPEN_SESSION_COUNT = 6;
+  const tableSessions = sortedSessions.map((session, index) => {
+    const isStillOpen = index >= sortedSessions.length - OPEN_SESSION_COUNT;
+    return {
+      id: session.id,
+      tableId: session.tableId,
+      status: isStillOpen ? TableSessionStatus.OPEN : TableSessionStatus.SETTLED,
+      openedAt: session.openedAt,
+      settledAt: isStillOpen ? null : new Date(session.lastOrderAt.getTime() + randomInt(15, 90) * 60_000),
+    };
+  });
+
+  async function insertInBatches<T>(items: T[], insert: (batch: T[]) => Promise<unknown>) {
+    const BATCH_SIZE = 1000;
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      await insert(items.slice(i, i + BATCH_SIZE));
+    }
+  }
+
+  await insertInBatches(tableSessions, (batch) => prisma.tableSession.createMany({ data: batch }));
+  await insertInBatches(orders, (batch) => prisma.order.createMany({ data: batch }));
+  await insertInBatches(orderItems, (batch) => prisma.orderItem.createMany({ data: batch }));
+
+  console.log(
+    `Seeded ${orders.length} mock orders (${orderItems.length} line items, ${tableSessions.length} table sessions) over the last ${MOCK_ORDER_DAYS_BACK} days.`,
+  );
+}
+
 async function main() {
   await prisma.user.upsert({
     where: { username: "admin" },
@@ -203,6 +502,26 @@ async function main() {
     prisma.item.count(),
   ]);
   console.log(`Seeded ${categoryCount} categories and ${itemCount} items.`);
+
+  const tables: TableRef[] = await Promise.all(
+    MOCK_TABLE_NUMBERS.map((number) =>
+      prisma.restaurantTable.upsert({
+        where: { number },
+        update: {},
+        create: { number },
+      }),
+    ),
+  );
+
+  const items = await prisma.item.findMany({ include: { category: { include: { brand: true } } } });
+  const itemPool: ItemPoolEntry[] = items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    price: item.price.toNumber(),
+    brandSlug: item.category.brand.slug,
+  }));
+
+  await seedMockOrders(itemPool, tables);
 }
 
 main()
