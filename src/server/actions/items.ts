@@ -52,6 +52,35 @@ export async function deleteImagesBestEffort(keys: string[]): Promise<void> {
   await Promise.allSettled(keys.map((key) => deleteObject(key)));
 }
 
+export type OrderableItemDTO = {
+  id: string;
+  name: string;
+  price: number;
+  brandSlug: string;
+  categoryTitle: string;
+};
+
+/**
+ * Everything staff can put on a ticket, flat and pre-sorted. The whole menu is
+ * a few dozen rows, so it ships in one query and gets filtered in the browser —
+ * far better than a round trip per keystroke while a customer waits on the phone.
+ */
+export async function listOrderableItems(): Promise<OrderableItemDTO[]> {
+  await requireUser();
+  const items = await prisma.item.findMany({
+    where: { isAvailable: true },
+    include: { category: { include: { brand: true } } },
+    orderBy: [{ category: { sortOrder: "asc" } }, { sortOrder: "asc" }],
+  });
+  return items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    price: item.price.toNumber(),
+    brandSlug: item.category.brand.slug,
+    categoryTitle: item.category.title,
+  }));
+}
+
 export async function listItems(categoryId: string): Promise<ItemDTO[]> {
   await requireUser();
   const items = await prisma.item.findMany({

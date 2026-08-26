@@ -8,11 +8,13 @@ import { resolveImageUrl } from "@/lib/storage/r2";
 import { findActiveOfferByCode } from "@/server/actions/offers";
 import {
   createOrderSchema,
+  editOrderSchema,
   listGuestOrdersSchema,
   updateOrderStatusSchema,
   rejectOrderSchema,
   settleTableSessionSchema,
   type CreateOrderInput,
+  type EditOrderInput,
   type UpdateOrderStatusInput,
   type RejectOrderInput,
   type SettleTableSessionInput,
@@ -35,9 +37,11 @@ export type OrderDTO = {
   /** Only set for ON_TABLE orders. */
   tableNumber: number | null;
   status: OrderStatus;
-  /** Set for TAKEAWAY/DELIVERY — who to call. */
+  /** Collected on every order type — who to call. */
   customerName: string | null;
   customerPhone: string | null;
+  /** `YYYY-MM-DD`, or null. Date-only: never shifted by a timezone on the way out. */
+  customerBirthday: string | null;
   /** DELIVERY only. */
   deliveryAddress: string | null;
   specialNotes: string | null;
@@ -83,6 +87,9 @@ function toOrderDTO(order: OrderWithItems, tableNumber: number | null): OrderDTO
     status: order.status,
     customerName: order.customerName,
     customerPhone: order.customerPhone,
+    customerBirthday: order.customerBirthday
+      ? order.customerBirthday.toISOString().slice(0, 10)
+      : null,
     deliveryAddress: order.deliveryAddress,
     specialNotes: order.specialNotes,
     rejectionReason: order.rejectionReason,
@@ -166,6 +173,11 @@ export async function createOrder(rawInput: CreateOrderInput): Promise<OrderDTO>
   const totalPrice = subtotal - discountAmount;
 
   const commonData = {
+    customerName: input.customerName,
+    customerPhone: input.customerPhone,
+    // Pinned to UTC midnight so the stored day is exactly the day the guest picked,
+    // whatever timezone either of us happens to be in.
+    customerBirthday: input.customerBirthday ? new Date(`${input.customerBirthday}T00:00:00Z`) : null,
     specialNotes: input.specialNotes || null,
     subtotal,
     offerCode,
@@ -181,8 +193,6 @@ export async function createOrder(rawInput: CreateOrderInput): Promise<OrderDTO>
       data: {
         ...commonData,
         type: OrderType[input.type],
-        customerName: input.customerName,
-        customerPhone: input.customerPhone,
         deliveryAddress: input.type === "DELIVERY" ? input.deliveryAddress : null,
       },
       include: { items: true },
@@ -328,6 +338,126 @@ export async function updateOrderStatus(rawInput: UpdateOrderStatusInput): Promi
   return toOrderDTO(order, existing.tableSession?.table.number ?? null);
 }
 
+/** Up to the moment it changes hands, a standalone ticket is still correctable. */
+const EDITABLE_STATUSES: OrderStatus[] = [
+  OrderStatus.RECEIVED,
+  OrderStatus.PREPARING,
+  OrderStatus.READY,
+];
+
+/**
+ * Staff amend a live takeaway/delivery ticket: the customer rang back to change
+ * something, or an item was 86'd and has to be swapped or dropped. Dine-in is
+ * excluded — a seated guest just sends another round, and their tickets are the
+ * table's billing history.
+ *
+ * Money is re-derived here exactly as it is on create, so a tampered payload
+ * can't rewrite prices. Two deliberate choices about that re-derivation:
+ * lines already on the ticket keep the price they were quoted at, and a discount
+ * whose offer has since expired is still honoured (capped at the new subtotal)
+ * rather than yanked from under a customer who already agreed to it.
+ */
+export async function editOrder(rawInput: EditOrderInput): Promise<OrderDTO> {
+  await requireUser();
+  const input = editOrderSchema.parse(rawInput);
+
+  const existing = await prisma.order.findUnique({
+    where: { id: input.id },
+    include: { items: true },
+  });
+  if (!existing) throw new ActionError("Order not found.", "NOT_FOUND");
+  if (existing.type === OrderType.ON_TABLE) {
+    throw new ActionError(
+      "Dine-in tickets can't be edited — the guest sends a new round instead.",
+      "VALIDATION",
+    );
+  }
+  if (!EDITABLE_STATUSES.includes(existing.status)) {
+    throw new ActionError(
+      "This ticket has already been handed over — it can no longer be edited.",
+      "CONFLICT",
+    );
+  }
+  if (existing.type === OrderType.DELIVERY && !input.deliveryAddress) {
+    throw new ActionError("A delivery order needs an address.", "VALIDATION");
+  }
+
+  const items = await prisma.item.findMany({
+    where: { id: { in: input.items.map((i) => i.itemId) } },
+    include: { category: { include: { brand: true } } },
+  });
+  const itemsById = new Map(items.map((item) => [item.id, item]));
+
+  // Whatever was already quoted stays quoted — only newly added lines have to be
+  // currently available, since removing a sold-out one is the whole point here.
+  const quotedPriceByItemId = new Map(
+    existing.items.filter((line) => line.itemId).map((line) => [line.itemId!, line.price]),
+  );
+
+  const unusable = input.items.find((requested) => {
+    const item = itemsById.get(requested.itemId);
+    if (!item) return true;
+    return !item.isAvailable && !quotedPriceByItemId.has(requested.itemId);
+  });
+  if (unusable) {
+    throw new ActionError("That item isn't on the menu right now.", "VALIDATION");
+  }
+
+  const orderItemsData = input.items.map((requested) => {
+    const item = itemsById.get(requested.itemId)!;
+    return {
+      itemId: item.id,
+      name: item.name,
+      price: quotedPriceByItemId.get(item.id) ?? item.price,
+      quantity: requested.quantity,
+      brandSlug: item.category.brand.slug,
+      image: item.images[0] ?? null,
+    };
+  });
+
+  const subtotal = orderItemsData.reduce(
+    (sum, item) => sum + item.price.toNumber() * item.quantity,
+    0,
+  );
+
+  let discountAmount = 0;
+  if (existing.offerCode) {
+    const offer = await findActiveOfferByCode(existing.offerCode);
+    discountAmount = offer
+      ? offer.discountType === "PERCENT"
+        ? subtotal * (offer.discountValue.toNumber() / 100)
+        : Math.min(offer.discountValue.toNumber(), subtotal)
+      : // Offer has since expired or been deactivated. Honour what the guest was
+        // promised, but never let it exceed what they now owe.
+        Math.min(existing.discountAmount.toNumber(), subtotal);
+  }
+
+  const order = await prisma.$transaction(async (tx) => {
+    // Every displayed field is snapshotted on the line, so replacing the set
+    // wholesale is simpler than diffing and loses nothing.
+    await tx.orderItem.deleteMany({ where: { orderId: input.id } });
+    return tx.order.update({
+      where: { id: input.id },
+      data: {
+        customerName: input.customerName,
+        customerPhone: input.customerPhone,
+        customerBirthday: input.customerBirthday
+          ? new Date(`${input.customerBirthday}T00:00:00Z`)
+          : null,
+        deliveryAddress: existing.type === OrderType.DELIVERY ? input.deliveryAddress : null,
+        specialNotes: input.specialNotes || null,
+        subtotal,
+        discountAmount,
+        totalPrice: subtotal - discountAmount,
+        items: { create: orderItemsData },
+      },
+      include: { items: true },
+    });
+  });
+
+  return toOrderDTO(order, null);
+}
+
 /**
  * Staff decline a ticket before the kitchen has started on it — a mistake or
  * a change of mind. Only allowed from RECEIVED; once preparing has started
@@ -376,9 +506,8 @@ export async function settleTableSession(rawInput: SettleTableSessionInput): Pro
   if (session.status === TableSessionStatus.SETTLED) {
     throw new ActionError("This table has already been settled.", "CONFLICT");
   }
-  const unresolved = session.orders.some(
-    (order) => order.status === OrderStatus.RECEIVED || order.status === OrderStatus.PREPARING,
-  );
+  const UNFINISHED: OrderStatus[] = [OrderStatus.RECEIVED, OrderStatus.PREPARING, OrderStatus.READY];
+  const unresolved = session.orders.some((order) => UNFINISHED.includes(order.status));
   if (unresolved) {
     throw new ActionError(
       "Every ticket must be served or rejected before this table can be settled.",

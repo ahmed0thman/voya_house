@@ -9,6 +9,8 @@ export const queryKeys = {
   items: {
     all: ["items"] as const,
     list: (categoryId: string) => ["items", "list", categoryId] as const,
+    /** Flat menu-wide list used when staff add a line to an existing ticket. */
+    orderable: ["items", "orderable"] as const,
   },
   publicMenu: {
     brand: (brandSlug: string) => ["publicMenu", brandSlug] as const,

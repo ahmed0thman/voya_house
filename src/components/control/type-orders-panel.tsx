@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import { useOrdersByType } from "@/hooks/use-orders";
+import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrderTicket } from "./order-ticket";
 
@@ -14,9 +15,18 @@ export function TypeOrdersPanel({
   emptyIcon: LucideIcon;
   emptyLabel: string;
 }) {
-  const { data: orders, isLoading, isError } = useOrdersByType(type);
+  const { data, isLoading, isError } = useOrdersByType(type);
 
-  if (isLoading) {
+  // The server always renders this as still loading, but the header's
+  // notification bell polls these same keys from outside the board's Suspense
+  // boundary — so its fetch can land in the gap before the board hydrates, and
+  // the first client render would otherwise show tickets where the HTML being
+  // hydrated has a skeleton. Holding the data back for that single render costs
+  // one frame and keeps the two sides identical.
+  const hydrated = useIsHydrated();
+  const orders = hydrated ? data : undefined;
+
+  if (!hydrated || isLoading) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Skeleton className="h-52 w-full" />

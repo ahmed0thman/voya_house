@@ -9,12 +9,6 @@ const orderLinesSchema = z
   )
   .min(1, "Add at least one item");
 
-const commonOrderFields = {
-  specialNotes: z.string().trim().max(500).optional().or(z.literal("")),
-  offerCode: z.string().trim().max(40).optional().or(z.literal("")),
-  items: orderLinesSchema,
-};
-
 /** Loose on formatting (landlines, +20, spaces all welcome) but insists on enough digits to actually call back. */
 const phoneSchema = z
   .string()
@@ -26,10 +20,39 @@ const phoneSchema = z
 const customerNameSchema = z.string().trim().min(2, "Enter your name").max(80);
 
 /**
- * The three order types carry genuinely different required fields — a table
- * ticket needs a table, a takeaway needs someone to call when it's ready, and a
- * delivery needs somewhere to take it. A discriminated union makes those
- * requirements structural rather than a pile of conditional checks.
+ * A calendar date, `YYYY-MM-DD`, with no time and no timezone — checked as a real
+ * day (so 2000-02-31 is rejected, not silently rolled forward) and bounded to
+ * something a living guest could plausibly have.
+ */
+const birthdaySchema = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use the date picker for your birthday")
+  .refine((value) => {
+    const [year, month, day] = value.split("-").map(Number);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    const isRealDate =
+      parsed.getUTCFullYear() === year &&
+      parsed.getUTCMonth() === month - 1 &&
+      parsed.getUTCDate() === day;
+    return isRealDate && year >= 1900 && parsed.getTime() <= Date.now();
+  }, "Enter a valid birthday");
+
+/** Asked of every guest now, whichever way they're ordering. */
+const commonOrderFields = {
+  customerName: customerNameSchema,
+  customerPhone: phoneSchema,
+  customerBirthday: birthdaySchema.optional().or(z.literal("")),
+  specialNotes: z.string().trim().max(500).optional().or(z.literal("")),
+  offerCode: z.string().trim().max(40).optional().or(z.literal("")),
+  items: orderLinesSchema,
+};
+
+/**
+ * All three types now collect the same contact details; what still differs is
+ * where the order goes — a table number, nothing at all, or a street address.
+ * The discriminated union keeps that structural rather than a pile of
+ * conditional checks.
  */
 export const createOrderSchema = z.discriminatedUnion("type", [
   z.object({
@@ -39,32 +62,50 @@ export const createOrderSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("TAKEAWAY"),
-    customerName: customerNameSchema,
-    customerPhone: phoneSchema,
     ...commonOrderFields,
   }),
   z.object({
     type: z.literal("DELIVERY"),
-    customerName: customerNameSchema,
-    customerPhone: phoneSchema,
     deliveryAddress: z.string().trim().min(10, "Enter a full delivery address").max(500),
     ...commonOrderFields,
   }),
 ]);
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 
+/**
+ * Staff correcting a live takeaway/delivery ticket — a customer changed their
+ * mind, or an item turned out to be 86'd and needs swapping or dropping. Items
+ * are a full replacement set, not a diff, so the payload always describes the
+ * ticket the staff member is actually looking at.
+ */
+export const editOrderSchema = z.object({
+  id: z.uuid(),
+  customerName: customerNameSchema,
+  customerPhone: phoneSchema,
+  customerBirthday: birthdaySchema.optional().or(z.literal("")),
+  deliveryAddress: z.string().trim().max(500).optional().or(z.literal("")),
+  specialNotes: z.string().trim().max(500).optional().or(z.literal("")),
+  items: orderLinesSchema,
+});
+export type EditOrderInput = z.infer<typeof editOrderSchema>;
+
 /** The guest tracks their own takeaway/delivery tickets by id — capped so a scraped list can't fan out. */
 export const listGuestOrdersSchema = z.array(z.uuid()).max(20);
 
 export const updateOrderStatusSchema = z.object({
   id: z.uuid(),
-  status: z.enum(["RECEIVED", "PREPARING", "SERVED"]),
+  status: z.enum(["RECEIVED", "PREPARING", "READY", "SERVED"]),
 });
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
 
 export const rejectOrderSchema = z.object({
   id: z.uuid(),
-  reason: z.string().trim().max(300).optional().or(z.literal("")),
+  /**
+   * The board composes this from a quick-select preset plus the staff note, so
+   * the bound has to cover both halves — the note itself is still capped at 300
+   * in the UI, and the preset sentence is what pushes past it.
+   */
+  reason: z.string().trim().max(400).optional().or(z.literal("")),
 });
 export type RejectOrderInput = z.infer<typeof rejectOrderSchema>;
 

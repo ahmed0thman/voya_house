@@ -21,7 +21,9 @@ export function TableQrDialog({ number }: { number: number }) {
 
   useEffect(() => {
     if (!open) return;
-    const url = new URL("/", window.location.origin);
+    // The canonical domain, not wherever staff happen to be browsing from —
+    // a QR code baked with a dev/internal origin is useless once printed.
+    const url = new URL("/", process.env.NEXT_PUBLIC_APP_URL || window.location.origin);
     url.searchParams.set("table", String(number));
 
     let cancelled = false;

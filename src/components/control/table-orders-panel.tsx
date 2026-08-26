@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ClipboardListIcon, ClockIcon, ReceiptTextIcon } from "lucide-react";
 import { useTableSessions, useSettleTableSession } from "@/hooks/use-orders";
+import { useIsHydrated } from "@/hooks/use-is-hydrated";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,15 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/constants/config";
 import { cn } from "@/lib/utils";
+import { urgencyDotClass } from "@/lib/order-urgency";
 import { OrderTicket, formatRelativeTime } from "./order-ticket";
 import type { OrderDTO, TableSessionDTO } from "@/server/actions/orders";
-
-/** Red = a ticket hasn't even been started; amber = something's cooking; calm gray = fully served, just waiting to be settled. */
-function statusDotClass(session: TableSessionDTO): string {
-  if (session.orders.some((o) => o.status === "RECEIVED")) return "bg-destructive";
-  if (session.orders.some((o) => o.status === "PREPARING")) return "bg-amber-500";
-  return "bg-muted-foreground/40";
-}
 
 /** A settled table is only ever billed for what was actually served — rejected tickets are free. */
 function isSettleable(session: TableSessionDTO): boolean {
@@ -171,7 +166,7 @@ function TableList({
               isSelected ? "border-foreground/30 bg-muted" : "border-transparent hover:bg-muted/60",
             )}
           >
-            <span className={cn("size-2 shrink-0 rounded-full", statusDotClass(session))} />
+            <span className={cn("size-2 shrink-0 rounded-full", urgencyDotClass(session.orders))} />
             <span className="min-w-0 flex-1">
               <span className="flex items-center justify-between gap-2">
                 <span className="font-medium">Table {session.tableNumber}</span>
@@ -219,17 +214,24 @@ function TableSessionDetail({ session }: { session: TableSessionDTO }) {
 
 const TIME_FORMAT = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
 
-/** A one-shot "jump to this table" request — `nonce` changes each time so the same table can be re-requested. */
-export type TableJumpSignal = { tableNumber: number; nonce: number };
+/** A one-shot "jump to this table" request — `nonce` identifies the request, so the same table can be re-requested. */
+export type TableJumpSignal = { tableNumber: number; nonce: string };
 
 export function TableOrdersPanel({ jumpSignal }: { jumpSignal: TableJumpSignal | null }) {
-  const { data: sessions, isLoading, isError } = useTableSessions();
+  const { data, isLoading, isError } = useTableSessions();
+
+  // Same reason as TypeOrdersPanel: the header's bell shares this query from
+  // outside the board's Suspense boundary, so sessions can already be in the
+  // cache on the render that has to match the server's skeleton.
+  const hydrated = useIsHydrated();
+  const sessions = hydrated ? data : undefined;
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Adjusted synchronously during render (not in an effect) so a new poll result or a fresh
   // notification jump is reflected in the very render that receives it, with no extra commit.
   const [seenSessions, setSeenSessions] = useState(sessions);
-  const [handledJumpNonce, setHandledJumpNonce] = useState<number | null>(null);
+  const [handledJumpNonce, setHandledJumpNonce] = useState<string | null>(null);
 
   if (sessions !== seenSessions) {
     setSeenSessions(sessions);
@@ -249,7 +251,7 @@ export function TableOrdersPanel({ jumpSignal }: { jumpSignal: TableJumpSignal |
     if (requested) setSelectedId(requested.id);
   }
 
-  if (isLoading) {
+  if (!hydrated || isLoading) {
     return (
       <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
         <Skeleton className="h-64 w-full" />

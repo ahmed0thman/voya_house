@@ -4,12 +4,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listOpenTableSessions,
   listOrdersByType,
+  editOrder,
   updateOrderStatus,
   rejectOrder,
   settleTableSession,
 } from "@/server/actions/orders";
+import { listOrderableItems } from "@/server/actions/items";
 import { queryKeys } from "@/lib/query-keys";
 import type {
+  EditOrderInput,
   UpdateOrderStatusInput,
   RejectOrderInput,
   SettleTableSessionInput,
@@ -31,6 +34,28 @@ export function useOrdersByType(type: "TAKEAWAY" | "DELIVERY") {
     queryKey: queryKeys.orders.byType(type),
     queryFn: () => listOrdersByType(type),
     refetchInterval: POLL_INTERVAL_MS,
+  });
+}
+
+/** The menu barely moves during a shift, so this is fetched once and reused. */
+export function useOrderableItems(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.items.orderable,
+    queryFn: () => listOrderableItems(),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useEditOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: EditOrderInput) => editOrder(input),
+    onSuccess: (order) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.orders.byType(order.type === "DELIVERY" ? "DELIVERY" : "TAKEAWAY"),
+      });
+    },
   });
 }
 

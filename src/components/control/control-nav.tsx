@@ -7,6 +7,7 @@ import { LogOutIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useLogout } from "@/hooks/use-auth";
+import { NotificationMenu } from "./notification-menu";
 
 const NAV_ITEMS = [
   { href: "/control", label: "Dashboard", adminOnly: true },
@@ -64,6 +65,7 @@ export function ControlNav({ user }: { user: { name: string; role: "ADMIN" | "ST
       </nav>
 
       <div className="flex items-center gap-2 border-l pl-4">
+        <NotificationMenu />
         <span className="text-sm text-muted-foreground">
           {user.name}{" "}
           <span className="text-xs text-muted-foreground/70">
