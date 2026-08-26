@@ -301,38 +301,38 @@ function BusinessOverview() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Rejections &amp; offers</CardTitle>
+                <CardTitle>Top rejection reasons</CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col gap-5">
-                <div>
-                  <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    Top rejection reasons
-                  </p>
-                  <RankedBarChart
-                    data={data.rejections.topReasons.map((reason) => ({
-                      label: reason.reason,
-                      value: reason.count,
-                    }))}
-                    formatValue={(v) => String(v)}
-                    seriesLabel="Rejections"
-                    emptyLabel="No rejections in this range."
-                  />
-                </div>
-                <div>
-                  <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    Top offer codes
-                  </p>
-                  <RankedBarChart
-                    data={data.offers.topCodes.map((code) => ({
-                      label: code.code,
-                      sublabel: formatPrice(code.totalDiscount),
-                      value: code.uses,
-                    }))}
-                    formatValue={(v) => `${v} uses`}
-                    seriesLabel="Uses"
-                    emptyLabel="No offer codes used in this range."
-                  />
-                </div>
+              <CardContent>
+                <RankedBarChart
+                  data={data.rejections.topReasons.map((reason) => ({
+                    label: reason.reason,
+                    value: reason.count,
+                  }))}
+                  formatValue={(v) => String(v)}
+                  seriesLabel="Rejections"
+                  color="var(--destructive)"
+                  emptyLabel="No rejections in this range."
+                />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Top offer codes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RankedBarChart
+                  data={data.offers.topCodes.map((code) => ({
+                    label: code.code,
+                    sublabel: formatPrice(code.totalDiscount),
+                    value: code.uses,
+                  }))}
+                  formatValue={(v) => `${v} uses`}
+                  seriesLabel="Uses"
+                  color="var(--chart-4)"
+                  emptyLabel="No offer codes used in this range."
+                />
               </CardContent>
             </Card>
           </div>
