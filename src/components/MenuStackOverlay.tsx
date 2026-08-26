@@ -1,19 +1,18 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { useGSAP } from "@gsap/react";
-import {
-  Cancel01Icon,
-  Touch01Icon,
-  ArrowRight01Icon,
-  ShoppingBag01Icon,
-  Clock01Icon,
-} from "hugeicons-react";
-import BookletCard from "./BookletCard";
-import { useCartStore } from "@/store/useCartStore";
-import { useGuestOrders } from "@/hooks/use-table-orders";
 import { formatPrice } from "@/constants/config";
+import { useCartStore } from "@/store/useCartStore";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
+import {
+  ArrowRight01Icon,
+  Cancel01Icon,
+  ShoppingBag01Icon,
+  Tap01Icon,
+  Touch01Icon,
+} from "hugeicons-react";
+import { useEffect, useRef, useState } from "react";
+import BookletCard from "./BookletCard";
 
 type BrandId = "coffee" | "papa" | "mama";
 const BRANDS: BrandId[] = ["coffee", "papa", "mama"];
@@ -35,7 +34,6 @@ export default function MenuStackOverlay({
     s.items.reduce((acc, i) => acc + i.quantity, 0),
   );
   const totalPrice = useCartStore((s) => s.getTotalPrice());
-  const activeOrdersCount = useGuestOrders().data?.length ?? 0;
   const openCart = useCartStore((s) => s.openCart);
 
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -362,53 +360,39 @@ export default function MenuStackOverlay({
       </div>
 
       {/* ─── Top Utility Bar: Floating Table Order & Close Buttons ─── */}
-      {/* Floating Table Order Button (Striking Accent Theme, visible only when user has items in cart or active orders) */}
-      {(totalItems > 0 || activeOrdersCount > 0) && (
+      {/* Floating Table Order Button — only while the cart holds items not yet sent to staff. */}
+      {totalItems > 0 && (
         <button
           onClick={openCart}
           aria-label={`View Table Order (${totalItems} items)`}
           className="overlay-control absolute top-3.5 left-4 sm:top-5 sm:left-6 z-50 group flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#E05D3A] hover:bg-[#F26A45] text-white border border-white/20 hover:border-white/40 backdrop-blur-xl shadow-[0_8px_25px_rgba(224,93,58,0.4)] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         >
-          {/* Pulsing indicator when cart has items or active order */}
-          {totalItems > 0 ? (
-            <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/80 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"></span>
-            </span>
-          ) : activeOrdersCount > 0 ? (
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/80 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white shadow-[0_0_8px_rgba(255,255,255,0.6)]"></span>
-            </span>
-          ) : null}
+          <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/80 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 bg-white shadow-[0_0_6px_rgba(255,255,255,0.6)]"></span>
+          </span>
 
           <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
-            {totalItems > 0 ? (
-              <ShoppingBag01Icon size={13} className="text-white" />
-            ) : (
-              <Clock01Icon size={13} className="text-white" />
-            )}
+            <ShoppingBag01Icon size={13} className="text-white" />
           </div>
 
           <div className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs">
             <span className="text-white font-bold tracking-wide">
-              {totalItems > 0
-                ? `${totalItems} Item${totalItems > 1 ? "s" : ""}`
-                : `${activeOrdersCount} Order${activeOrdersCount > 1 ? "s" : ""}`}
+              {totalItems} Item{totalItems > 1 ? "s" : ""}
             </span>
-            {totalItems > 0 && (
-              <>
-                <span className="text-white/50">·</span>
-                <span className="text-white font-bold tracking-wide">
-                  {formatPrice(totalPrice)}
-                </span>
-              </>
-            )}
+            <span className="text-white/50">·</span>
+            <span className="text-white font-bold tracking-wide">
+              {formatPrice(totalPrice)}
+            </span>
           </div>
 
           <span className="font-mono text-[10px] uppercase tracking-wider text-white/80 group-hover:text-white transition-colors pl-0.5 hidden sm:inline">
             View ↗
           </span>
+          <Tap01Icon
+            size={20}
+            className="text-white/80 group-hover:text-white transition-colors shrink-0 sm:hidden"
+          />
         </button>
       )}
 

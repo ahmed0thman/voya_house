@@ -4,7 +4,7 @@ import { Inter, Outfit, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import GlobalCursor from "@/components/GlobalCursor";
 import { QueryProvider } from "@/components/providers/query-provider";
-import { Toaster } from "@/components/ui/sonner";
+import { AppToaster } from "@/components/app-toaster";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -30,7 +30,7 @@ export default function RootLayout({
         <GlobalCursor />
         <QueryProvider>
           {children}
-          <Toaster />
+          <AppToaster />
         </QueryProvider>
       </body>
     </html>

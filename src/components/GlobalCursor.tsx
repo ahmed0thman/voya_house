@@ -2,15 +2,17 @@
 
 import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
+import { usePathname } from "next/navigation";
 
 export default function GlobalCursor() {
+  const pathname = usePathname();
   const mousePos = useRef({ x: -1000, y: -1000 });
   const cursorRef = useRef<HTMLDivElement>(null);
   const cursorAuraRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Only run on desktop devices
-    if (window.matchMedia("(pointer: coarse)").matches) return;
+    // Only run on desktop devices and not on control board routes
+    if (window.matchMedia("(pointer: coarse)").matches || pathname.startsWith('/control')) return;
 
     // Force hide default cursors
     document.documentElement.style.setProperty('cursor', 'none', 'important');
@@ -88,7 +90,9 @@ export default function GlobalCursor() {
       document.removeEventListener("mouseout", handleMouseOut);
       if (style.parentNode) style.parentNode.removeChild(style);
     };
-  }, []);
+  }, [pathname]);
+
+  if (pathname.startsWith('/control')) return null;
 
   return (
     <div 
