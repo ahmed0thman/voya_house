@@ -19,13 +19,6 @@ function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-const STATUS_ORDER = [
-  OrderStatus.RECEIVED,
-  OrderStatus.PREPARING,
-  OrderStatus.READY,
-  OrderStatus.SERVED,
-  OrderStatus.REJECTED,
-] as const;
 const TYPE_ORDER = [OrderType.ON_TABLE, OrderType.TAKEAWAY, OrderType.DELIVERY] as const;
 
 type ResolvedRange = { start: Date | null; end: Date };
@@ -113,7 +106,6 @@ export type BusinessDashboardDTO = {
     revenueChangePct: number | null;
     orderCountChangePct: number | null;
   } | null;
-  ordersByStatus: { status: OrderStatus; count: number }[];
   ordersByType: { type: OrderType; count: number; revenue: number }[];
   revenueByBrand: { brandSlug: string; brandName: string; revenue: number; itemsSold: number }[];
   revenueTrend: { bucket: string; revenue: number; orderCount: number }[];
@@ -166,7 +158,6 @@ export const getBusinessDashboard = defineAction({
         : Promise.resolve(null),
     ]);
 
-    const statusCounts = new Map<OrderStatus, number>();
     const typeAgg = new Map<OrderType, { count: number; revenue: number }>();
     const brandAgg = new Map<string, { revenue: number; itemsSold: number }>();
     const itemAgg = new Map<string, { name: string; brandSlug: string; quantitySold: number; revenue: number }>();
@@ -190,7 +181,6 @@ export const getBusinessDashboard = defineAction({
     const granularity: Granularity = input.preset === "all" ? "month" : pickGranularity(spanDays);
 
     for (const order of orders) {
-      statusCounts.set(order.status, (statusCounts.get(order.status) ?? 0) + 1);
       hourCounts[order.createdAt.getUTCHours()]++;
 
       if (order.status === OrderStatus.REJECTED) {
@@ -280,7 +270,6 @@ export const getBusinessDashboard = defineAction({
             orderCountChangePct: percentChange(revenueOrderCount, previousOrderCount),
           }
         : null,
-      ordersByStatus: STATUS_ORDER.map((status) => ({ status, count: statusCounts.get(status) ?? 0 })),
       ordersByType: TYPE_ORDER.map((type) => ({
         type,
         count: typeAgg.get(type)?.count ?? 0,
@@ -332,7 +321,6 @@ export type OrdersReportRowDTO = {
   tableNumber: number | null;
   customerName: string | null;
   customerPhone: string | null;
-  status: OrderStatus;
   items: { name: string; quantity: number; brandSlug: string }[];
   brandSlugs: string[];
   specialNotes: string | null;
@@ -365,7 +353,6 @@ export const getOrdersReport = defineAction({
   handler: async (input): Promise<OrdersReportDTO> => {
     const where: Prisma.OrderWhereInput = {};
 
-    if (input.status !== "ALL") where.status = input.status;
     if (input.type !== "ALL") where.type = input.type;
     if (input.brandSlug !== "ALL") where.items = { some: { brandSlug: input.brandSlug } };
 
@@ -412,7 +399,6 @@ export const getOrdersReport = defineAction({
       tableNumber: order.tableSession?.table.number ?? null,
       customerName: order.customerName,
       customerPhone: order.customerPhone,
-      status: order.status,
       items: order.items,
       brandSlugs: Array.from(new Set(order.items.map((item) => item.brandSlug))),
       specialNotes: order.specialNotes,

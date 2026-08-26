@@ -14,7 +14,7 @@ import {
 import { useBusinessDashboard } from "@/hooks/use-reports";
 import type { DashboardRangeInput } from "@/lib/validations/reports";
 import { OrdersReportTable } from "./orders-report-table";
-import { BarTrendChart, RankedBarList } from "./charts";
+import { TrendAreaChart, CategoryBarChart, RankedBarChart, RankedPieChart } from "./charts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,40 +23,48 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formatPrice } from "@/constants/config";
 import type { LucideIcon } from "lucide-react";
 
-const RANGE_PRESETS: { value: DashboardRangeInput["preset"]; label: string }[] = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "7 days" },
-  { value: "30d", label: "30 days" },
-  { value: "90d", label: "90 days" },
-  { value: "all", label: "All time" },
-  { value: "custom", label: "Custom" },
-];
+const RANGE_PRESETS: { value: DashboardRangeInput["preset"]; label: string }[] =
+  [
+    { value: "today", label: "Today" },
+    { value: "7d", label: "7 days" },
+    { value: "30d", label: "30 days" },
+    { value: "90d", label: "90 days" },
+    { value: "all", label: "All time" },
+    { value: "custom", label: "Custom" },
+  ];
 
 const TYPE_LABEL: Record<string, string> = {
   ON_TABLE: "Dine-in",
   TAKEAWAY: "Takeaway",
   DELIVERY: "Delivery",
 };
-const STATUS_LABEL: Record<string, string> = {
-  RECEIVED: "Received",
-  PREPARING: "Preparing",
-  READY: "Ready",
-  SERVED: "Served",
-  REJECTED: "Rejected",
+/** Each house's own identity color — same values as the public-facing brand badges (see CartSheet's BRAND_CONFIG). */
+const BRAND_COLOR: Record<string, string> = {
+  coffee: "#F1E6C3",
+  papa: "#B7D39A",
+  mama: "#D8A98F",
 };
-
 function formatCompact(value: number): string {
-  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
+  return new Intl.NumberFormat(undefined, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
 }
 
 function formatPct(value: number): string {
   return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
 }
 
-function bucketLabel(bucket: string, granularity: "day" | "week" | "month"): string {
+function bucketLabel(
+  bucket: string,
+  granularity: "day" | "week" | "month",
+): string {
   if (granularity === "month") {
     const [year, month] = bucket.split("-").map(Number);
-    return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString(undefined, { month: "short" });
+    return new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString(
+      undefined,
+      { month: "short" },
+    );
   }
   const date = new Date(`${bucket}T00:00:00.000Z`);
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -77,15 +85,23 @@ function TrendTile({
     <Card>
       <CardContent className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{label}</span>
+          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            {label}
+          </span>
           <span className="text-2xl font-semibold tabular-nums">{value}</span>
           {changePct != null && (
             <span
               className={`inline-flex items-center gap-0.5 text-xs font-medium ${
-                changePct >= 0 ? "text-emerald-600 dark:text-emerald-500" : "text-destructive"
+                changePct >= 0
+                  ? "text-emerald-600 dark:text-emerald-500"
+                  : "text-destructive"
               }`}
             >
-              {changePct >= 0 ? <TrendingUpIcon className="size-3" /> : <TrendingDownIcon className="size-3" />}
+              {changePct >= 0 ? (
+                <TrendingUpIcon className="size-3" />
+              ) : (
+                <TrendingDownIcon className="size-3" />
+              )}
               {formatPct(changePct)} vs prior period
             </span>
           )}
@@ -143,7 +159,7 @@ function BusinessOverview() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-21.5 rounded-xl" />
           ))}
@@ -154,7 +170,7 @@ function BusinessOverview() {
         </p>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 ">
             <TrendTile
               label="Revenue"
               value={formatPrice(data.revenue.total)}
@@ -167,7 +183,11 @@ function BusinessOverview() {
               icon={ReceiptIcon}
               changePct={data.previousPeriod?.orderCountChangePct}
             />
-            <TrendTile label="Avg. order value" value={formatPrice(data.revenue.averageOrderValue)} icon={TrendingUpIcon} />
+            <TrendTile
+              label="Avg. order value"
+              value={formatPrice(data.revenue.averageOrderValue)}
+              icon={TrendingUpIcon}
+            />
             <TrendTile
               label="Discounts given"
               value={formatPrice(data.offers.totalDiscount)}
@@ -190,13 +210,13 @@ function BusinessOverview() {
               <CardTitle>Revenue trend</CardTitle>
             </CardHeader>
             <CardContent>
-              <BarTrendChart
+              <TrendAreaChart
                 data={data.revenueTrend.map((point) => ({
                   label: bucketLabel(point.bucket, data.granularity),
                   value: point.revenue,
                 }))}
                 formatValue={formatPrice}
-                labelEvery={Math.max(1, Math.ceil(data.revenueTrend.length / 10))}
+                seriesLabel="Revenue"
               />
             </CardContent>
           </Card>
@@ -207,13 +227,18 @@ function BusinessOverview() {
                 <CardTitle>Revenue by house</CardTitle>
               </CardHeader>
               <CardContent>
-                <RankedBarList
-                  items={data.revenueByBrand.map((brand) => ({
+                <RankedPieChart
+                  data={data.revenueByBrand.map((brand) => ({
                     label: brand.brandName,
                     sublabel: `${brand.itemsSold} sold`,
                     value: brand.revenue,
+                    color: BRAND_COLOR[brand.brandSlug],
                   }))}
                   formatValue={formatPrice}
+                  centerLabel={{
+                    value: formatCompact(data.revenueByBrand.reduce((sum, b) => sum + b.revenue, 0)),
+                    caption: "Revenue",
+                  }}
                 />
               </CardContent>
             </Card>
@@ -223,28 +248,17 @@ function BusinessOverview() {
                 <CardTitle>Orders by type</CardTitle>
               </CardHeader>
               <CardContent>
-                <RankedBarList
-                  items={data.ordersByType.map((entry) => ({
+                <RankedPieChart
+                  data={data.ordersByType.map((entry) => ({
                     label: TYPE_LABEL[entry.type] ?? entry.type,
                     sublabel: formatPrice(entry.revenue),
                     value: entry.count,
                   }))}
                   formatValue={(v) => `${v} orders`}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Orders by status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RankedBarList
-                  items={data.ordersByStatus.map((entry) => ({
-                    label: STATUS_LABEL[entry.status] ?? entry.status,
-                    value: entry.count,
-                  }))}
-                  formatValue={(v) => String(v)}
+                  centerLabel={{
+                    value: String(data.ordersByType.reduce((sum, t) => sum + t.count, 0)),
+                    caption: "Orders",
+                  }}
                 />
               </CardContent>
             </Card>
@@ -254,14 +268,15 @@ function BusinessOverview() {
                 <CardTitle>Orders by hour</CardTitle>
               </CardHeader>
               <CardContent>
-                <BarTrendChart
+                <CategoryBarChart
                   data={data.ordersByHour.map((entry) => ({
-                    label: entry.hour % 4 === 0 ? `${entry.hour}h` : "",
+                    label: `${entry.hour}h`,
                     value: entry.count,
                   }))}
                   formatValue={(v) => `${v} orders`}
-                  labelEvery={4}
+                  seriesLabel="Orders"
                   color="var(--chart-2)"
+                  tickInterval={3}
                 />
               </CardContent>
             </Card>
@@ -271,13 +286,14 @@ function BusinessOverview() {
                 <CardTitle>Top selling items</CardTitle>
               </CardHeader>
               <CardContent>
-                <RankedBarList
-                  items={data.topItems.map((item) => ({
+                <RankedBarChart
+                  data={data.topItems.map((item) => ({
                     label: item.name,
                     sublabel: `${item.quantitySold}× · ${item.brandSlug}`,
                     value: item.revenue,
                   }))}
                   formatValue={formatPrice}
+                  seriesLabel="Revenue"
                   emptyLabel="No items sold in this range."
                 />
               </CardContent>
@@ -292,12 +308,13 @@ function BusinessOverview() {
                   <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     Top rejection reasons
                   </p>
-                  <RankedBarList
-                    items={data.rejections.topReasons.map((reason) => ({
+                  <RankedBarChart
+                    data={data.rejections.topReasons.map((reason) => ({
                       label: reason.reason,
                       value: reason.count,
                     }))}
                     formatValue={(v) => String(v)}
+                    seriesLabel="Rejections"
                     emptyLabel="No rejections in this range."
                   />
                 </div>
@@ -305,13 +322,14 @@ function BusinessOverview() {
                   <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
                     Top offer codes
                   </p>
-                  <RankedBarList
-                    items={data.offers.topCodes.map((code) => ({
+                  <RankedBarChart
+                    data={data.offers.topCodes.map((code) => ({
                       label: code.code,
                       sublabel: formatPrice(code.totalDiscount),
                       value: code.uses,
                     }))}
                     formatValue={(v) => `${v} uses`}
+                    seriesLabel="Uses"
                     emptyLabel="No offer codes used in this range."
                   />
                 </div>
@@ -323,11 +341,17 @@ function BusinessOverview() {
             <CardContent className="flex flex-wrap items-center gap-6">
               <div className="flex items-center gap-2 text-sm">
                 <ArmchairIcon className="size-4 text-muted-foreground" />
-                <span className="font-medium">{data.tableSessions.openCount}</span>
-                <span className="text-muted-foreground">tables open right now</span>
+                <span className="font-medium">
+                  {data.tableSessions.openCount}
+                </span>
+                <span className="text-muted-foreground">
+                  tables open right now
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground">Avg. visit length:</span>
+                <span className="text-muted-foreground">
+                  Avg. visit length:
+                </span>
                 <span className="font-medium">
                   {data.tableSessions.avgSessionMinutes != null
                     ? `${data.tableSessions.avgSessionMinutes} min`
@@ -336,7 +360,9 @@ function BusinessOverview() {
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-muted-foreground">Unique customers:</span>
-                <span className="font-medium">{formatCompact(data.customers.uniqueCustomers)}</span>
+                <span className="font-medium">
+                  {formatCompact(data.customers.uniqueCustomers)}
+                </span>
               </div>
             </CardContent>
           </Card>

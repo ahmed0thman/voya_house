@@ -18,6 +18,7 @@ import { formatPrice } from "@/constants/config";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -42,24 +43,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type Status = OrdersReportRowDTO["status"];
 type OrderType = OrdersReportRowDTO["type"];
-
-const STATUS_LABEL: Record<Status, string> = {
-  RECEIVED: "Received",
-  PREPARING: "Preparing",
-  READY: "Ready",
-  SERVED: "Served",
-  REJECTED: "Rejected",
-};
-
-const STATUS_BADGE_VARIANT: Record<Status, "default" | "secondary" | "destructive" | "outline"> = {
-  RECEIVED: "secondary",
-  PREPARING: "default",
-  READY: "default",
-  SERVED: "outline",
-  REJECTED: "destructive",
-};
 
 const TYPE_LABEL: Record<OrderType, string> = {
   ON_TABLE: "Dine-in",
@@ -71,7 +55,6 @@ const DEFAULT_FILTERS: OrdersReportInput = {
   page: 1,
   pageSize: 25,
   search: "",
-  status: "ALL",
   type: "ALL",
   brandSlug: "ALL",
   sortBy: "createdAt",
@@ -79,31 +62,47 @@ const DEFAULT_FILTERS: OrdersReportInput = {
 };
 
 function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  return new Date(iso).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 function SortIcon({ active, dir }: { active: boolean; dir: "asc" | "desc" }) {
   if (!active) return null;
-  return dir === "asc" ? <ArrowUpIcon className="size-3" /> : <ArrowDownIcon className="size-3" />;
+  return dir === "asc" ? (
+    <ArrowUpIcon className="size-3" />
+  ) : (
+    <ArrowDownIcon className="size-3" />
+  );
 }
 
 export function OrdersReportTable() {
   const [searchInput, setSearchInput] = useState("");
   const [filters, setFilters] = useState<OrdersReportInput>(DEFAULT_FILTERS);
-  const [selectedOrder, setSelectedOrder] = useState<OrdersReportRowDTO | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<OrdersReportRowDTO | null>(
+    null,
+  );
   const { data: brands } = useBrands();
 
   // Debounced so free typing doesn't fire a request per keystroke.
   useEffect(() => {
     const handle = setTimeout(() => {
-      setFilters((prev) => (prev.search === searchInput ? prev : { ...prev, search: searchInput, page: 1 }));
+      setFilters((prev) =>
+        prev.search === searchInput
+          ? prev
+          : { ...prev, search: searchInput, page: 1 },
+      );
     }, 350);
     return () => clearTimeout(handle);
   }, [searchInput]);
 
   const { data, isLoading, isError, isFetching } = useOrdersReport(filters);
 
-  function updateFilter<K extends keyof OrdersReportInput>(key: K, value: OrdersReportInput[K]) {
+  function updateFilter<K extends keyof OrdersReportInput>(
+    key: K,
+    value: OrdersReportInput[K],
+  ) {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   }
 
@@ -117,13 +116,12 @@ export function OrdersReportTable() {
 
   const hasActiveFilters = Boolean(
     filters.search ||
-      filters.status !== "ALL" ||
-      filters.type !== "ALL" ||
-      filters.brandSlug !== "ALL" ||
-      filters.from ||
-      filters.to ||
-      filters.minTotal !== undefined ||
-      filters.maxTotal !== undefined,
+    filters.type !== "ALL" ||
+    filters.brandSlug !== "ALL" ||
+    filters.from ||
+    filters.to ||
+    filters.minTotal !== undefined ||
+    filters.maxTotal !== undefined,
   );
 
   function clearFilters() {
@@ -133,107 +131,114 @@ export function OrdersReportTable() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="relative w-full max-w-xs">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
+        <Field className="col-span-2">
+          <FieldLabel htmlFor="report-search">Search</FieldLabel>
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="report-search"
+              placeholder="Name, phone, order # or code…"
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              className="pl-8"
+            />
+          </div>
+        </Field>
+
+        <Field className="">
+          <FieldLabel htmlFor="report-type">Type</FieldLabel>
+          <Select
+            value={filters.type}
+            onValueChange={(value) =>
+              updateFilter("type", value as OrdersReportInput["type"])
+            }
+          >
+            <SelectTrigger id="report-type">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All types</SelectItem>
+              {(Object.entries(TYPE_LABEL) as [OrderType, string][]).map(
+                ([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ),
+              )}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field className="">
+          <FieldLabel htmlFor="report-brand">House</FieldLabel>
+          <Select
+            value={filters.brandSlug}
+            onValueChange={(value) => value && updateFilter("brandSlug", value)}
+          >
+            <SelectTrigger id="report-brand">
+              <SelectValue placeholder="House" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All houses</SelectItem>
+              {brands?.map((brand) => (
+                <SelectItem key={brand.id} value={brand.slug}>
+                  {brand.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+
+        <Field className="">
+          <FieldLabel htmlFor="report-from">From</FieldLabel>
           <Input
-            placeholder="Search name, phone, order # or code…"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            className="pl-8"
-          />
-        </div>
-
-        <Select
-          value={filters.status}
-          onValueChange={(value) => updateFilter("status", value as OrdersReportInput["status"])}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All statuses</SelectItem>
-            {(Object.entries(STATUS_LABEL) as [Status, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.type}
-          onValueChange={(value) => updateFilter("type", value as OrdersReportInput["type"])}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All types</SelectItem>
-            {(Object.entries(TYPE_LABEL) as [OrderType, string][]).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={filters.brandSlug}
-          onValueChange={(value) => value && updateFilter("brandSlug", value)}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="House" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="ALL">All houses</SelectItem>
-            {brands?.map((brand) => (
-              <SelectItem key={brand.id} value={brand.slug}>
-                {brand.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-1.5">
-          <Input
+            id="report-from"
             type="date"
             value={filters.from ?? ""}
             onChange={(event) => updateFilter("from", event.target.value)}
-            className="w-36"
           />
-          <span className="text-sm text-muted-foreground">to</span>
+        </Field>
+        <Field className="">
+          <FieldLabel htmlFor="report-to">To</FieldLabel>
           <Input
+            id="report-to"
             type="date"
             value={filters.to ?? ""}
             onChange={(event) => updateFilter("to", event.target.value)}
-            className="w-36"
           />
-        </div>
+        </Field>
 
-        <div className="flex items-center gap-1.5">
+        <Field className="">
+          <FieldLabel htmlFor="report-min-total">Min total</FieldLabel>
           <Input
+            id="report-min-total"
             type="number"
             min={0}
-            placeholder="Min"
             value={filters.minTotal ?? ""}
             onChange={(event) =>
-              updateFilter("minTotal", event.target.value ? Number(event.target.value) : undefined)
+              updateFilter(
+                "minTotal",
+                event.target.value ? Number(event.target.value) : undefined,
+              )
             }
-            className="w-20"
           />
-          <span className="text-sm text-muted-foreground">–</span>
+        </Field>
+        <Field className="">
+          <FieldLabel htmlFor="report-max-total">Max total</FieldLabel>
           <Input
+            id="report-max-total"
             type="number"
             min={0}
-            placeholder="Max"
             value={filters.maxTotal ?? ""}
             onChange={(event) =>
-              updateFilter("maxTotal", event.target.value ? Number(event.target.value) : undefined)
+              updateFilter(
+                "maxTotal",
+                event.target.value ? Number(event.target.value) : undefined,
+              )
             }
-            className="w-20"
           />
-        </div>
+        </Field>
 
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -258,27 +263,37 @@ export function OrdersReportTable() {
             ))}
           </div>
         ) : isError || !data ? (
-          <p className="p-6 text-center text-sm text-destructive">Couldn&apos;t load the report.</p>
+          <p className="p-6 text-center text-sm text-destructive">
+            Couldn&apos;t load the report.
+          </p>
         ) : data.rows.length === 0 ? (
           <div className="flex flex-col items-center gap-3 p-16 text-center">
             <div className="rounded-full bg-muted p-3 text-muted-foreground">
               <ReceiptTextIcon className="size-5" />
             </div>
-            <p className="text-sm text-muted-foreground">No orders match these filters.</p>
+            <p className="text-sm text-muted-foreground">
+              No orders match these filters.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("createdAt")}>
+                  <TableHead
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleSort("createdAt")}
+                  >
                     <span className="inline-flex items-center gap-1">
-                      Date <SortIcon active={filters.sortBy === "createdAt"} dir={filters.sortDir} />
+                      Date{" "}
+                      <SortIcon
+                        active={filters.sortBy === "createdAt"}
+                        dir={filters.sortDir}
+                      />
                     </span>
                   </TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Houses</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead
@@ -286,7 +301,11 @@ export function OrdersReportTable() {
                     onClick={() => toggleSort("totalPrice")}
                   >
                     <span className="inline-flex items-center gap-1">
-                      Total <SortIcon active={filters.sortBy === "totalPrice"} dir={filters.sortDir} />
+                      Total{" "}
+                      <SortIcon
+                        active={filters.sortBy === "totalPrice"}
+                        dir={filters.sortDir}
+                      />
                     </span>
                   </TableHead>
                 </TableRow>
@@ -303,20 +322,24 @@ export function OrdersReportTable() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-medium">{order.customerName ?? "—"}</span>
+                        <span className="font-medium">
+                          {order.customerName ?? "—"}
+                        </span>
                         {order.customerPhone && (
-                          <span className="text-xs text-muted-foreground">{order.customerPhone}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {order.customerPhone}
+                          </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">
                       {TYPE_LABEL[order.type]}
                       {order.tableNumber != null && (
-                        <span className="text-muted-foreground"> · #{order.tableNumber}</span>
+                        <span className="text-muted-foreground">
+                          {" "}
+                          · #{order.tableNumber}
+                        </span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={STATUS_BADGE_VARIANT[order.status]}>{STATUS_LABEL[order.status]}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
@@ -327,7 +350,9 @@ export function OrdersReportTable() {
                         ))}
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{order.items.length}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {order.items.length}
+                    </TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatPrice(order.totalPrice)}
                       {order.discountAmount > 0 && (
@@ -355,7 +380,9 @@ export function OrdersReportTable() {
               variant="outline"
               size="icon-sm"
               disabled={data.page <= 1}
-              onClick={() => setFilters((prev) => ({ ...prev, page: prev.page - 1 }))}
+              onClick={() =>
+                setFilters((prev) => ({ ...prev, page: prev.page - 1 }))
+              }
             >
               <ChevronLeftIcon />
             </Button>
@@ -363,7 +390,9 @@ export function OrdersReportTable() {
               variant="outline"
               size="icon-sm"
               disabled={data.page >= data.totalPages}
-              onClick={() => setFilters((prev) => ({ ...prev, page: prev.page + 1 }))}
+              onClick={() =>
+                setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
+              }
             >
               <ChevronRightIcon />
             </Button>
@@ -371,15 +400,21 @@ export function OrdersReportTable() {
         </div>
       )}
 
-      <Dialog open={!!selectedOrder} onOpenChange={(open) => !open && setSelectedOrder(null)}>
+      <Dialog
+        open={!!selectedOrder}
+        onOpenChange={(open) => !open && setSelectedOrder(null)}
+      >
         <DialogContent className="sm:max-w-md">
           {selectedOrder && (
             <>
               <DialogHeader>
                 <DialogTitle>Order details</DialogTitle>
                 <DialogDescription>
-                  {formatDateTime(selectedOrder.createdAt)} · {TYPE_LABEL[selectedOrder.type]}
-                  {selectedOrder.tableNumber != null ? ` · Table ${selectedOrder.tableNumber}` : ""}
+                  {formatDateTime(selectedOrder.createdAt)} ·{" "}
+                  {TYPE_LABEL[selectedOrder.type]}
+                  {selectedOrder.tableNumber != null
+                    ? ` · Table ${selectedOrder.tableNumber}`
+                    : ""}
                 </DialogDescription>
               </DialogHeader>
               <div className="flex flex-col gap-3 text-sm">
@@ -387,19 +422,19 @@ export function OrdersReportTable() {
                   <span className="text-muted-foreground">Customer</span>
                   <span>
                     {selectedOrder.customerName ?? "—"}
-                    {selectedOrder.customerPhone ? ` · ${selectedOrder.customerPhone}` : ""}
+                    {selectedOrder.customerPhone
+                      ? ` · ${selectedOrder.customerPhone}`
+                      : ""}
                   </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <Badge variant={STATUS_BADGE_VARIANT[selectedOrder.status]}>
-                    {STATUS_LABEL[selectedOrder.status]}
-                  </Badge>
                 </div>
                 {selectedOrder.rejectionReason && (
                   <div className="flex justify-between gap-4">
-                    <span className="shrink-0 text-muted-foreground">Rejection reason</span>
-                    <span className="text-right">{selectedOrder.rejectionReason}</span>
+                    <span className="shrink-0 text-muted-foreground">
+                      Rejection reason
+                    </span>
+                    <span className="text-right">
+                      {selectedOrder.rejectionReason}
+                    </span>
                   </div>
                 )}
                 <div className="rounded-lg border">
@@ -410,7 +445,9 @@ export function OrdersReportTable() {
                           <TableCell className="font-medium">
                             {item.quantity}× {item.name}
                           </TableCell>
-                          <TableCell className="text-right text-muted-foreground">{item.brandSlug}</TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {item.brandSlug}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -422,7 +459,12 @@ export function OrdersReportTable() {
                 </div>
                 {selectedOrder.discountAmount > 0 && (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Discount{selectedOrder.offerCode ? ` (${selectedOrder.offerCode})` : ""}</span>
+                    <span>
+                      Discount
+                      {selectedOrder.offerCode
+                        ? ` (${selectedOrder.offerCode})`
+                        : ""}
+                    </span>
                     <span>−{formatPrice(selectedOrder.discountAmount)}</span>
                   </div>
                 )}

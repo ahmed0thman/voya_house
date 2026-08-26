@@ -15,7 +15,6 @@ export const dashboardRangeSchema = z.object({
 });
 export type DashboardRangeInput = z.infer<typeof dashboardRangeSchema>;
 
-const orderStatusSchema = z.enum(["RECEIVED", "PREPARING", "READY", "SERVED", "REJECTED"]);
 const orderTypeSchema = z.enum(["ON_TABLE", "TAKEAWAY", "DELIVERY"]);
 
 export const ordersReportSchema = z.object({
@@ -23,7 +22,6 @@ export const ordersReportSchema = z.object({
   pageSize: z.number().int().min(1).max(100).default(25),
   /** Matches against customer name, phone, order id, or offer code. */
   search: z.string().trim().max(100).optional().or(z.literal("")),
-  status: orderStatusSchema.or(z.literal("ALL")).default("ALL"),
   type: orderTypeSchema.or(z.literal("ALL")).default("ALL"),
   brandSlug: z.string().or(z.literal("ALL")).default("ALL"),
   from: isoDateSchema.optional().or(z.literal("")),
