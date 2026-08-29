@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useGSAP } from "@gsap/react";
 import SplitText from "@/components/SplitText";
+import { findNearestLoadedFrame } from "@/lib/frame-sequence";
 
 import {
   Coffee01Icon,
@@ -14,6 +15,12 @@ import {
   Pizza01Icon,
   ArrowRight01Icon,
 } from "hugeicons-react";
+
+// Intrinsic size of the frame sequence (public/assets/frames/*.jpg).
+// The canvas backing store is locked to this in JSX so it never depends on
+// when the first image finishes decoding.
+const FRAME_WIDTH = 720;
+const FRAME_HEIGHT = 1280;
 
 interface MobileStageProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -44,19 +51,30 @@ export default function MobileStage({
   const overlayRef = useRef<HTMLDivElement>(null);
   const groundGlowRef = useRef<HTMLDivElement>(null);
 
-  // Draw first frame when images are ready
+  // Draw the first frame as soon as it is available. On a slow connection the
+  // loader dismisses on the 3.5s fallback timer, before frame 1 has decoded —
+  // so retry on load instead of bailing out, otherwise the canvas stays empty
+  // until the first scroll.
   useEffect(() => {
     if (!isLoaded) return;
+    const canvas = canvasRef.current;
     const firstImg = imagesRef.current[0];
-    if (firstImg && firstImg.complete && canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      if (ctx) {
-        canvasRef.current.width = 720;
-        canvasRef.current.height = 1280;
-        ctx.clearRect(0, 0, 720, 1280);
-        ctx.drawImage(firstImg, 0, 0);
-      }
+    if (!canvas || !firstImg) return;
+
+    const draw = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+      ctx.drawImage(firstImg, 0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+    };
+
+    if (firstImg.complete && firstImg.naturalWidth > 0) {
+      draw();
+      return;
     }
+
+    firstImg.addEventListener("load", draw);
+    return () => firstImg.removeEventListener("load", draw);
   }, [isLoaded, imagesRef]);
 
   // ─── GSAP Master Timeline (scroll-driven) ──────────────────────────────
@@ -64,6 +82,11 @@ export default function MobileStage({
     () => {
       if (!introDone) return;
       gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
+      // Android/iOS collapse and re-show the URL bar while scrolling, which
+      // fires a resize and would otherwise make ScrollTrigger refresh and jump
+      // mid-scroll. The stage is sized to the large viewport, so ignore it.
+      ScrollTrigger.config({ ignoreMobileResize: true });
 
       const el = containerRef.current;
       const overlay = overlayRef.current;
@@ -86,12 +109,16 @@ export default function MobileStage({
                 Math.floor(self.progress * (frameCount - 1)),
               ),
             );
-            const img = imagesRef.current[currentFrame];
-            if (img && img.complete && canvasRef.current) {
+            // On a slow connection the exact frame may still be in flight —
+            // fall back to the nearest already-loaded frame so the canvas
+            // keeps tracking scroll position instead of freezing on stale
+            // content.
+            const img = findNearestLoadedFrame(imagesRef.current, currentFrame);
+            if (img && canvasRef.current) {
               const ctx = canvasRef.current.getContext("2d");
               if (ctx) {
-                ctx.clearRect(0, 0, 720, 1280);
-                ctx.drawImage(img, 0, 0);
+                ctx.clearRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+                ctx.drawImage(img, 0, 0, FRAME_WIDTH, FRAME_HEIGHT);
               }
             }
             updateProgress(self.progress);
@@ -102,11 +129,7 @@ export default function MobileStage({
       // Overlay colors for the 5 phases
       masterTl
         .to(overlay, { backgroundColor: "rgba(0,0,0,0)", duration: 0.2 }, 0)
-        .to(
-          overlay,
-          { backgroundColor: "rgba(0,0,0,0.4)", duration: 0.2 },
-          0.2,
-        )
+        .to(overlay, { backgroundColor: "rgba(0,0,0,0.4)", duration: 0.2 }, 0.2)
         .to(
           overlay,
           { backgroundColor: "rgba(0,0,0,0.3)", duration: 0.2 },
@@ -173,7 +196,7 @@ export default function MobileStage({
           0.04,
         )
         .fromTo(
-          ".s1-explore-btn",
+          ".s1-scroll-indicator",
           { autoAlpha: 1, y: 0 },
           { autoAlpha: 0, y: -35, duration: 0.08 },
           0.06,
@@ -404,9 +427,9 @@ export default function MobileStage({
           0.5,
         );
 
-        // 4. Explore Button fade up
+        // 4. Scroll indicator fade up
         tl.fromTo(
-          ".s1-explore-btn",
+          ".s1-scroll-indicator",
           { autoAlpha: 0, y: 12 },
           { autoAlpha: 1, y: 0, duration: 0.9, ease: "power2.out" },
           0.8,
@@ -421,6 +444,8 @@ export default function MobileStage({
       {/* Mobile Canvas Sequence Background */}
       <canvas
         ref={canvasRef}
+        width={FRAME_WIDTH}
+        height={FRAME_HEIGHT}
         className="absolute inset-0 w-full h-full object-cover scale-105"
       />
       <div
@@ -461,13 +486,18 @@ export default function MobileStage({
             </p>
           </div>
 
-          {/* Explore The House Button */}
+          {/* Scroll Down Indicator */}
           <button
             onClick={onExploreHouse}
-            className="s1-explore-btn group flex items-center gap-2 mt-8 px-7 py-2.5 rounded-lg border border-black/20 bg-[#F1E6C3] hover:bg-white active:scale-95 transition-all text-black font-sans font-medium text-[11px] uppercase tracking-[0.25em] cursor-pointer pointer-events-auto shadow-sm opacity-0"
+            aria-label="Scroll to explore"
+            className="s1-scroll-indicator group flex flex-col items-center gap-3 mt-36 cursor-pointer pointer-events-auto opacity-0"
           >
-            <span>Explore the House</span>
-            <ArrowRight01Icon className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <span className="font-sans font-semibold uppercase tracking-[0.24em] text-[10px] text-brand-black/70">
+              Scroll
+            </span>
+            <span className="w-6 h-10 rounded-full border-2 border-black/30 overflow-hidden flex justify-center pt-2 group-hover:border-black/50 transition-colors">
+              <span className="w-1.5 h-1.5 rounded-full bg-black/50 scroll-dot-anim" />
+            </span>
           </button>
         </div>
       </div>

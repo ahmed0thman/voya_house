@@ -18,6 +18,7 @@ import OrderModeSync from "@/components/OrderModeSync";
 import { useViewport } from "@/hooks/useViewport";
 import MobileStage from "@/components/MobileStage";
 import DesktopStage from "@/components/DesktopStage";
+import { preloadFrameSequence } from "@/lib/frame-sequence";
 
 // Section snap points as scroll progress (0–1)
 const SNAP_POINTS = [0, 0.3, 0.55, 0.74, 0.95];
@@ -25,6 +26,22 @@ const TOTAL_SECTIONS = 9; // 5 video sections + booklets + story + contact + foo
 const SCROLL_DURATION = 3.5; // seconds per section transition
 const COOLDOWN_MS = 3600; // lock input during animation
 const FRAME_COUNT = 361;
+// How many leading frames must be loaded, in order, before the loader lets
+// the user scroll. Frame 1 alone isn't enough runway — on a throttled
+// connection the user reaches frame 2 before it's ready and the canvas
+// visibly stalls. This gives the ordered loader below a head start.
+const INITIAL_READY_FRAMES = 24;
+// Eagerly fetch only the first quarter of the sequence; the rest waits for
+// scroll engagement. Fetching all 361 frames (~28MB) unconditionally kept
+// the network busy for the entire session — confirmed via Lighthouse, which
+// showed LCP/TTI dragged out past 50s even though the page was actually
+// interactive the whole time. Most visitors never scroll past the hero, so
+// that background fetch was pure waste for them.
+const EAGER_LOAD_FRAMES = Math.ceil(FRAME_COUNT * 0.25);
+// Resume fetching the remaining 75% once scroll has consumed 10% of the
+// eager batch — proof the visitor is actually scrolling, not just landing
+// on the page.
+const RESUME_LOAD_FRAME = Math.ceil(EAGER_LOAD_FRAMES * 0.1);
 
 export default function Home() {
   const pageRef = useRef<HTMLDivElement>(null);
@@ -58,6 +75,10 @@ export default function Home() {
   } = useAmbientSound();
   const videoReady = useRef(false);
   const minTimeReached = useRef(false);
+  const frameLoaderRef = useRef<ReturnType<typeof preloadFrameSequence> | null>(
+    null,
+  );
+  const resumeTriggered = useRef(false);
 
   // Mutable refs for navigation state
   const currentIndex = useRef(0);
@@ -144,6 +165,23 @@ export default function Home() {
     });
   }, [enableSound]);
 
+  // Scroll-tick handler shared by both stages: keeps the ambient sound sync
+  // (updateProgress) and also triggers the deferred frame-sequence load
+  // once scroll proves the visitor is actually engaging with the sequence.
+  const handleScrollProgress = useCallback(
+    (progress: number) => {
+      updateProgress(progress);
+      if (!resumeTriggered.current) {
+        const currentFrame = Math.floor(progress * (FRAME_COUNT - 1));
+        if (currentFrame >= RESUME_LOAD_FRAME) {
+          resumeTriggered.current = true;
+          frameLoaderRef.current?.resume();
+        }
+      }
+    },
+    [updateProgress],
+  );
+
   // ─── Reset Scroll Position on Mount ───────────────────────────────────────────
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
@@ -177,47 +215,58 @@ export default function Home() {
       tryDismiss();
     }, 1000);
 
-    // Fallback timer: Force dismiss after 3.5 seconds
+    // Fallback timer: force dismiss after 6 seconds even if the sequence
+    // hasn't reached INITIAL_READY_FRAMES yet, so a truly broken connection
+    // doesn't trap the user on the loader forever. Whatever isn't loaded yet
+    // is covered at scroll time by the nearest-loaded-frame fallback in
+    // MobileStage/DesktopStage.
     const fallbackTimer = setTimeout(() => {
       if (!isLoaded) {
         videoReady.current = true;
         minTimeReached.current = true;
         tryDismiss();
       }
-    }, 3500);
+    }, 6000);
 
-    // Preload image sequence
-    const images: HTMLImageElement[] = [];
+    // Preload image sequence with a small concurrency window, strictly in
+    // frame order (see src/lib/frame-sequence.ts for why this matters on a
+    // throttled connection). Only dismiss the loader once a real runway of
+    // leading frames is ready, not just frame 1.
+    const images: HTMLImageElement[] = new Array(FRAME_COUNT);
     imagesRef.current = images;
-    let loadedCount = 0;
 
     const isDesktop = window.innerWidth >= 768;
-    for (let i = 1; i <= FRAME_COUNT; i++) {
-      const img = new window.Image();
+    const srcFor = (i: number) => {
       const paddedIndex = i.toString().padStart(4, "0");
       // Frame 64 is where the editorial stage starts fading in (progress
       // 0.18), so that is the first frame the right-hand panel actually
       // shows. Everything from there on needs the transparent PNGs.
-      if (isDesktop && i >= 64) {
-        img.src = `/assets/frames-web/frame_${paddedIndex}.png`;
-      } else {
-        img.src = `/assets/frames/frame_${paddedIndex}.jpg`;
-      }
-      images.push(img);
+      return isDesktop && i >= 64
+        ? `/assets/frames-web/frame_${paddedIndex}.png`
+        : `/assets/frames/frame_${paddedIndex}.jpg`;
+    };
 
-      img.onload = () => {
-        loadedCount++;
-        // Dismiss loading screen when the first frame is ready
-        if (loadedCount === 1) {
+    const loader = preloadFrameSequence(images, {
+      frameCount: FRAME_COUNT,
+      initialBatchSize: EAGER_LOAD_FRAMES,
+      srcFor,
+      onFrameSettled: (loadedCount, contiguousLoaded) => {
+        if (!videoReady.current && (
+          contiguousLoaded >= INITIAL_READY_FRAMES ||
+          loadedCount === FRAME_COUNT
+        )) {
           videoReady.current = true;
           tryDismiss();
         }
-      };
-    }
+      },
+    });
+    frameLoaderRef.current = loader;
 
     return () => {
       clearTimeout(minTimer);
       clearTimeout(fallbackTimer);
+      loader.cancel();
+      frameLoaderRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -279,7 +328,7 @@ export default function Home() {
     onIntroDone: () => setIntroDone(true),
     onExploreHouse: handleExploreHouse,
     onOpenMenu: setActiveMenu as (menu: "coffee" | "papa" | "mama") => void,
-    updateProgress,
+    updateProgress: handleScrollProgress,
   };
 
   return (
@@ -288,13 +337,28 @@ export default function Home() {
 
       <main
         ref={container}
-        className="relative w-full h-[100dvh] bg-[#080907] selection:bg-[#B7D39A] selection:text-black font-sans overflow-hidden"
+        className="relative w-full h-stage bg-[#080907] selection:bg-[#B7D39A] selection:text-black font-sans overflow-hidden"
       >
-        {/* Viewport Stage */}
+        {/* Viewport Stage. Both stages render on the server (and on the
+            first client render, before useViewport's effect resolves) so
+            the hero — including the LCP image — exists in the initial HTML
+            instead of depending on JS hydration to appear at all. The
+            inactive one is CSS-hidden (zero layout cost, no CLS) only for
+            that brief window; the instant the real viewport is known, it's
+            dropped from the tree entirely. Both stages independently
+            register a pinned ScrollTrigger on this same container once
+            `introDone`, so leaving both mounted any longer than this risks
+            two competing pins on one element. */}
         <div className="absolute inset-0 w-full h-full">
-          {viewport === "mobile" && <MobileStage {...stageProps} />}
-          {viewport === "desktop" && (
-            <DesktopStage {...stageProps} bookletsRef={bookletsRef} />
+          {viewport !== "desktop" && (
+            <div className={viewport === null ? "md:hidden" : undefined}>
+              <MobileStage {...stageProps} />
+            </div>
+          )}
+          {viewport !== "mobile" && (
+            <div className={viewport === null ? "hidden md:block" : undefined}>
+              <DesktopStage {...stageProps} bookletsRef={bookletsRef} />
+            </div>
           )}
         </div>
       </main>

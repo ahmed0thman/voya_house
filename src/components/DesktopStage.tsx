@@ -7,12 +7,19 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 import { useGSAP } from "@gsap/react";
 import HeroFlashlightEffect from "@/components/HeroFlashlightEffect";
+import { findNearestLoadedFrame } from "@/lib/frame-sequence";
 import {
   Coffee01Icon,
   Leaf01Icon,
   Pizza01Icon,
   ArrowRight01Icon,
 } from "hugeicons-react";
+
+// Intrinsic size of the frame sequence (public/assets/frames-web/*.png and
+// public/assets/frames/*.jpg). The canvas backing store is locked to this in
+// JSX so it never depends on when the first image finishes decoding.
+const FRAME_WIDTH = 720;
+const FRAME_HEIGHT = 1280;
 
 
 
@@ -45,21 +52,30 @@ export default function DesktopStage({
 }: DesktopStageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // Draw the first frame as soon as it is available. On a slow connection the
+  // loader dismisses on the 3.5s fallback timer, before frame 1 has decoded —
+  // so retry on load instead of bailing out, otherwise the canvas stays empty
+  // until the first scroll.
   useEffect(() => {
     if (!isLoaded || !imagesRef.current.length) return;
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    
-    // Initial draw
     const img = imagesRef.current[0];
-    if (img && img.complete) {
-      canvas.width = 720;
-      canvas.height = 1280;
-      ctx.clearRect(0, 0, 720, 1280);
-      ctx.drawImage(img, 0, 0);
+    if (!canvas || !img) return;
+
+    const draw = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.clearRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+      ctx.drawImage(img, 0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+    };
+
+    if (img.complete && img.naturalWidth > 0) {
+      draw();
+      return;
     }
+
+    img.addEventListener("load", draw);
+    return () => img.removeEventListener("load", draw);
   }, [isLoaded, imagesRef]);
 
   useGSAP(
@@ -85,12 +101,16 @@ export default function DesktopStage({
                 ),
               );
               const canvas = canvasRef.current;
-              const img = imagesRef.current[frameIndex];
-              if (canvas && img && img.complete) {
+              // On a slow connection the exact frame may still be in flight —
+              // fall back to the nearest already-loaded frame so the canvas
+              // keeps tracking scroll position instead of freezing on stale
+              // content.
+              const img = findNearestLoadedFrame(imagesRef.current, frameIndex);
+              if (canvas && img) {
                 const ctx = canvas.getContext("2d");
                 if (ctx) {
-                  ctx.clearRect(0, 0, 720, 1280);
-                  ctx.drawImage(img, 0, 0);
+                  ctx.clearRect(0, 0, FRAME_WIDTH, FRAME_HEIGHT);
+                  ctx.drawImage(img, 0, 0, FRAME_WIDTH, FRAME_HEIGHT);
                 }
               }
             }
@@ -835,6 +855,8 @@ export default function DesktopStage({
           <div className="relative h-full aspect-[9/16] z-0">
             <canvas
               ref={canvasRef}
+              width={FRAME_WIDTH}
+              height={FRAME_HEIGHT}
               className="w-full h-full object-cover"
             />
           </div>

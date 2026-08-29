@@ -83,6 +83,18 @@ body {
   color: var(--color-brand-black);
 }
 
+/* Full-bleed scrollytelling stage height.
+   `100vh` on mobile browsers resolves to the *large* viewport — the height with
+   the URL bar hidden — and stays constant while Android/iOS collapse and
+   re-show their toolbars. `100dvh` shrinks with the toolbar, and because GSAP's
+   pin freezes the element height in px at refresh time, that left a black strip
+   at the bottom of the stage once the bar auto-hid on scroll. `100lvh` is the
+   explicit modern spelling of the same value and wins where supported. */
+.h-stage {
+  height: 100vh;
+  height: 100lvh;
+}
+
 #canvas-container {
   position: fixed;
   top: 0;
