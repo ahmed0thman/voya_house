@@ -46,17 +46,24 @@ interface CartStore {
    */
   tableNumber: number | null;
   /**
-   * Whether `tableNumber` came from a scanned QR rather than the guest picking
-   * from a list. A scan is proof of where they physically are, so it's shown as
-   * settled fact; a self-declared table stays editable.
+   * True once this table is settled fact rather than a tentative pick — either
+   * it came from a scanned QR, or a self-selected table's first order has
+   * already gone through. Either way the guest is now provably seated there:
+   * the picker stops offering it as a free choice (shown as a locked "Table N"
+   * instead), and later rounds this session stop being treated as a fresh
+   * claim on the table — see `tableSelfSelected` in `order.ts` for why that
+   * distinction matters (a confirmed table must never be rejected as "taken"
+   * by its own occupant sending a second round).
    */
-  tableFromScan: boolean;
+  tableConfirmed: boolean;
   /** Ids of the takeaway/delivery tickets this browser has placed — how those guests track their orders. */
   guestOrderIds: string[];
   isCartOpen: boolean;
   viewingOrderStatus: boolean;
 
-  setTableNumber: (table: number | null, options?: { fromScan?: boolean }) => void;
+  setTableNumber: (table: number | null, options?: { confirmed?: boolean }) => void;
+  /** Marks the currently-selected table confirmed after its first order succeeds — see `tableConfirmed`. */
+  confirmTable: () => void;
   /** `persist: false` while hydrating from storage, so a restore doesn't rewrite what it just read. */
   setOrderMode: (mode: OrderMode, options?: { persist?: boolean }) => void;
   setGuestOrderIds: (ids: string[]) => void;
@@ -91,13 +98,14 @@ export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   orderMode: null,
   tableNumber: null,
-  tableFromScan: false,
+  tableConfirmed: false,
   guestOrderIds: [],
   isCartOpen: false,
   viewingOrderStatus: false,
 
   setTableNumber: (table, options) =>
-    set({ tableNumber: table, tableFromScan: options?.fromScan ?? false }),
+    set({ tableNumber: table, tableConfirmed: options?.confirmed ?? false }),
+  confirmTable: () => set({ tableConfirmed: true }),
 
   setOrderMode: (mode, options) => {
     set({ orderMode: mode });

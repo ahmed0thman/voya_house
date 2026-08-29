@@ -327,12 +327,13 @@ export default function CartSheet() {
     items,
     orderMode,
     tableNumber,
-    tableFromScan,
+    tableConfirmed,
     isCartOpen,
     viewingOrderStatus,
     closeCart,
     setOrderMode,
     setTableNumber,
+    confirmTable,
     setViewingOrderStatus,
     updateQuantity,
     removeItem,
@@ -496,7 +497,10 @@ export default function CartSheet() {
         ? {
             type: "ON_TABLE",
             tableNumber: tableNumber!,
-            tableSelfSelected: !tableFromScan,
+            // Once confirmed this is the guest's own already-open session — a
+            // second round must join it, not be re-checked as a fresh claim
+            // on the table (which would wrongly read as "already taken").
+            tableSelfSelected: !tableConfirmed,
             ...common,
           }
         : orderMode === "TAKEAWAY"
@@ -512,6 +516,10 @@ export default function CartSheet() {
         setAppliedOffer(null);
         clearCart();
         setViewingOrderStatus(true);
+        // A self-selected table is now settled fact: it just got a real order
+        // sent to it, so the next round should behave exactly like a scanned
+        // table — locked in, no picker, no re-litigating whether it's "taken".
+        if (orderMode === "ON_TABLE") confirmTable();
       },
       onError: (error) => {
         toast.error(error.message);
@@ -1090,9 +1098,9 @@ export default function CartSheet() {
                   </div>
                 ) : (
                   <>
-                    {orderMode === "ON_TABLE" && tableFromScan ? (
-                      /* A scanned table is where the guest physically is — not something
-                         to pick from a list, and not a mode they need to re-choose. */
+                    {orderMode === "ON_TABLE" && tableConfirmed ? (
+                      /* Either scanned, or already ordered here once this session — either
+                         way it's not something to pick from a list or re-choose anymore. */
                       <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 mb-3">
                         <div className="flex items-center gap-2">
                           <Location01Icon size={15} className="text-[#F1E6C3]" />

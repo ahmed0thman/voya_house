@@ -27,7 +27,7 @@ function OrderModeReader() {
     // 1. A scanned table QR is the only thing in a URL that decides how someone
     //    is ordering — it's proof of where they physically are.
     if (Number.isInteger(parsedTable) && parsedTable > 0) {
-      setTableNumber(parsedTable, { fromScan: true });
+      setTableNumber(parsedTable, { confirmed: true });
       setOrderMode("ON_TABLE");
       return;
     }
