@@ -46,6 +46,20 @@ export const STATE_CHIP: Record<OpenState, string> = {
   ready: "bg-emerald-600 text-white",
 };
 
+/**
+ * The same red/amber/green as `STATE_CHIP`, but keyed by the raw `OrderStatus`
+ * so a single ticket's badge (order card) can match the board's tab chips
+ * exactly instead of drifting to its own palette. SERVED and REJECTED have no
+ * tab equivalent — they're neutral/soft since that work is already done.
+ */
+export const STATUS_CHIP: Record<OrderStatus, string> = {
+  RECEIVED: STATE_CHIP.new,
+  PREPARING: STATE_CHIP.preparing,
+  READY: STATE_CHIP.ready,
+  SERVED: "bg-secondary text-secondary-foreground",
+  REJECTED: "bg-destructive/10 text-destructive",
+};
+
 export const STATE_LABEL: Record<OpenState, string> = {
   new: "new",
   preparing: "preparing",

@@ -3,6 +3,7 @@
 import { defineAction } from "@/server/define-action";
 import {
   generateItemImageKey,
+  generateOfferBannerImageKey,
   createPresignedUploadUrl,
   deleteObject,
   resolveImageUrl,
@@ -11,6 +12,8 @@ import {
 import {
   requestItemImageUploadSchema,
   deleteItemImageSchema,
+  requestOfferBannerUploadSchema,
+  deleteOfferBannerImageSchema,
 } from "@/lib/validations/upload";
 
 export type PresignedUploadDTO = {
@@ -48,6 +51,36 @@ export const requestItemImageUpload = defineAction({
 export const deleteItemImage = defineAction({
   auth: "user",
   schema: deleteItemImageSchema,
+  handler: async (input): Promise<{ key: string }> => {
+    await deleteObject(input.key);
+    return { key: input.key };
+  },
+});
+
+/** Same flow as `requestItemImageUpload`, scoped to admin — banners live under offers. */
+export const requestOfferBannerUpload = defineAction({
+  auth: "admin",
+  schema: requestOfferBannerUploadSchema,
+  handler: async (input): Promise<PresignedUploadDTO> => {
+  await assertStorageBudget(input.fileSize);
+  const key = generateOfferBannerImageKey(input.fileName);
+  const uploadUrl = await createPresignedUploadUrl({
+    key,
+    contentType: input.contentType,
+  });
+
+  return {
+    uploadUrl,
+    key,
+    publicUrl: resolveImageUrl(key),
+    contentType: input.contentType,
+  };
+  },
+});
+
+export const deleteOfferBannerImage = defineAction({
+  auth: "admin",
+  schema: deleteOfferBannerImageSchema,
   handler: async (input): Promise<{ key: string }> => {
     await deleteObject(input.key);
     return { key: input.key };

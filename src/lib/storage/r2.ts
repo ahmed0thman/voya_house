@@ -139,14 +139,23 @@ export async function getStorageStatus(): Promise<StorageStatusDTO> {
   }
 }
 
-/** Generates a stable, collision-free object key for an uploaded item image. */
-export function generateItemImageKey(fileName: string): string {
-  const safeName =
+function sanitizeFileName(fileName: string): string {
+  return (
     fileName
       .toLowerCase()
       .replace(/[^a-z0-9.]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "image";
-  return `items/${crypto.randomUUID()}-${safeName}`;
+      .replace(/^-+|-+$/g, "") || "image"
+  );
+}
+
+/** Generates a stable, collision-free object key for an uploaded item image. */
+export function generateItemImageKey(fileName: string): string {
+  return `items/${crypto.randomUUID()}-${sanitizeFileName(fileName)}`;
+}
+
+/** Generates a stable, collision-free object key for an offer's banner image. */
+export function generateOfferBannerImageKey(fileName: string): string {
+  return `offers/banners/${crypto.randomUUID()}-${sanitizeFileName(fileName)}`;
 }
 
 /**

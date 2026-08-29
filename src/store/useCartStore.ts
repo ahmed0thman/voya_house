@@ -15,9 +15,6 @@ export interface CartItem {
   image?: string;
 }
 
-/** Demo fallback for local testing without scanning a table QR code — real guests always arrive with `?table=N`. */
-const DEFAULT_TABLE_NUMBER = 4;
-
 export function formatTableNumber(number: number): string {
   return `Table ${String(number).padStart(2, "0")}`;
 }
@@ -37,18 +34,29 @@ interface CartStore {
   items: CartItem[];
   /**
    * How this guest is ordering. `?table=N` (a scanned QR) resolves it to dine in;
-   * anyone else arrives with it `null` and must pick pickup or delivery at
+   * anyone else arrives with it `null` and picks dine in, pickup or delivery at
    * checkout — there is deliberately no default, since guessing wrong sends
    * someone's food to the wrong place.
    */
   orderMode: OrderMode | null;
-  tableNumber: number;
+  /**
+   * Null until a table is known, which is the normal state for anyone who
+   * didn't scan a QR. Never defaulted to a real number: a plausible-looking
+   * guess would quietly send food to a table the guest isn't sitting at.
+   */
+  tableNumber: number | null;
+  /**
+   * Whether `tableNumber` came from a scanned QR rather than the guest picking
+   * from a list. A scan is proof of where they physically are, so it's shown as
+   * settled fact; a self-declared table stays editable.
+   */
+  tableFromScan: boolean;
   /** Ids of the takeaway/delivery tickets this browser has placed — how those guests track their orders. */
   guestOrderIds: string[];
   isCartOpen: boolean;
   viewingOrderStatus: boolean;
 
-  setTableNumber: (table: number) => void;
+  setTableNumber: (table: number | null, options?: { fromScan?: boolean }) => void;
   /** `persist: false` while hydrating from storage, so a restore doesn't rewrite what it just read. */
   setOrderMode: (mode: OrderMode, options?: { persist?: boolean }) => void;
   setGuestOrderIds: (ids: string[]) => void;
@@ -82,12 +90,14 @@ interface CartStore {
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   orderMode: null,
-  tableNumber: DEFAULT_TABLE_NUMBER,
+  tableNumber: null,
+  tableFromScan: false,
   guestOrderIds: [],
   isCartOpen: false,
   viewingOrderStatus: false,
 
-  setTableNumber: (table) => set({ tableNumber: table }),
+  setTableNumber: (table, options) =>
+    set({ tableNumber: table, tableFromScan: options?.fromScan ?? false }),
 
   setOrderMode: (mode, options) => {
     set({ orderMode: mode });

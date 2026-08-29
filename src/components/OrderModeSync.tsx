@@ -27,7 +27,7 @@ function OrderModeReader() {
     // 1. A scanned table QR is the only thing in a URL that decides how someone
     //    is ordering — it's proof of where they physically are.
     if (Number.isInteger(parsedTable) && parsedTable > 0) {
-      setTableNumber(parsedTable);
+      setTableNumber(parsedTable, { fromScan: true });
       setOrderMode("ON_TABLE");
       return;
     }
@@ -42,7 +42,8 @@ function OrderModeReader() {
     }
 
     // 3. Nothing scanned, nothing remembered: leave the mode unset. The guest
-    //    picks pickup or delivery at checkout rather than us guessing for them.
+    //    picks dine in, pickup or delivery at checkout rather than us guessing
+    //    for them — and a dine-in pick there names its own table.
   }, [searchParams, setTableNumber, setOrderMode, setGuestOrderIds]);
 
   return null;

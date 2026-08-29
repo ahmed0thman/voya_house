@@ -58,6 +58,13 @@ export const createOrderSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("ON_TABLE"),
     tableNumber: z.number().int().positive(),
+    /**
+     * True when the guest named the table from the picker rather than scanning
+     * its QR. Only a self-selected table is refused when already seated: a scan
+     * is proof the guest is physically there, so it must keep joining an open
+     * session — that's how a table sends its second and third rounds.
+     */
+    tableSelfSelected: z.boolean().optional(),
     ...commonOrderFields,
   }),
   z.object({

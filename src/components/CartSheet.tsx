@@ -28,7 +28,11 @@ import {
 import { toast } from "sonner";
 import DeliveryLocationPicker from "@/components/DeliveryLocationPicker";
 import { useCartStore, formatTableNumber, ORDER_MODE_LABEL } from "@/store/useCartStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { useGuestOrders, usePlaceOrder, useValidateOfferCode } from "@/hooks/use-table-orders";
+import { useGuestTables } from "@/hooks/use-tables";
+import { queryKeys } from "@/lib/query-keys";
+import { ActionError } from "@/lib/action-error";
 import { useRejectedOrderRecovery } from "@/hooks/use-rejected-order-recovery";
 import { useOrderUpdateNotice } from "@/hooks/use-order-update-notice";
 import {
@@ -100,9 +104,9 @@ const MODE_CONFIG: Record<
     cartTabLabel: "New Order",
     emptyTitle: "Your Order is Empty",
     emptyBody:
-      "Explore our 3D menu booklets to pick specialty coffee, healthy dishes, or comfort food — you'll choose pickup or delivery at checkout.",
+      "Explore our 3D menu booklets to pick specialty coffee, healthy dishes, or comfort food — you'll choose dine in, pickup or delivery at checkout.",
     destinationHeading: "How Would You Like It?",
-    submitLabel: "Choose Pickup or Delivery",
+    submitLabel: "Choose How to Receive It",
     submitPendingLabel: "Sending...",
     submitNote: "Pick a method above to continue",
     // Never rendered: a placed ticket always carries a real order type.
@@ -175,10 +179,95 @@ const MODE_CONFIG: Record<
   },
 };
 
+/**
+ * What an unrouted guest can pick at checkout. Dine in is included because
+ * plenty of people sit down and open the site directly rather than scanning
+ * the QR on their table — they just have to say which table they're at.
+ */
+const MODE_CHOICES = ["ON_TABLE", "DELIVERY", "TAKEAWAY"] as const;
+
+const MODE_CHOICE_HINT: Record<(typeof MODE_CHOICES)[number], string> = {
+  ON_TABLE: "Served at your table",
+  DELIVERY: "Sent to your door",
+  TAKEAWAY: "Collect at the counter",
+};
+
+/**
+ * Lets a guest name the table they're sitting at when they didn't scan its QR.
+ * Only active tables are offered, and the order is still re-checked server-side
+ * — this is convenience, not authority.
+ */
+function TablePicker({
+  tableNumber,
+  onSelect,
+  error,
+}: {
+  tableNumber: number | null;
+  onSelect: (table: number | null) => void;
+  error?: string;
+}) {
+  const { data: tables = [], isLoading, isError } = useGuestTables();
+  /** Every table is seated. Not an error — just nothing this guest can claim from here. */
+  const noneFree = !isLoading && !isError && tables.length === 0;
+
+  return (
+    <div className="mb-3">
+      <label
+        htmlFor="cart-table-picker"
+        className="block font-mono text-[9px] uppercase tracking-widest text-white/50 mb-1.5"
+      >
+        Which Table Are You At?
+      </label>
+      <div
+        className={`flex items-center gap-2 px-3 rounded-xl bg-black/30 border transition-all ${
+          error ? "border-red-500/60" : "border-white/10 focus-within:border-[#F1E6C3]"
+        }`}
+      >
+        <Location01Icon size={14} className="text-white/40 shrink-0" />
+        <select
+          id="cart-table-picker"
+          value={tableNumber ?? ""}
+          disabled={isLoading || isError || noneFree}
+          onChange={(e) => onSelect(e.target.value ? Number(e.target.value) : null)}
+          aria-invalid={!!error}
+          className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white outline-none [color-scheme:dark] disabled:opacity-50 cursor-pointer"
+        >
+          <option value="">
+            {isLoading
+              ? "Loading tables…"
+              : isError
+                ? "Couldn't load tables"
+                : noneFree
+                  ? "No free tables right now"
+                  : "Select your table"}
+          </option>
+          {tables.map((table) => (
+            <option key={table.number} value={table.number}>
+              {formatTableNumber(table.number)}
+              {table.label ? ` · ${table.label}` : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      {error && (
+        <span className="block px-1 mt-1 text-[10px] text-red-400 font-mono">{error}</span>
+      )}
+      {(isError || noneFree) && !error && (
+        <span className="block px-1 mt-1 text-[10px] text-white/40 font-mono">
+          {noneFree
+            ? "Already seated? Scan the QR code on your table to order to it."
+            : "Ask a member of staff, or scan the QR code on your table."}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /** The guest's live tracker steps, in order — a status's index in here is its progress. */
 const PROGRESS_ORDER = ["RECEIVED", "PREPARING", "READY", "SERVED"] as const;
 
-function OrderProgressTracker({ order, tableNumber }: { order: OrderDTO; tableNumber: number }) {
+/** Reads the table off the ticket itself — a placed order's own table is the authority, not whatever the cart is set to now. */
+function OrderProgressTracker({ order }: { order: OrderDTO }) {
   const copy = MODE_CONFIG[order.type];
   const steps = [
     { label: "1. Received", hint: "Barista / Chef" },
@@ -186,7 +275,10 @@ function OrderProgressTracker({ order, tableNumber }: { order: OrderDTO; tableNu
     { label: copy.readyStepLabel, hint: copy.readyStepHint },
     {
       label: copy.finalStepLabel,
-      hint: order.type === "ON_TABLE" ? `To ${formatTableNumber(tableNumber)}` : copy.finalStepHint,
+      hint:
+        order.type === "ON_TABLE" && order.tableNumber !== null
+          ? `To ${formatTableNumber(order.tableNumber)}`
+          : copy.finalStepHint,
     },
   ];
   const currentIndex = PROGRESS_ORDER.indexOf(order.status as (typeof PROGRESS_ORDER)[number]);
@@ -235,10 +327,12 @@ export default function CartSheet() {
     items,
     orderMode,
     tableNumber,
+    tableFromScan,
     isCartOpen,
     viewingOrderStatus,
     closeCart,
     setOrderMode,
+    setTableNumber,
     setViewingOrderStatus,
     updateQuantity,
     removeItem,
@@ -247,6 +341,7 @@ export default function CartSheet() {
     getTotalItems,
   } = useCartStore();
 
+  const queryClient = useQueryClient();
   const { data: activeOrders = [] } = useGuestOrders();
   const placeOrderMutation = usePlaceOrder();
   const validateOfferMutation = useValidateOfferCode();
@@ -272,7 +367,9 @@ export default function CartSheet() {
   } | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"name" | "phone" | "address", string>>>({});
+  const [fieldErrors, setFieldErrors] = useState<
+    Partial<Record<"name" | "phone" | "address" | "table", string>>
+  >({});
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -363,6 +460,9 @@ export default function CartSheet() {
     if (orderMode === "DELIVERY" && contact.address.trim().length < 10) {
       next.address = "Please enter a full delivery address.";
     }
+    if (orderMode === "ON_TABLE" && tableNumber === null) {
+      next.table = "Please select the table you're sitting at.";
+    }
     return next;
   };
 
@@ -370,7 +470,7 @@ export default function CartSheet() {
     e.preventDefault();
     if (items.length === 0) return;
     if (orderMode === null) {
-      toast.error("Choose pickup or delivery first.");
+      toast.error("Choose how you'd like your order first.");
       return;
     }
 
@@ -390,8 +490,15 @@ export default function CartSheet() {
       items: items.map((item) => ({ itemId: item.id, quantity: item.quantity })),
     };
     const input: CreateOrderInput =
+      // `validateContact` has already refused a dine-in order with no table,
+      // so the assertion here can't fire on a real submit.
       orderMode === "ON_TABLE"
-        ? { type: "ON_TABLE", tableNumber, ...common }
+        ? {
+            type: "ON_TABLE",
+            tableNumber: tableNumber!,
+            tableSelfSelected: !tableFromScan,
+            ...common,
+          }
         : orderMode === "TAKEAWAY"
           ? { type: "TAKEAWAY", ...common }
           : { type: "DELIVERY", deliveryAddress: contact.address.trim(), ...common };
@@ -406,7 +513,17 @@ export default function CartSheet() {
         clearCart();
         setViewingOrderStatus(true);
       },
-      onError: (error) => toast.error(error.message),
+      onError: (error) => {
+        toast.error(error.message);
+        // Lost the race for a table someone else just sat at. Drop the dead
+        // pick and refresh the list so they're choosing from what's actually
+        // free, rather than re-submitting into the same rejection.
+        if (error instanceof ActionError && error.code === "CONFLICT" && orderMode === "ON_TABLE") {
+          setTableNumber(null);
+          setFieldErrors((f) => ({ ...f, table: "Please pick another table." }));
+          queryClient.invalidateQueries({ queryKey: queryKeys.tables.guest });
+        }
+      },
     });
   };
 
@@ -461,7 +578,9 @@ export default function CartSheet() {
               </h2>
               {orderMode && (
                 <span className="px-2 py-0.5 rounded-full border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 font-mono text-[9px] sm:text-[10px] text-[#F1E6C3] font-bold">
-                  {orderMode === "ON_TABLE" ? formatTableNumber(tableNumber) : ORDER_MODE_LABEL[orderMode]}
+                  {orderMode === "ON_TABLE" && tableNumber !== null
+                    ? formatTableNumber(tableNumber)
+                    : ORDER_MODE_LABEL[orderMode]}
                 </span>
               )}
             </div>
@@ -625,7 +744,7 @@ export default function CartSheet() {
                   </p>
                 </div>
               ) : (
-                <OrderProgressTracker order={activeSelectedOrder} tableNumber={tableNumber} />
+                <OrderProgressTracker order={activeSelectedOrder} />
               )}
 
               {/* Items in this specific ticket */}
@@ -943,16 +1062,18 @@ export default function CartSheet() {
 
                 {needsModeChoice ? (
                   /* Nothing scanned and nothing remembered. The guest says where the order
-                     goes before anything else — a wrong guess sends someone's food astray. */
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    {(["DELIVERY", "TAKEAWAY"] as const).map((mode) => {
+                     goes before anything else — a wrong guess sends someone's food astray.
+                     Dine in is offered here too, for someone already sitting down who
+                     opened the site directly instead of scanning their table's QR. */
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {MODE_CHOICES.map((mode) => {
                       const ModeIcon = MODE_CONFIG[mode].icon;
                       return (
                         <button
                           key={mode}
                           type="button"
                           onClick={() => setOrderMode(mode)}
-                          className="group flex flex-col items-center gap-1.5 rounded-xl border border-white/15 bg-black/30 px-3 py-4 text-center transition-all hover:border-[#F1E6C3]/60 hover:bg-white/[0.06] active:scale-95 cursor-pointer"
+                          className="group flex flex-col items-center gap-1.5 rounded-xl border border-white/15 bg-black/30 px-2 py-4 text-center transition-all hover:border-[#F1E6C3]/60 hover:bg-white/[0.06] active:scale-95 cursor-pointer"
                         >
                           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#F1E6C3]/10 text-[#F1E6C3] transition-colors group-hover:bg-[#F1E6C3] group-hover:text-black">
                             <ModeIcon size={17} />
@@ -961,7 +1082,7 @@ export default function CartSheet() {
                             {ORDER_MODE_LABEL[mode]}
                           </span>
                           <span className="font-sans text-[10px] leading-tight text-white/45">
-                            {mode === "DELIVERY" ? "Sent to your door" : "Collect at the counter"}
+                            {MODE_CHOICE_HINT[mode]}
                           </span>
                         </button>
                       );
@@ -969,41 +1090,56 @@ export default function CartSheet() {
                   </div>
                 ) : (
                   <>
-                    {orderMode === "ON_TABLE" ? (
-                      /* A scanned table is where the guest physically is — not something to pick from a list. */
+                    {orderMode === "ON_TABLE" && tableFromScan ? (
+                      /* A scanned table is where the guest physically is — not something
+                         to pick from a list, and not a mode they need to re-choose. */
                       <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 mb-3">
                         <div className="flex items-center gap-2">
                           <Location01Icon size={15} className="text-[#F1E6C3]" />
                           <span className="font-serif text-xs sm:text-sm text-white font-medium">Table</span>
                         </div>
                         <span className="font-mono text-xs font-bold text-[#F1E6C3]">
-                          {formatTableNumber(tableNumber)}
+                          {tableNumber !== null ? formatTableNumber(tableNumber) : "—"}
                         </span>
                       </div>
                     ) : (
-                      /* Still a free choice after the fact — someone who picked delivery
-                         may decide to swing by and collect it instead. */
-                      <div className="p-1 rounded-xl bg-black/40 border border-white/10 grid grid-cols-2 gap-1 font-mono text-[10px] mb-3">
-                        {(["DELIVERY", "TAKEAWAY"] as const).map((mode) => {
-                          const ModeIcon = MODE_CONFIG[mode].icon;
-                          const isActive = orderMode === mode;
-                          return (
-                            <button
-                              key={mode}
-                              type="button"
-                              onClick={() => setOrderMode(mode)}
-                              className={`py-2 px-2 rounded-lg flex items-center justify-center gap-1.5 uppercase tracking-wider transition-all cursor-pointer ${
-                                isActive
-                                  ? "bg-[#F1E6C3] text-black font-bold"
-                                  : "text-white/60 hover:text-white hover:bg-white/5"
-                              }`}
-                            >
-                              <ModeIcon size={13} />
-                              <span>{ORDER_MODE_LABEL[mode]}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <>
+                        {/* Still a free choice after the fact — someone who picked delivery
+                            may decide to swing by and collect it, or to sit down instead. */}
+                        <div className="p-1 rounded-xl bg-black/40 border border-white/10 grid grid-cols-3 gap-1 font-mono text-[10px] mb-3">
+                          {MODE_CHOICES.map((mode) => {
+                            const ModeIcon = MODE_CONFIG[mode].icon;
+                            const isActive = orderMode === mode;
+                            return (
+                              <button
+                                key={mode}
+                                type="button"
+                                onClick={() => setOrderMode(mode)}
+                                className={`py-2 px-1.5 rounded-lg flex items-center justify-center gap-1.5 uppercase tracking-wider transition-all cursor-pointer ${
+                                  isActive
+                                    ? "bg-[#F1E6C3] text-black font-bold"
+                                    : "text-white/60 hover:text-white hover:bg-white/5"
+                                }`}
+                              >
+                                <ModeIcon size={13} />
+                                <span>{ORDER_MODE_LABEL[mode]}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Walked in without scanning — they name the table themselves. */}
+                        {orderMode === "ON_TABLE" && (
+                          <TablePicker
+                            tableNumber={tableNumber}
+                            onSelect={(table) => {
+                              setTableNumber(table);
+                              setFieldErrors((f) => ({ ...f, table: undefined }));
+                            }}
+                            error={fieldErrors.table}
+                          />
+                        )}
+                      </>
                     )}
 
                     {/* Asked of every guest now — a name and number to call, whether they're

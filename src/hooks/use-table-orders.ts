@@ -16,11 +16,16 @@ import type { CreateOrderInput } from "@/lib/validations/order";
 /** Polls so a ticket's status (e.g. moved to "Preparing") updates on its own while the guest waits. */
 const POLL_INTERVAL_MS = 15_000;
 
-/** Every ticket in the table's currently open session — stays visible (even once served) until staff settle the table. */
-export function useTableOrders(tableNumber: number) {
+/**
+ * Every ticket in the table's currently open session — stays visible (even once
+ * served) until staff settle the table. Disabled until a table is actually
+ * known: a guest who hasn't scanned or picked one yet has no session to poll.
+ */
+export function useTableOrders(tableNumber: number | null) {
   return useQuery({
-    queryKey: queryKeys.orders.table(tableNumber),
-    queryFn: () => unwrap(listSessionOrdersForTable(tableNumber)),
+    queryKey: queryKeys.orders.table(tableNumber ?? 0),
+    queryFn: () => unwrap(listSessionOrdersForTable(tableNumber!)),
+    enabled: tableNumber !== null,
     refetchInterval: POLL_INTERVAL_MS,
   });
 }

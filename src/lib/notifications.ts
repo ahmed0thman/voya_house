@@ -25,6 +25,18 @@ const STORAGE_KEY = "voya_order_notifications";
 const TTL_MS = 12 * 60 * 60 * 1000;
 const MAX_RECORDS = 40;
 
+/**
+ * A separate, much longer-lived record of ids this browser has already
+ * alerted on — distinct from `STORAGE_KEY`'s shift-length display history.
+ * If dedup reused that trimmed/TTL'd list, any order still sitting in
+ * RECEIVED past the 12h window (a slow table, a demo seed row) would drop out
+ * of it on every write and then read back as "new" on the very next poll,
+ * toasting the same stale order over and over, forever. Capped by count
+ * instead of time so it never needs to forget an id just because it's old.
+ */
+const SEEN_KEY = "voya_order_notifications_seen";
+const MAX_SEEN = 1000;
+
 function isFresh(entry: OrderNotification): boolean {
   return Date.now() - new Date(entry.createdAt).getTime() < TTL_MS;
 }
@@ -53,14 +65,45 @@ export function writeNotifications(entries: OrderNotification[]): OrderNotificat
   return trimmed;
 }
 
-/** Adds anything this browser hasn't recorded yet, newest first. Existing read state is preserved. */
+export function readSeenOrderIds(): Set<string> {
+  try {
+    const raw = localStorage.getItem(SEEN_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((id): id is string => typeof id === "string"));
+  } catch {
+    return new Set();
+  }
+}
+
+export function writeSeenOrderIds(ids: string[]): void {
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(ids.slice(-MAX_SEEN)));
+  } catch {
+    // Ignore storage errors in restricted contexts
+  }
+}
+
+/**
+ * Adds anything this browser hasn't alerted on yet, newest first. Existing
+ * read state on the display list is preserved. `seenIds` — not the display
+ * list — is the dedup authority, so an alert already shown never resurfaces
+ * just because it later aged out of the visible history.
+ */
 export function mergeNotifications(
   existing: OrderNotification[],
+  seenIds: Set<string>,
   incoming: Omit<OrderNotification, "read">[],
-): { merged: OrderNotification[]; added: OrderNotification[] } {
-  const known = new Set(existing.map((entry) => entry.id));
+): { merged: OrderNotification[]; added: OrderNotification[]; nextSeenIds: string[] } {
   const added = incoming
-    .filter((entry) => !known.has(entry.id))
+    .filter((entry) => !seenIds.has(entry.id))
     .map((entry) => ({ ...entry, read: false }));
-  return { merged: added.length ? [...added, ...existing] : existing, added };
+  const nextSeenIds = added.length
+    ? [...seenIds, ...added.map((entry) => entry.id)]
+    : [...seenIds];
+  return {
+    merged: added.length ? [...added, ...existing] : existing,
+    added,
+    nextSeenIds,
+  };
 }

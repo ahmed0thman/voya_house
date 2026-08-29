@@ -265,7 +265,7 @@ export default function Home() {
     return () => {
       clearTimeout(minTimer);
       clearTimeout(fallbackTimer);
-      loader.cancel();
+      frameLoaderRef.current?.cancel();
       frameLoaderRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

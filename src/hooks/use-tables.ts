@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listTables,
+  listGuestTables,
   createTable,
   createTablesRange,
   updateTable,
@@ -21,6 +22,22 @@ export function useTables() {
   return useQuery({
     queryKey: queryKeys.tables.all,
     queryFn: () => unwrap(listTables()),
+  });
+}
+
+/**
+ * The free tables a guest can claim, for someone who walked in without scanning
+ * a QR. Occupancy is live state — a table can be taken while this guest is still
+ * browsing — so it's kept short-lived and refetched whenever they come back to
+ * the tab, rather than cached like the admin's static table list.
+ */
+export function useGuestTables(enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.tables.guest,
+    queryFn: () => unwrap(listGuestTables()),
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
+    enabled,
   });
 }
 

@@ -473,7 +473,8 @@ export default function MobileStage({
               alt="Voya House"
               width={230}
               height={50}
-              priority
+              loading="eager"
+              fetchPriority="high"
               style={{ width: "215px", height: "auto" }}
               className="object-contain"
             />

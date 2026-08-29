@@ -34,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EditOrderDialog } from "./edit-order-dialog";
 import { formatPrice } from "@/constants/config";
 import { cn } from "@/lib/utils";
+import { STATUS_CHIP } from "@/lib/order-urgency";
 import type { OrderDTO } from "@/server/actions/orders";
 
 export const BRAND_ICON: Record<string, typeof CoffeeIcon> = {
@@ -42,7 +43,10 @@ export const BRAND_ICON: Record<string, typeof CoffeeIcon> = {
   mama: PizzaIcon,
 };
 
-export const TIME_FORMAT = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
+export const TIME_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 /** DB ids are full UUIDs — too long for a ticket badge, so show a short, still-unique-enough tag. */
 export function formatTicketId(id: string): string {
@@ -64,7 +68,11 @@ export function formatRelativeTime(iso: string): string {
  * the chip is read by whoever is rejecting, the sentence by the guest.
  */
 const REJECTION_PRESETS = [
-  { id: "out-of-stock", label: "Out of stock", reason: "Some items are out of stock" },
+  {
+    id: "out-of-stock",
+    label: "Out of stock",
+    reason: "Some items are out of stock",
+  },
   {
     id: "customer-cancelled",
     label: "Customer cancelled",
@@ -87,7 +95,10 @@ const NOTE_MAX_LENGTH = 300;
  * alone — a preset says the category, the note says which item or when to call
  * back. Both end up in the single reason the guest reads.
  */
-function composeReason(presetId: RejectionPresetId | null, note: string): string {
+function composeReason(
+  presetId: RejectionPresetId | null,
+  note: string,
+): string {
   const preset = REJECTION_PRESETS.find((entry) => entry.id === presetId);
   const trimmed = note.trim();
   if (preset && trimmed) return `${preset.reason} — ${trimmed}`;
@@ -113,7 +124,15 @@ function RejectOrderButton({ order }: { order: OrderDTO }) {
         }
       }}
     >
-      <AlertDialogTrigger render={<Button size="sm" variant="outline" className="text-destructive hover:text-destructive" />}>
+      <AlertDialogTrigger
+        render={
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive hover:text-destructive"
+          />
+        }
+      >
         <XIcon />
         Reject
       </AlertDialogTrigger>
@@ -121,9 +140,10 @@ function RejectOrderButton({ order }: { order: OrderDTO }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Reject this ticket?</AlertDialogTitle>
           <AlertDialogDescription>
-            The guest will see this ticket as rejected and its items will be moved back into their
-            cart to review and resend. Use this for a mistaken or unwanted order — not once it&apos;s
-            already being prepared.
+            The guest will see this ticket as rejected and its items will be
+            moved back into their cart to review and resend. Use this for a
+            mistaken or unwanted order — not once it&apos;s already being
+            prepared.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex flex-col gap-2">
@@ -166,7 +186,8 @@ function RejectOrderButton({ order }: { order: OrderDTO }) {
           {/* Staff are writing something a customer reads, so show them the customer's view. */}
           {reason && (
             <p className="text-xs text-muted-foreground">
-              The guest will see: <span className="text-foreground">{reason}</span>
+              The guest will see:{" "}
+              <span className="text-foreground">{reason}</span>
             </p>
           )}
         </div>
@@ -214,10 +235,18 @@ const HANDOFF_LABEL: Record<OrderDTO["type"], string> = {
  */
 function nextStepFor(order: OrderDTO) {
   if (order.status === "PREPARING") {
-    return { label: "Mark Ready", status: "READY" as const, icon: BellRingIcon };
+    return {
+      label: "Mark Ready",
+      status: "READY" as const,
+      icon: BellRingIcon,
+    };
   }
   if (order.status === "READY") {
-    return { label: HANDOFF_LABEL[order.type], status: "SERVED" as const, icon: CheckIcon };
+    return {
+      label: HANDOFF_LABEL[order.type],
+      status: "SERVED" as const,
+      icon: CheckIcon,
+    };
   }
   return null;
 }
@@ -227,12 +256,13 @@ function isBirthdayToday(birthday: string | null): boolean {
   if (!birthday) return false;
   const now = new Date();
   const [, month, day] = birthday.split("-");
-  return (
-    Number(month) === now.getMonth() + 1 && Number(day) === now.getDate()
-  );
+  return Number(month) === now.getMonth() + 1 && Number(day) === now.getDate();
 }
 
-const BIRTHDAY_FORMAT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
+const BIRTHDAY_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+});
 
 function formatBirthday(birthday: string): string {
   const [year, month, day] = birthday.split("-").map(Number);
@@ -245,12 +275,14 @@ function CustomerDetails({ order }: { order: OrderDTO }) {
   const birthdayToday = isBirthdayToday(order.customerBirthday);
 
   return (
-    <div className="mt-2.5 flex flex-col gap-1 rounded-md bg-muted/60 px-2.5 py-2 text-xs">
+    <div className=" flex flex-col gap-1 rounded-md bg-muted/60 px-2.5 py-2 text-xs">
       <span className="flex flex-wrap items-center gap-1.5">
         <UserIcon className="size-3 shrink-0 text-muted-foreground" />
         <span className="font-medium">{order.customerName}</span>
         {order.customerBirthday && !birthdayToday && (
-          <span className="text-muted-foreground">· born {formatBirthday(order.customerBirthday)}</span>
+          <span className="text-muted-foreground">
+            · born {formatBirthday(order.customerBirthday)}
+          </span>
         )}
       </span>
       {/* The one thing about a birthday that's actually actionable on the floor. */}
@@ -287,10 +319,14 @@ export function OrderTicket({ order }: { order: OrderDTO }) {
   // dine-in guest amends by sending another round instead.
   const isEditable =
     order.type !== "ON_TABLE" &&
-    (order.status === "RECEIVED" || order.status === "PREPARING" || order.status === "READY");
+    (order.status === "RECEIVED" ||
+      order.status === "PREPARING" ||
+      order.status === "READY");
 
   return (
-    <div className={`rounded-lg border p-3 ${order.status === "REJECTED" ? "opacity-70" : ""}`}>
+    <div
+      className={`rounded-lg border p-3 flex flex-col gap-3 ${order.status === "REJECTED" ? "opacity-70" : ""}`}
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="font-mono">
@@ -301,27 +337,28 @@ export function OrderTicket({ order }: { order: OrderDTO }) {
             {TIME_FORMAT.format(new Date(order.createdAt))}
           </span>
         </div>
-        <Badge
-          variant={
-            order.status === "REJECTED"
-              ? "destructive"
-              : order.status === "SERVED"
-                ? "secondary"
-                : order.status === "READY" || order.status === "PREPARING"
-                  ? "default"
-                  : "outline"
-          }
-          className={order.status === "READY" ? "bg-emerald-600 text-white" : undefined}
-        >
-          {STATUS_LABEL[order.status]}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <span className="text-lg font-bold tabular-nums">
+            {formatPrice(order.totalPrice)}
+          </span>
+          {/* Same red/amber/green as the board's tab chips — a ticket's badge shouldn't disagree with the tab it lives under. */}
+          <Badge
+            variant="outline"
+            className={cn("border-transparent", STATUS_CHIP[order.status])}
+          >
+            {STATUS_LABEL[order.status]}
+          </Badge>
+        </div>
       </div>
 
-      <ul className="mt-2.5 flex flex-col gap-1.5 text-sm">
+      <ul className=" flex flex-col gap-1.5 text-sm">
         {order.items.map((item) => {
           const Icon = BRAND_ICON[item.brandSlug] ?? CoffeeIcon;
           return (
-            <li key={item.id} className="flex items-center justify-between gap-2">
+            <li
+              key={item.id}
+              className="flex items-center justify-between gap-2"
+            >
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="shrink-0 font-mono text-xs text-muted-foreground">
                   {item.quantity}×
@@ -340,18 +377,18 @@ export function OrderTicket({ order }: { order: OrderDTO }) {
       <CustomerDetails order={order} />
 
       {order.specialNotes && (
-        <p className="mt-2.5 rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground italic">
+        <p className=" rounded-md bg-muted px-2.5 py-1.5 text-xs text-muted-foreground italic">
           &ldquo;{order.specialNotes}&rdquo;
         </p>
       )}
 
       {order.status === "REJECTED" && order.rejectionReason && (
-        <p className="mt-2.5 rounded-md bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+        <p className=" rounded-md bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
           Rejected: {order.rejectionReason}
         </p>
       )}
 
-      <div className="mt-2.5 border-t pt-2.5">
+      <div className="mt-auto border-t pt-2.5">
         {order.discountAmount > 0 && (
           <div className="mb-1.5 flex flex-col gap-0.5 text-xs text-muted-foreground">
             <div className="flex justify-between">
@@ -359,13 +396,14 @@ export function OrderTicket({ order }: { order: OrderDTO }) {
               <span>{formatPrice(order.subtotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Discount{order.offerCode ? ` (${order.offerCode})` : ""}</span>
+              <span>
+                Discount{order.offerCode ? ` (${order.offerCode})` : ""}
+              </span>
               <span>-{formatPrice(order.discountAmount)}</span>
             </div>
           </div>
         )}
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold">{formatPrice(order.totalPrice)}</span>
+        <div className="flex items-center justify-end">
           <div className="flex flex-wrap items-center justify-end gap-1.5">
             {isEditable && <EditOrderDialog order={order} />}
             {order.status === "RECEIVED" && <RejectOrderButton order={order} />}

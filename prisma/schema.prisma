@@ -130,12 +130,12 @@ enum TableSessionStatus {
 /// table is settled. Only dine-in (`OrderType.ON_TABLE`) orders ever belong
 /// to one; takeaway/delivery orders stand alone.
 model TableSession {
-  id        String              @id @default(uuid(7))
-  tableId   String              @map("table_id")
-  table     RestaurantTable     @relation(fields: [tableId], references: [id], onDelete: Restrict)
-  status    TableSessionStatus  @default(OPEN)
-  openedAt  DateTime            @default(now()) @map("opened_at")
-  settledAt DateTime?           @map("settled_at")
+  id        String             @id @default(uuid(7))
+  tableId   String             @map("table_id")
+  table     RestaurantTable    @relation(fields: [tableId], references: [id], onDelete: Restrict)
+  status    TableSessionStatus @default(OPEN)
+  openedAt  DateTime           @default(now()) @map("opened_at")
+  settledAt DateTime?          @map("settled_at")
 
   orders Order[]
 
@@ -168,33 +168,33 @@ enum OrderType {
 /// a SERVED ticket stays on an OPEN session's tab until the whole table
 /// settles up.
 model Order {
-  id             String        @id @default(uuid(7))
-  type           OrderType     @default(ON_TABLE)
+  id               String        @id @default(uuid(7))
+  type             OrderType     @default(ON_TABLE)
   /// Only set for `ON_TABLE` orders — takeaway/delivery tickets aren't part of a table visit.
-  tableSessionId String?       @map("table_session_id")
-  tableSession   TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: Restrict)
-  status         OrderStatus   @default(RECEIVED)
+  tableSessionId   String?       @map("table_session_id")
+  tableSession     TableSession? @relation(fields: [tableSessionId], references: [id], onDelete: Restrict)
+  status           OrderStatus   @default(RECEIVED)
   /// Captured on every order type. Nullable only because tickets placed before
   /// this was required still exist — new orders always carry both.
-  customerName   String?       @map("customer_name")
-  customerPhone  String?       @map("customer_phone")
+  customerName     String?       @map("customer_name")
+  customerPhone    String?       @map("customer_phone")
   /// Optional, date-only (no time, no timezone) — a service cue, not an identifier.
-  customerBirthday DateTime?   @map("customer_birthday") @db.Date
+  customerBirthday DateTime?     @map("customer_birthday") @db.Date
   /// DELIVERY only — where the rider is taking it.
-  deliveryAddress String?      @map("delivery_address")
-  specialNotes   String?       @map("special_notes")
+  deliveryAddress  String?       @map("delivery_address")
+  specialNotes     String?       @map("special_notes")
   /// Set only when `status` is REJECTED — why staff declined the ticket.
-  rejectionReason String?      @map("rejection_reason")
+  rejectionReason  String?       @map("rejection_reason")
   /// Sum of item snapshots at order time, before any discount.
-  subtotal       Decimal       @db.Decimal(10, 2)
+  subtotal         Decimal       @db.Decimal(10, 2)
   /// The `CodeOffer.code` applied at checkout, if any — stored uppercased, independent
   /// of whether that offer is later edited or deactivated (this ticket's discount is locked in).
-  offerCode      String?       @map("offer_code")
-  discountAmount Decimal       @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  offerCode        String?       @map("offer_code")
+  discountAmount   Decimal       @default(0) @map("discount_amount") @db.Decimal(10, 2)
   /// subtotal - discountAmount — the amount actually owed for this ticket.
-  totalPrice     Decimal       @map("total_price") @db.Decimal(10, 2)
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  totalPrice       Decimal       @map("total_price") @db.Decimal(10, 2)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
 
   items OrderItem[]
 
@@ -231,19 +231,26 @@ enum DiscountType {
 }
 
 model CodeOffer {
-  id            String       @id @default(uuid(7))
+  id                 String       @id @default(uuid(7))
   /// Always stored uppercased so lookups are case-insensitive by construction.
-  code          String       @unique
-  name          String?
-  description   String?
-  discountType  DiscountType @map("discount_type")
+  code               String       @unique
+  name               String?
+  description        String?
+  discountType       DiscountType @map("discount_type")
   /// A percentage (0–100) when discountType is PERCENT, an EGP amount when FIXED.
-  discountValue Decimal      @map("discount_value") @db.Decimal(10, 2)
-  validFrom     DateTime     @map("valid_from")
-  validUntil    DateTime     @map("valid_until")
-  isActive      Boolean      @default(true) @map("is_active")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  discountValue      Decimal      @map("discount_value") @db.Decimal(10, 2)
+  validFrom          DateTime     @map("valid_from")
+  validUntil         DateTime     @map("valid_until")
+  isActive           Boolean      @default(true) @map("is_active")
+  /// At most one offer has this true at a time — enforced in the server action,
+  /// not the DB — since it's the offer whose banner shows on the public menu.
+  showOnMenu         Boolean      @default(false) @map("show_on_menu")
+  /// R2 object keys for the promotional banner shown atop the public menu.
+  /// Both must be set (see getFeaturedOfferBanner) for the banner to appear.
+  bannerImageMobile  String?      @map("banner_image_mobile")
+  bannerImageDesktop String?      @map("banner_image_desktop")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
 
   @@map("code_offers")
 }

@@ -199,13 +199,28 @@ export const createOrder = defineAction({
   }
 
   const dineInTable = table!;
+  const selfSelected = input.type === "ON_TABLE" && input.tableSelfSelected === true;
   const order = await prisma.$transaction(async (tx) => {
     // One open session per table, shared by every ticket the guest sends
     // during this visit — opened by whichever order gets here first.
+    const existingSession = await tx.tableSession.findFirst({
+      where: { tableId: dineInTable.id, status: TableSessionStatus.OPEN },
+    });
+
+    // A table picked from the list must be a free one. Checked here rather than
+    // only when building that list, so two walk-ins racing for the last free
+    // table can't both claim it — the loser is told, not silently seated on the
+    // winner's tab. A scanned table is exempt: joining its open session is the
+    // whole point, and is how a seated guest sends another round.
+    if (existingSession && selfSelected) {
+      throw new ActionError(
+        "That table has just been taken. Please pick another table, or scan the QR code on your table.",
+        "CONFLICT",
+      );
+    }
+
     const session =
-      (await tx.tableSession.findFirst({
-        where: { tableId: dineInTable.id, status: TableSessionStatus.OPEN },
-      })) ?? (await tx.tableSession.create({ data: { tableId: dineInTable.id } }));
+      existingSession ?? (await tx.tableSession.create({ data: { tableId: dineInTable.id } }));
 
     return tx.order.create({
       data: {

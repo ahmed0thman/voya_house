@@ -61,6 +61,10 @@ export function preloadFrameSequence(
     if (cancelled || nextIndex >= ceiling) return;
     const i = nextIndex++;
     const img = new window.Image();
+    // Explicit, not left to Chrome's own heuristic: these must never queue
+    // ahead of the LCP image or other critical resources under a
+    // bandwidth-constrained connection.
+    img.fetchPriority = "low";
     images[i] = img;
     img.onload = img.onerror = () => {
       if (cancelled) return;

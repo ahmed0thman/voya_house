@@ -5,6 +5,7 @@ import { BrandMenu, MenuItem } from '@/data/mockMenu';
 import { useCartStore } from '@/store/useCartStore';
 import { formatPrice } from '@/constants/config';
 import MorphingCartButton from './MorphingCartButton';
+import { OfferBanner } from './OfferBanner';
 
 
 function MenuItemCartButton({
@@ -142,10 +143,14 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
       <div 
         ref={scrollRef}
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-32 px-6 relative touch-pan-y"
-        style={{ 
+        style={{
           WebkitOverflowScrolling: 'touch',
         }}
       >
+        <div className="pt-4">
+          <OfferBanner />
+        </div>
+
         {menu.categories.map((category, categoryIndex) => (
           <section
             key={category.id}

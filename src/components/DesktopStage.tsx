@@ -314,7 +314,8 @@ export default function DesktopStage({
               alt="Voya House"
               width={340}
               height={75}
-              priority
+              loading="eager"
+              fetchPriority="high"
               style={{ width: "320px", height: "auto" }}
               className="object-contain invert brightness-200"
             />

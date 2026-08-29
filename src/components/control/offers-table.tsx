@@ -123,6 +123,9 @@ export function OffersTable() {
                               validFrom: new Date(offer.validFrom),
                               validUntil: new Date(offer.validUntil),
                               isActive: checked,
+                              showOnMenu: offer.showOnMenu,
+                              bannerImageMobileKey: offer.bannerImageMobile?.key ?? null,
+                              bannerImageDesktopKey: offer.bannerImageDesktop?.key ?? null,
                             },
                             { onError: (error) => toast.error(error.message) },
                           )

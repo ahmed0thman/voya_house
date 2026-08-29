@@ -25,6 +25,9 @@ const discountValueSchema = z
   .positive("Must be greater than 0")
   .max(1_000_000, "Value is unreasonably large");
 
+/** R2 object key, or null to clear a banner image that was previously set. */
+const bannerImageKeySchema = z.string().trim().min(1).nullable();
+
 export const createOfferSchema = z
   .object({
     code: codeSchema,
@@ -34,6 +37,9 @@ export const createOfferSchema = z
     discountValue: discountValueSchema,
     validFrom: z.date(),
     validUntil: z.date(),
+    showOnMenu: z.boolean().optional(),
+    bannerImageMobileKey: bannerImageKeySchema.optional(),
+    bannerImageDesktopKey: bannerImageKeySchema.optional(),
   })
   .refine((data) => data.discountType !== "PERCENT" || data.discountValue <= 100, {
     message: "A percent discount can't exceed 100",
@@ -56,6 +62,9 @@ export const updateOfferSchema = z
     validFrom: z.date(),
     validUntil: z.date(),
     isActive: z.boolean(),
+    showOnMenu: z.boolean(),
+    bannerImageMobileKey: bannerImageKeySchema,
+    bannerImageDesktopKey: bannerImageKeySchema,
   })
   .refine((data) => data.discountType !== "PERCENT" || data.discountValue <= 100, {
     message: "A percent discount can't exceed 100",

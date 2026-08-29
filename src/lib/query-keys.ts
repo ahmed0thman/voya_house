@@ -39,9 +39,13 @@ export const queryKeys = {
   },
   tables: {
     all: ["tables"] as const,
+    /** Public: active tables only, for the guest's own table picker. */
+    guest: ["tables", "guest"] as const,
   },
   offers: {
     all: ["offers"] as const,
+    /** Public: the currently featured offer's banner images, if any. */
+    featuredBanner: ["offers", "featuredBanner"] as const,
   },
   auth: {
     currentUser: ["auth", "currentUser"] as const,

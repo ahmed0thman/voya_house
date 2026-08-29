@@ -24,12 +24,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
+import { OfferBannerUploader } from "@/components/control/offer-banner-uploader";
 import { useCreateOffer, useUpdateOffer } from "@/hooks/use-offers";
 import { discountTypeSchema } from "@/lib/validations/offer";
-import type { OfferDTO } from "@/server/actions/offers";
+import type { OfferBannerImageDTO, OfferDTO } from "@/server/actions/offers";
 
-const DISCOUNT_TYPE_OPTIONS: { value: z.infer<typeof discountTypeSchema>; label: string }[] = [
+const DISCOUNT_TYPE_OPTIONS: {
+  value: z.infer<typeof discountTypeSchema>;
+  label: string;
+}[] = [
   { value: "PERCENT", label: "Percent off" },
   { value: "FIXED", label: "Fixed amount off" },
 ];
@@ -43,28 +53,44 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 /** Local form schema — the date input gives a string; converted to Date at submit time. */
 const formSchema = z
   .object({
-    code: z.string().trim().min(3, "Code must be at least 3 characters").max(30),
+    code: z
+      .string()
+      .trim()
+      .min(3, "Code must be at least 3 characters")
+      .max(30),
     name: z.string().trim().max(120, "Name is too long").optional(),
-    description: z.string().trim().max(500, "Description is too long").optional(),
+    description: z
+      .string()
+      .trim()
+      .max(500, "Description is too long")
+      .optional(),
     discountType: discountTypeSchema,
     discountValue: z.number().positive("Must be greater than 0"),
     validFrom: z.string().min(1, "Required"),
     validDays: z.number().int().positive("Must be at least 1 day"),
+    showOnMenu: z.boolean(),
   })
-  .refine((data) => data.discountType !== "PERCENT" || data.discountValue <= 100, {
-    message: "A percent discount can't exceed 100",
-    path: ["discountValue"],
-  });
+  .refine(
+    (data) => data.discountType !== "PERCENT" || data.discountValue <= 100,
+    {
+      message: "A percent discount can't exceed 100",
+      path: ["discountValue"],
+    },
+  );
 type FormValues = z.infer<typeof formSchema>;
 
-type OfferFormDialogProps = { mode: "create" } | { mode: "edit"; offer: OfferDTO };
+type OfferFormDialogProps =
+  | { mode: "create" }
+  | { mode: "edit"; offer: OfferDTO };
 
 function toDateInputValue(iso: string): string {
   return iso.slice(0, 10);
 }
 
 function daysBetween(fromIso: string, untilIso: string): number {
-  const days = Math.round((new Date(untilIso).getTime() - new Date(fromIso).getTime()) / MS_PER_DAY);
+  const days = Math.round(
+    (new Date(untilIso).getTime() - new Date(fromIso).getTime()) / MS_PER_DAY,
+  );
   return Math.max(1, days);
 }
 
@@ -84,6 +110,14 @@ function OfferFormFields({
   const updateOffer = useUpdateOffer();
   const isPending = createOffer.isPending || updateOffer.isPending;
 
+  const [bannerMobile, setBannerMobile] = useState<OfferBannerImageDTO | null>(
+    isEdit ? props.offer.bannerImageMobile : null,
+  );
+  const [bannerDesktop, setBannerDesktop] =
+    useState<OfferBannerImageDTO | null>(
+      isEdit ? props.offer.bannerImageDesktop : null,
+    );
+
   const {
     register,
     handleSubmit,
@@ -100,6 +134,7 @@ function OfferFormFields({
           discountValue: props.offer.discountValue,
           validFrom: toDateInputValue(props.offer.validFrom),
           validDays: daysBetween(props.offer.validFrom, props.offer.validUntil),
+          showOnMenu: props.offer.showOnMenu,
         }
       : {
           code: "",
@@ -109,6 +144,7 @@ function OfferFormFields({
           discountValue: 10,
           validFrom: toDateInputValue(new Date().toISOString()),
           validDays: 30,
+          showOnMenu: false,
         },
   });
 
@@ -116,7 +152,9 @@ function OfferFormFields({
 
   const onSubmit = (values: FormValues) => {
     const validFrom = new Date(values.validFrom);
-    const validUntil = new Date(validFrom.getTime() + values.validDays * MS_PER_DAY);
+    const validUntil = new Date(
+      validFrom.getTime() + values.validDays * MS_PER_DAY,
+    );
 
     const shared = {
       code: values.code,
@@ -126,6 +164,9 @@ function OfferFormFields({
       discountValue: values.discountValue,
       validFrom,
       validUntil,
+      showOnMenu: values.showOnMenu,
+      bannerImageMobileKey: bannerMobile?.key ?? null,
+      bannerImageDesktopKey: bannerDesktop?.key ?? null,
     };
 
     if (isEdit) {
@@ -152,7 +193,7 @@ function OfferFormFields({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
-      <FieldGroup>
+      <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <Field data-invalid={!!errors.code}>
           <FieldLabel htmlFor="offer-code">Code</FieldLabel>
           <Input
@@ -174,7 +215,7 @@ function OfferFormFields({
           <FieldError errors={[errors.name]} />
         </Field>
 
-        <Field data-invalid={!!errors.description}>
+        <Field data-invalid={!!errors.description} className="col-span-full">
           <FieldLabel htmlFor="offer-description">Description</FieldLabel>
           <Textarea
             id="offer-description"
@@ -226,24 +267,61 @@ function OfferFormFields({
           <FieldError errors={[errors.discountValue]} />
         </Field>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field data-invalid={!!errors.validFrom}>
-            <FieldLabel htmlFor="offer-valid-from">Valid from</FieldLabel>
-            <Input id="offer-valid-from" type="date" {...register("validFrom")} />
-            <FieldError errors={[errors.validFrom]} />
-          </Field>
+        <Field data-invalid={!!errors.validFrom}>
+          <FieldLabel htmlFor="offer-valid-from">Valid from</FieldLabel>
+          <Input id="offer-valid-from" type="date" {...register("validFrom")} />
+          <FieldError errors={[errors.validFrom]} />
+        </Field>
 
-          <Field data-invalid={!!errors.validDays}>
-            <FieldLabel htmlFor="offer-valid-days">Valid for (days)</FieldLabel>
-            <Input
-              id="offer-valid-days"
-              type="number"
-              min="1"
-              step="1"
-              {...register("validDays", { valueAsNumber: true })}
-            />
-            <FieldError errors={[errors.validDays]} />
-          </Field>
+        <Field data-invalid={!!errors.validDays}>
+          <FieldLabel htmlFor="offer-valid-days">Valid for (days)</FieldLabel>
+          <Input
+            id="offer-valid-days"
+            type="number"
+            min="1"
+            step="1"
+            {...register("validDays", { valueAsNumber: true })}
+          />
+          <FieldError errors={[errors.validDays]} />
+        </Field>
+
+        <Field orientation="horizontal" className="col-span-full">
+          <FieldLabel htmlFor="offer-show-on-menu">Feature on menu</FieldLabel>
+          <Controller
+            control={control}
+            name="showOnMenu"
+            render={({ field }) => (
+              <Switch
+                id="offer-show-on-menu"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+        </Field>
+        <p className="-mt-2 text-xs text-muted-foreground col-span-full">
+          Shows this offer&apos;s banner at the top of the public menu. Only one
+          offer can be featured at a time — turning this on unfeatures any other
+          offer.
+        </p>
+
+        <div className="col-span-full">
+          <OfferBannerUploader
+            label="Mobile banner"
+            hint="Short, wide banner for the mobile menu — roughly 3:1 (e.g. 900×300px)."
+            image={bannerMobile}
+            onChange={setBannerMobile}
+            aspectClassName="aspect-3/1"
+          />
+        </div>
+        <div className="col-span-full">
+          <OfferBannerUploader
+            label="Desktop banner"
+            hint="Even wider, shorter banner for the desktop menu — roughly 8:1 (e.g. 1600×200px)."
+            image={bannerDesktop}
+            onChange={setBannerDesktop}
+            aspectClassName="aspect-[8/1]"
+          />
         </div>
       </FieldGroup>
 
@@ -290,11 +368,15 @@ export function OfferFormDialog(props: OfferFormDialogProps) {
           </>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit offer" : "New offer"}</DialogTitle>
         </DialogHeader>
-        <OfferFormFields key={formKey} props={props} onClose={() => setOpen(false)} />
+        <OfferFormFields
+          key={formKey}
+          props={props}
+          onClose={() => setOpen(false)}
+        />
       </DialogContent>
     </Dialog>
   );

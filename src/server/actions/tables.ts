@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { TableSessionStatus } from "@/generated/prisma/client";
 import { ActionError } from "@/lib/action-error";
 import { defineAction } from "@/server/define-action";
 import {
@@ -31,6 +32,40 @@ export const listTables = defineAction({
   handler: async (): Promise<TableDTO[]> => {
     const tables = await prisma.restaurantTable.findMany({ orderBy: { number: "asc" } });
     return tables.map(toTableDTO);
+  },
+});
+
+/** What a guest picking their own table needs to see — no ids, no inactive tables. */
+export type GuestTableDTO = {
+  number: number;
+  label: string | null;
+};
+
+/**
+ * Public on purpose — feeds the table picker for a guest who walked in and
+ * opened the site directly instead of scanning the QR at their table.
+ *
+ * Tables already seated (an OPEN session) are left out: claiming one would put
+ * this guest's ticket on another party's tab and send their food to a table
+ * they aren't at. Someone genuinely sitting at an occupied table — a friend
+ * ordering on their own phone — still joins it by scanning its QR, which is
+ * proof of where they are in a way a dropdown pick never is.
+ *
+ * Deliberately no ids: the number is the whole identity a guest ever needs,
+ * and `createOrder` re-checks both existence and occupancy anyway.
+ */
+export const listGuestTables = defineAction({
+  auth: "public",
+  handler: async (): Promise<GuestTableDTO[]> => {
+    const tables = await prisma.restaurantTable.findMany({
+      where: {
+        isActive: true,
+        tableSessions: { none: { status: TableSessionStatus.OPEN } },
+      },
+      orderBy: { number: "asc" },
+      select: { number: true, label: true },
+    });
+    return tables;
   },
 });
 

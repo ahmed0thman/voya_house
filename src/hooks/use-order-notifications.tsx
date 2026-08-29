@@ -7,7 +7,9 @@ import { useTableSessions, useOrdersByType } from "@/hooks/use-orders";
 import {
   mergeNotifications,
   readNotifications,
+  readSeenOrderIds,
   writeNotifications,
+  writeSeenOrderIds,
   type NotificationTab,
   type OrderNotification,
 } from "@/lib/notifications";
@@ -85,6 +87,16 @@ export function useOrderNotifications(onOpenOrder?: (entry: OrderNotification) =
   const hydrated = useRef(false);
   /** `false` until the first poll has landed, so a page load never toasts a backlog. */
   const baselineSet = useRef(false);
+  /**
+   * Toasts from the previous batch that might still be sitting on screen. A new
+   * order shouldn't pile its alert on top of ones staff hasn't acted on yet —
+   * each new arrival clears whatever's still showing first, so only the latest
+   * is ever up. Anything that already timed out or was dismissed by hand is
+   * pruned out via the toast's own callbacks, so this never grows unbounded.
+   */
+  const activeToastIds = useRef<Set<string | number>>(new Set());
+  /** Dedup authority for `mergeNotifications` — see `readSeenOrderIds` for why this is separate from `listRef`. */
+  const seenIdsRef = useRef<Set<string>>(new Set());
 
   const commit = useCallback((next: OrderNotification[]) => {
     const saved = writeNotifications(next);
@@ -120,24 +132,42 @@ export function useOrderNotifications(onOpenOrder?: (entry: OrderNotification) =
     const stored = readNotifications();
     listRef.current = stored;
     setNotifications(stored);
+    // The display list may have aged entries out already; folding their ids in
+    // too keeps dedup working across a reload even before `readSeenOrderIds`
+    // catches up on its own (e.g. an older browser that predates this key).
+    seenIdsRef.current = new Set([...readSeenOrderIds(), ...stored.map((entry) => entry.id)]);
   }, []);
 
   useEffect(() => {
     if (!tableSessions.data || !takeaway.data || !delivery.data) return;
 
     const incoming = collectIncoming(tableSessions.data, takeaway.data, delivery.data);
-    const { merged, added } = mergeNotifications(listRef.current, incoming);
+    const { merged, added, nextSeenIds } = mergeNotifications(
+      listRef.current,
+      seenIdsRef.current,
+      incoming,
+    );
 
     if (added.length > 0) {
       commit(merged);
+      seenIdsRef.current = new Set(nextSeenIds);
+      writeSeenOrderIds(nextSeenIds);
       if (baselineSet.current) {
+        // Clear whatever's still on screen from the last batch before raising
+        // the new one, so staff are never looking at a growing pile of alerts.
+        for (const id of activeToastIds.current) toast.dismiss(id);
+        activeToastIds.current.clear();
+
         for (const entry of added) {
-          toast(`New order — ${describeNotification(entry)}`, {
+          const id = toast(`New order — ${describeNotification(entry)}`, {
             icon: <BellRingIcon className="size-4" />,
             duration: 12_000,
             className: "border-2 border-destructive font-medium",
             action: { label: "View", onClick: () => openRef.current?.(entry) },
+            onAutoClose: () => activeToastIds.current.delete(id),
+            onDismiss: () => activeToastIds.current.delete(id),
           });
+          activeToastIds.current.add(id);
         }
       }
     }
