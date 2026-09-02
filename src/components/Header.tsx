@@ -150,6 +150,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               alt={t("brandLogoAlt")}
               width={80}
               height={24}
+              sizes="80px"
               className="object-contain invert brightness-200"
             />
             <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#F1E6C3] px-2 py-0.5 rounded-full border border-white/15 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-block">
@@ -236,6 +237,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                   alt={t("brandLogoAlt")}
                   width={28}
                   height={28}
+                  sizes="28px"
                   className="opacity-90 brightness-110"
                 />
                 {/* The wordmark is the brand's own spelling — it stays Latin in

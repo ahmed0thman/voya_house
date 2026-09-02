@@ -477,6 +477,7 @@ export default function MobileStage({
               alt={tHero("brand")}
               width={230}
               height={50}
+              sizes="215px"
               loading="eager"
               fetchPriority="high"
               style={{ width: "215px", height: "auto" }}

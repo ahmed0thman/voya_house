@@ -193,6 +193,7 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
                 alt={t("logoAlt")}
                 width={24}
                 height={24}
+                sizes="24px"
                 className="opacity-90 brightness-110 shrink-0"
               />
               <div className="w-1.5 h-1.5 rounded-full bg-[#F1E6C3] animate-pulse shrink-0 hidden sm:block" />

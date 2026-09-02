@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { BrandMenu, MenuItem } from "@/data/mockMenu";
 import { useCartStore } from "@/store/useCartStore";
 import { formatPrice } from "@/constants/config";
@@ -190,10 +191,13 @@ export default function TalabatMenu({
                       style={{ width: 100, height: 100 }}
                     >
                       {item.image && (
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="100px"
+                          quality={75}
+                          className="object-cover"
                           draggable={false}
                         />
                       )}

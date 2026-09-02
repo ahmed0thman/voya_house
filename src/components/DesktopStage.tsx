@@ -320,6 +320,7 @@ export default function DesktopStage({
               alt={tHero("brand")}
               width={340}
               height={75}
+              sizes="320px"
               loading="eager"
               fetchPriority="high"
               style={{ width: "320px", height: "auto" }}

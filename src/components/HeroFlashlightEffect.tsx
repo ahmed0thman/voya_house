@@ -83,6 +83,9 @@ export default function HeroFlashlightEffect() {
           src="/assets/3d-renders/entrance_3d.png" 
           alt="Voya Entrance" 
           fill
+          sizes="100vw"
+          quality={75}
+          priority
           className="object-cover opacity-60"
         />
       </div>

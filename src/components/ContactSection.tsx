@@ -145,6 +145,7 @@ export default function ContactSection() {
                     alt={t("emblemAlt")}
                     width={24}
                     height={24}
+                    sizes="24px"
                     className="opacity-90 object-contain"
                   />
                 </div>

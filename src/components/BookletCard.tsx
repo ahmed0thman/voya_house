@@ -155,6 +155,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
                   alt={tBrands(brandId)}
                   fill
                   sizes="(max-width: 768px) 180px, 240px"
+                  quality={75}
                   className="object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.25)] transition-transform duration-500 hover:scale-105"
                   priority
                 />

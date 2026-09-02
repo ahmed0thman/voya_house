@@ -10,6 +10,9 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { AppToaster } from "@/components/app-toaster";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { routing, directionOf } from "@/i18n/routing";
+// SEO
+import { SITE_URL, seoConfig, type SeoLocale } from "@/lib/seo.config";
+import { VoyaHouseJsonLd } from "@/components/seo/VoyaHouseJsonLd";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -51,10 +54,69 @@ export async function generateMetadata({
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
 
+  const seoLocale = locale as SeoLocale;
+  const config = seoConfig[seoLocale];
   const t = await getTranslations({ locale, namespace: "metadata" });
+  const altLocale = seoLocale === "en" ? "ar" : "en";
+
   return {
-    title: t("title"),
+    metadataBase: new URL(SITE_URL),
+
+    title: {
+      default: t("title"),
+      template: `%s | ${t("siteName")}`,
+    },
     description: t("description"),
+    keywords: config.keywords,
+    authors: [{ name: config.siteName }],
+    creator: config.siteName,
+    publisher: config.siteName,
+
+    alternates: {
+      canonical: `/${locale}`,
+      languages: {
+        en: "/en",
+        ar: "/ar",
+        "x-default": "/en",
+      },
+    },
+
+    openGraph: {
+      type: "website",
+      locale: seoLocale === "ar" ? "ar_EG" : "en_US",
+      alternateLocale: seoLocale === "ar" ? "en_US" : "ar_EG",
+      siteName: t("siteName"),
+      title: t("ogTitle"),
+      description: t("ogDescription"),
+      url: `/${locale}`,
+      images: [
+        {
+          url: `/${locale}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: t("siteName"),
+        },
+      ],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: t("ogTitle"),
+      description: t("ogDescription"),
+      images: [`/${locale}/opengraph-image`],
+    },
+
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
+    },
   };
 }
 
@@ -83,6 +145,8 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
       <body
         className={`${fontVariables} font-sans antialiased bg-white text-black whitespace-break-spaces`}
       >
+        {/* Structured data — rendered server-side so crawlers see it in the initial HTML */}
+        <VoyaHouseJsonLd locale={locale as SeoLocale} />
         <GlobalCursor />
         <NextIntlClientProvider>
           <QueryProvider>

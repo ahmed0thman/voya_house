@@ -491,6 +491,7 @@ export default function BookletShowroom({
                         alt={tBrands(card.id)}
                         fill
                         sizes="(max-width: 768px) 120px, 180px"
+                        quality={75}
                         className="object-contain pointer-events-none drop-shadow-[0_12px_20px_rgba(0,0,0,0.2)]"
                       />
                     </div>

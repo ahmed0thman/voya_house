@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useFeaturedOfferBanner } from "@/hooks/use-offers";
 
 /**
@@ -18,18 +19,28 @@ export function OfferBanner() {
   return (
     <div>
       {banner.bannerImageMobileUrl && (
-        <img
-          src={banner.bannerImageMobileUrl}
-          alt={`${banner.code} offer`}
-          className="block md:hidden w-full h-auto rounded-2xl object-cover object-center aspect-3/1"
-        />
+        <div className="relative block md:hidden w-full rounded-2xl overflow-hidden aspect-[3/1]">
+          <Image
+            src={banner.bannerImageMobileUrl}
+            alt={`${banner.code} offer`}
+            fill
+            sizes="100vw"
+            quality={80}
+            className="object-cover object-center"
+          />
+        </div>
       )}
       {banner.bannerImageDesktopUrl && (
-        <img
-          src={banner.bannerImageDesktopUrl}
-          alt={`${banner.code} offer`}
-          className="hidden md:block w-full h-auto rounded-2xl object-cover aspect-[8/1]"
-        />
+        <div className="relative hidden md:block w-full rounded-2xl overflow-hidden aspect-[8/1]">
+          <Image
+            src={banner.bannerImageDesktopUrl}
+            alt={`${banner.code} offer`}
+            fill
+            sizes="100vw"
+            quality={80}
+            className="object-cover"
+          />
+        </div>
       )}
     </div>
   );
