@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Add01Icon, Remove01Icon, Delete02Icon } from "hugeicons-react";
+import { useTranslations } from "next-intl";
 
 interface MorphingCartButtonProps {
   initialQuantity?: number;
@@ -14,6 +15,7 @@ export default function MorphingCartButton({
   onQuantityChange,
   brandColors,
 }: MorphingCartButtonProps) {
+  const t = useTranslations("menuItem");
   const [prevInitialQuantity, setPrevInitialQuantity] = useState(initialQuantity);
   const [quantity, setQuantity] = useState(initialQuantity);
 
@@ -44,7 +46,7 @@ export default function MorphingCartButton({
     return (
       <button
         onClick={handleIncrement}
-        aria-label="Add to order"
+        aria-label={t("addToOrder")}
         className={`h-9 sm:h-10 px-4 sm:px-5 rounded-full flex items-center gap-1.5 ${
           brandColors?.accent || "bg-black"
         } ${
@@ -80,7 +82,7 @@ export default function MorphingCartButton({
 
       <button
         onClick={handleIncrement}
-        aria-label="Increase quantity"
+        aria-label={t("increaseQuantity")}
         className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-white text-black flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs"
       >
         <Add01Icon size={14} strokeWidth={2.5} />

@@ -15,20 +15,25 @@ export interface CartItem {
   image?: string;
 }
 
-export function formatTableNumber(number: number): string {
-  return `Table ${String(number).padStart(2, "0")}`;
+/**
+ * The zero-padded digits only ("07"), not the whole phrase. The word "Table"
+ * lives in the `common.tableNumber` message so it can be translated and, in
+ * Arabic, sit on the correct side of the number.
+ */
+export function formatTableDigits(number: number): string {
+  return String(number).padStart(2, "0");
 }
 
+/**
+ * English-only fallback, still read by `CartSheet`. The translated equivalent
+ * is the `orderMode` namespace in `messages/*.json`; this constant goes away
+ * once the cart moves onto it.
+ */
 export const ORDER_MODE_LABEL: Record<OrderMode, string> = {
   ON_TABLE: "Dine In",
   TAKEAWAY: "Pickup",
   DELIVERY: "Delivery",
 };
-
-/** Safe to call before the guest has chosen — an unresolved mode is just "Order". */
-export function orderModeLabel(mode: OrderMode | null): string {
-  return mode ? ORDER_MODE_LABEL[mode] : "Order";
-}
 
 interface CartStore {
   items: CartItem[];
@@ -46,14 +51,11 @@ interface CartStore {
    */
   tableNumber: number | null;
   /**
-   * True once this table is settled fact rather than a tentative pick — either
-   * it came from a scanned QR, or a self-selected table's first order has
-   * already gone through. Either way the guest is now provably seated there:
-   * the picker stops offering it as a free choice (shown as a locked "Table N"
-   * instead), and later rounds this session stop being treated as a fresh
-   * claim on the table — see `tableSelfSelected` in `order.ts` for why that
-   * distinction matters (a confirmed table must never be rejected as "taken"
-   * by its own occupant sending a second round).
+   * True once this table is fact rather than a tentative pick: it came from a
+   * scanned QR, or an order has already gone through on it — including one
+   * placed before a refresh, which comes back as a rejoined session. Either
+   * way the guest is provably seated there, so the picker stops offering it as
+   * a choice and shows a locked "Table N" instead.
    */
   tableConfirmed: boolean;
   /** Ids of the takeaway/delivery tickets this browser has placed — how those guests track their orders. */
@@ -109,9 +111,11 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   setOrderMode: (mode, options) => {
     set({ orderMode: mode });
-    // Dine-in is never written down — the scan is the state, so a settled visit
-    // can't linger and reclaim a later param-less visit. Only the guest's own
-    // pickup/delivery choice is worth remembering.
+    // Dine-in is never written down as a bare mode: "was dining in" can't tell
+    // a live visit from a settled one, and would reclaim a later param-less
+    // load for a table nobody's at. The visit itself is remembered instead, by
+    // session id, in `rememberTableSession` — the server retires that the
+    // moment the bill is settled. Here, only pickup/delivery is worth keeping.
     if (options?.persist !== false && mode !== "ON_TABLE") {
       rememberOrderMode(mode);
     }

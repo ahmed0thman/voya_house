@@ -19,6 +19,89 @@
   --font-serif: var(--font-cormorant), var(--font-outfit), ui-serif, Georgia, serif;
 }
 
+.icon-auto-dir{
+  @apply rtl:rotate-180;
+}
+
+/* ═══ Arabic / RTL typography ═══════════════════════════════════════════════
+   Every rule below is scoped to [dir="rtl"]; the English side is untouched.
+
+   Latin islands — the wordmark, an email address — opt out of all of it by
+   carrying their own lang="en", so they keep rendering in Inter/Cormorant.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* 1. FACES.
+   Pointing the type roles at the shared --font-sans/--font-serif tokens was not
+   enough: those tokens lead with Inter and Cormorant, neither of which has a
+   single Arabic glyph, and the tokens themselves resolve empty in this build.
+   Arabic was therefore being drawn in Times — i.e. handed to whatever default
+   Arabic face the operating system happened to pick, which is why it read as a
+   different (and much worse) design. Each role is remapped explicitly here. */
+/* Declared on <body>, not on [dir="rtl"] itself: next/font puts
+   --font-arabic-sans / --font-arabic-serif on the body element, so a composite
+   built on <html> resolves against variables that don't exist there yet and
+   collapses to nothing — which is precisely how Arabic ended up in Times. */
+[dir="rtl"] body {
+  --font-arabic-body: var(--font-arabic-sans), "Segoe UI", Tahoma, sans-serif;
+  --font-arabic-display: var(--font-arabic-serif), "Times New Roman", serif;
+  font-family: var(--font-arabic-body);
+}
+
+[dir="rtl"] :is(.font-sans, .font-mono):not(:lang(en)) {
+  /* No Arabic monospace reads as credible UI chrome, so the mono labels borrow
+     the body face. Their "label" quality comes from size and colour instead —
+     which is just as well, since the tracking that carried it is removed below. */
+  font-family: var(--font-arabic-body);
+}
+
+[dir="rtl"] .font-serif:not(:lang(en)) {
+  font-family: var(--font-arabic-display);
+}
+
+/* 2. TRACKING.
+   Arabic is a joined script. letter-spacing does not merely loosen it, it severs
+   the cursive connections between letters, and there is no uppercase to
+   transform in the first place. Both are undone wherever Arabic renders; because
+   both properties inherit, resetting them on the tracked element also fixes
+   every descendant. */
+[dir="rtl"] :is(.uppercase, [class*="tracking-"]):not(:lang(en)) {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* 3. LEADING.
+   Arabic ascenders and descenders reach further than Latin, so running text
+   needs more room than the leading tuned for Inter. Confined to prose on
+   purpose: the previous blanket rule on the [dir="rtl"] root inherited into
+   buttons, badges and single-line labels too, padding out every piece of UI
+   chrome on the page. */
+[dir="rtl"] :is(p, li, blockquote):not(:lang(en)) {
+  line-height: 1.85;
+}
+
+/* 4. HEADINGS.
+   Amiri sets loosely by default, which leaves display type looking unmoored at
+   the sizes this design uses. Pulling the leading in restores the tight,
+   deliberate look the Cormorant headings have in English. */
+[dir="rtl"] :is(h1, h2, h3, h4):not(:lang(en)) {
+  line-height: 1.4;
+}
+
+/* 5. VERTICAL LABELS.
+   The mobile stage's rotated side-labels (VOYA / PAPA VOYA / MAMA VOYA) use
+   writing-mode: vertical-rl with text-orientation: upright — correct for a
+   script like Latin where each glyph already stands upright on its own.
+   Arabic has no upright form: "upright" places every letter in its isolated
+   presentation form and stacks them, which is what severs the joins and
+   turns a word into a column of disconnected letters. `sideways` shapes the
+   run normally (horizontally, joins intact) and rotates the whole run as one
+   unit, which is what a script without vertical forms needs. */
+[dir="rtl"] .s3-vertical-text,
+[dir="rtl"] .s4-vertical-text,
+[dir="rtl"] .s5-vertical-text {
+  text-orientation: sideways;
+}
+
 .gradient-text-gold {
   background: linear-gradient(135deg, #FFF0D0 0%, #F1E6C3 40%, #D4AF37 75%, #C2B280 100%);
   -webkit-background-clip: text;
@@ -98,7 +181,7 @@ body {
 #canvas-container {
   position: fixed;
   top: 0;
-  left: 0;
+  inset-inline-start: 0;
   width: 100vw;
   height: 100vh;
   z-index: -1;

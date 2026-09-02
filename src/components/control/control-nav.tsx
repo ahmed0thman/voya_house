@@ -64,7 +64,7 @@ export function ControlNav({ user }: { user: { name: string; role: "ADMIN" | "ST
         })}
       </nav>
 
-      <div className="flex items-center gap-2 border-l pl-4">
+      <div className="flex items-center gap-2 border-s ps-4">
         <NotificationMenu />
         <span className="text-sm text-muted-foreground">
           {user.name}{" "}

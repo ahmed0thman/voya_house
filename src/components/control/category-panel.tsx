@@ -90,7 +90,7 @@ export function CategoryPanel({
               <button
                 type="button"
                 onClick={() => onSelectCategory(category.id)}
-                className="flex flex-1 items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-muted/60"
+                className="flex flex-1 items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-start text-sm hover:bg-muted/60"
               >
                 <span
                   className={cn(

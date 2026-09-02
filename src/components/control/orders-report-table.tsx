@@ -135,13 +135,13 @@ export function OrdersReportTable() {
         <Field className="col-span-2">
           <FieldLabel htmlFor="report-search">Search</FieldLabel>
           <div className="relative">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <SearchIcon className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="report-search"
               placeholder="Name, phone, order # or code…"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              className="pl-8"
+              className="ps-8"
             />
           </div>
         </Field>
@@ -297,7 +297,7 @@ export function OrdersReportTable() {
                   <TableHead>Houses</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead
-                    className="cursor-pointer text-right select-none"
+                    className="cursor-pointer text-end select-none"
                     onClick={() => toggleSort("totalPrice")}
                   >
                     <span className="inline-flex items-center gap-1">
@@ -353,7 +353,7 @@ export function OrdersReportTable() {
                     <TableCell className="text-muted-foreground">
                       {order.items.length}
                     </TableCell>
-                    <TableCell className="text-right font-medium tabular-nums">
+                    <TableCell className="text-end font-medium tabular-nums">
                       {formatPrice(order.totalPrice)}
                       {order.discountAmount > 0 && (
                         <div className="text-xs font-normal text-muted-foreground">
@@ -432,7 +432,7 @@ export function OrdersReportTable() {
                     <span className="shrink-0 text-muted-foreground">
                       Rejection reason
                     </span>
-                    <span className="text-right">
+                    <span className="text-end">
                       {selectedOrder.rejectionReason}
                     </span>
                   </div>
@@ -445,7 +445,7 @@ export function OrdersReportTable() {
                           <TableCell className="font-medium">
                             {item.quantity}× {item.name}
                           </TableCell>
-                          <TableCell className="text-right text-muted-foreground">
+                          <TableCell className="text-end text-muted-foreground">
                             {item.brandSlug}
                           </TableCell>
                         </TableRow>

@@ -15,26 +15,38 @@ import {
   ArrowRight01Icon,
   ShoppingBag01Icon,
 } from "hugeicons-react";
-import { useCartStore, orderModeLabel } from "@/store/useCartStore";
+import { useTranslations } from "next-intl";
+import { useCartStore } from "@/store/useCartStore";
 import { useGuestOrders } from "@/hooks/use-table-orders";
+import LocaleSwitcher from "@/components/LocaleSwitcher";
 
 interface HeaderProps {
   onOpenBooklet?: (menu: "coffee" | "papa" | "mama") => void;
 }
 
+/**
+ * Only what's genuinely structural lives here — the section id, its ordinal and
+ * its icon. Every word is looked up by id from the `nav` namespace, so adding a
+ * language never means touching this file.
+ */
 const NAV_LINKS = [
-  { id: "booklets", label: "The Trilogy Showroom", num: "01", tag: "Collectible Menus", icon: SparklesIcon },
-  { id: "story", label: "About Voya House", num: "02", tag: "Our Story & Sanctuary", icon: SparklesIcon },
-  { id: "contact", label: "Visit & Concierge", num: "03", tag: "Flagship & Inquiries", icon: Location01Icon },
-];
+  { id: "booklets", num: "01", icon: SparklesIcon },
+  { id: "story", num: "02", icon: SparklesIcon },
+  { id: "contact", num: "03", icon: Location01Icon },
+] as const;
 
 const QUICK_BOOKLETS = [
-  { id: "coffee" as const, label: "Voya Coffee", desc: "Specialty Roasts & Rituals", icon: Coffee01Icon, color: "#F1E6C3" },
-  { id: "papa" as const, label: "Papa Voya", desc: "Mindful Meals & Vitality", icon: Leaf01Icon, color: "#B7D39A" },
-  { id: "mama" as const, label: "Mama Voya", desc: "Comfort Food & Family Table", icon: Pizza01Icon, color: "#D8A98F" },
+  { id: "coffee" as const, icon: Coffee01Icon, color: "#F1E6C3" },
+  { id: "papa" as const, icon: Leaf01Icon, color: "#B7D39A" },
+  { id: "mama" as const, icon: Pizza01Icon, color: "#D8A98F" },
 ];
 
 export default function Header({ onOpenBooklet }: HeaderProps) {
+  const t = useTranslations("header");
+  const tNav = useTranslations("nav");
+  const tBooklets = useTranslations("booklets");
+  const tMode = useTranslations("orderMode");
+  const tContact = useTranslations("contact");
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -47,6 +59,8 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
   const openCart = useCartStore((s) => s.openCart);
   const orderMode = useCartStore((s) => s.orderMode);
   const activeOrdersCount = useGuestOrders().data?.length ?? 0;
+  /** "Dine In" / "Pickup" / "Delivery", or a neutral "Order" before they've chosen. */
+  const modeLabel = tMode(orderMode ?? "unset");
 
   // Close on ESC
   useEffect(() => {
@@ -113,11 +127,11 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
 
   return (
     <>
-      <header className="voya-header fixed top-0 left-0 w-full z-40 px-4 sm:px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300 opacity-0">
+      <header className="voya-header fixed top-0 start-0 w-full z-40 px-4 sm:px-6 py-4 md:px-12 pointer-events-none text-white transition-all duration-300 opacity-0">
         {/* Dynamic Glassy Background & Glowing Bottom Border */}
         <div className="header-bg absolute inset-0 pointer-events-none opacity-0 invisible bg-[#080907]/45 backdrop-blur-xl" />
         <div
-          className="header-glow absolute bottom-0 left-0 w-full h-[1px] pointer-events-none opacity-0 invisible shadow-[0_1px_10px_rgba(241,230,195,0.5),0_0_20px_rgba(255,255,255,0.25)]"
+          className="header-glow absolute bottom-0 start-0 w-full h-[1px] pointer-events-none opacity-0 invisible shadow-[0_1px_10px_rgba(241,230,195,0.5),0_0_20px_rgba(255,255,255,0.25)]"
           style={{
             background:
               "linear-gradient(90deg, rgba(241, 230, 195, 0) 0%, rgba(241, 230, 195, 0.4) 20%, rgba(255, 255, 255, 0.85) 50%, rgba(241, 230, 195, 0.4) 80%, rgba(241, 230, 195, 0) 100%)",
@@ -133,13 +147,13 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
           >
             <Image
               src="/assets/logos/Asset 26.svg"
-              alt="Voya Logo"
+              alt={t("brandLogoAlt")}
               width={80}
               height={24}
               className="object-contain invert brightness-200"
             />
             <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#F1E6C3] px-2 py-0.5 rounded-full border border-white/15 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-block">
-              House
+              {t("houseTag")}
             </span>
           </button>
 
@@ -151,23 +165,29 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                 onClick={() => scrollToSection(link.id)}
                 className="font-mono text-xs uppercase tracking-[0.2em] text-white/70 hover:text-[#F1E6C3] transition-colors cursor-pointer"
               >
-                {link.label.replace("The ", "").replace("About ", "")}
+                {/* A separate, already-short label per locale. The English copy used
+                    to be trimmed with .replace("The ", ""), which silently did
+                    nothing in any language that doesn't left with "The". */}
+                {tNav(`${link.id}.short`)}
               </button>
             ))}
           </nav>
 
-          {/* Right Actions: Cart Button & Menu Toggle */}
+          {/* Right Actions: Language, Cart Button & Menu Toggle */}
           <div className="flex items-center gap-3 sm:gap-4">
-            
+
+            <LocaleSwitcher variant="pill" className="hidden sm:flex" />
+            <LocaleSwitcher variant="compact" className="sm:hidden" />
+
             {/* Luxury Cart Button */}
             <button
               onClick={handleCartClick}
-              aria-label={`${orderModeLabel(orderMode)} Cart (${totalItems} items)`}
+              aria-label={t("cartAria", { mode: modeLabel, count: totalItems })}
               className="relative inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 rounded-full bg-[#F1E6C3] hover:bg-white text-black font-mono text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.25)] active:scale-95 cursor-pointer"
             >
               {/* Glowing Pulsing Dot when Cart is Not Empty */}
               {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+                <span className="absolute -top-1 -end-1 flex h-3.5 w-3.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F1E6C3] opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-[#F1E6C3] shadow-[0_0_12px_rgba(241,230,195,1)] border-2 border-black"></span>
                 </span>
@@ -175,7 +195,11 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
 
               <ShoppingBag01Icon size={16} className="text-black shrink-0" />
               <span className="hidden sm:inline">
-                {totalItems > 0 ? `Order (${totalItems})` : activeOrdersCount > 0 ? `Orders (${activeOrdersCount})` : "Order"}
+                {totalItems > 0
+                  ? t("orderWithCount", { count: totalItems })
+                  : activeOrdersCount > 0
+                    ? t("ordersWithCount", { count: activeOrdersCount })
+                    : t("order")}
               </span>
               <span className="sm:hidden font-mono text-xs">
                 {totalItems > 0 ? totalItems : ""}
@@ -185,7 +209,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
             {/* Hamburger Button with Frosted Capsule */}
             <button
               onClick={() => setIsOpen(true)}
-              aria-label="Open Navigation Menu"
+              aria-label={t("openMenu")}
               className="flex flex-col items-end space-y-[5px] p-2.5 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:bg-black/60 active:scale-95 group cursor-pointer transition-all duration-300 shadow-[0_2px_12px_rgba(0,0,0,0.25)]"
             >
               <span className="block w-5 h-[2px] bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#F1E6C3]"></span>
@@ -209,19 +233,21 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               <div className="flex items-center gap-3">
                 <Image
                   src="/assets/logos/Asset 8.svg"
-                  alt="Voya Logo"
+                  alt={t("brandLogoAlt")}
                   width={28}
                   height={28}
                   className="opacity-90 brightness-110"
                 />
-                <span className="font-serif text-xl tracking-[0.15em] font-medium text-white">
+                {/* The wordmark is the brand's own spelling — it stays Latin in
+                    both languages, like the logo beside it. */}
+                <span lang="en" dir="ltr" className="font-serif text-xl tracking-[0.15em] font-medium text-white">
                   VOYA HOUSE
                 </span>
               </div>
 
               <button
                 onClick={() => setIsOpen(false)}
-                aria-label="Close Menu"
+                aria-label={t("closeMenu")}
                 className="w-11 h-11 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer"
               >
                 <Cancel01Icon size={18} />
@@ -233,7 +259,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               {/* Primary Section Links */}
               <div className="md:col-span-7 flex flex-col space-y-4">
                 <span className="sheet-anim-item font-mono text-[10px] uppercase tracking-[0.25em] text-white/40 font-bold mb-2">
-                  Navigation Directory
+                  {tNav("directory")}
                 </span>
 
                 {NAV_LINKS.map((link) => {
@@ -242,7 +268,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                     <button
                       key={link.id}
                       onClick={() => scrollToSection(link.id)}
-                      className="sheet-anim-item group flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:border-[#F1E6C3]/40 bg-white/[0.02] hover:bg-white/[0.06] transition-all duration-300 text-left cursor-pointer"
+                      className="sheet-anim-item group flex items-center justify-between p-4 rounded-2xl border border-white/5 hover:border-[#F1E6C3]/40 bg-white/[0.02] hover:bg-white/[0.06] transition-all duration-300 text-start cursor-pointer"
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#F1E6C3] group-hover:scale-105 transition-transform shrink-0">
@@ -254,16 +280,21 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                               {link.num}
                             </span>
                             <h3 className="font-serif text-lg sm:text-xl text-white group-hover:text-[#F1E6C3] transition-colors font-medium">
-                              {link.label}
+                              {tNav(`${link.id}.label`)}
                             </h3>
                           </div>
                           <p className="font-sans text-xs text-white/50">
-                            {link.tag}
+                            {tNav(`${link.id}.tag`)}
                           </p>
                         </div>
                       </div>
                       <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-[#F1E6C3] group-hover:text-black flex items-center justify-center text-white/60 transition-all">
-                        <ArrowRight01Icon size={14} className="transform group-hover:translate-x-0.5 transition-transform" />
+                        {/* Points "forward", which is leftward in Arabic — mirrored
+                            rather than rotated per-hover so the nudge still follows it. */}
+                        <ArrowRight01Icon
+                          size={14}
+                          className="transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform icon-auto-dir"
+                        />
                       </div>
                     </button>
                   );
@@ -273,7 +304,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               {/* Quick 3D Menus Drawer & Cart Link */}
               <div className="md:col-span-5 flex flex-col space-y-3">
                 <span className="sheet-anim-item font-mono text-[10px] uppercase tracking-[0.25em] text-[#F1E6C3]/80 font-bold mb-2">
-                  Instant Menu Booklets
+                  {tBooklets("sectionLabel")}
                 </span>
 
                 {QUICK_BOOKLETS.map((booklet) => {
@@ -282,7 +313,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                     <button
                       key={booklet.id}
                       onClick={() => handleBookletClick(booklet.id)}
-                      className="sheet-anim-item group flex items-center gap-4 p-3.5 rounded-2xl border border-white/10 hover:border-white/30 bg-white/[0.03] hover:bg-white/[0.08] transition-all text-left cursor-pointer"
+                      className="sheet-anim-item group flex items-center gap-4 p-3.5 rounded-2xl border border-white/10 hover:border-white/30 bg-white/[0.03] hover:bg-white/[0.08] transition-all text-start cursor-pointer"
                     >
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
@@ -292,14 +323,14 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-serif text-base text-white group-hover:text-[#F1E6C3] transition-colors truncate">
-                          {booklet.label}
+                          {tBooklets(`${booklet.id}.label`)}
                         </h4>
                         <p className="font-sans text-[11px] text-white/50 truncate">
-                          {booklet.desc}
+                          {tBooklets(`${booklet.id}.desc`)}
                         </p>
                       </div>
                       <span className="font-mono text-[10px] uppercase tracking-wider text-white/40 group-hover:text-white shrink-0">
-                        Open ↗
+                        {tBooklets("open")} <span className="inline-block rtl:-scale-x-100">↗</span>
                       </span>
                     </button>
                   );
@@ -308,7 +339,7 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                 {/* View Table Order inside Sheet */}
                 <button
                   onClick={handleCartClick}
-                  className="sheet-anim-item group mt-2 flex items-center justify-between p-4 rounded-2xl border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 hover:bg-[#F1E6C3]/20 transition-all text-left cursor-pointer"
+                  className="sheet-anim-item group mt-2 flex items-center justify-between p-4 rounded-2xl border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 hover:bg-[#F1E6C3]/20 transition-all text-start cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-[#F1E6C3] text-black flex items-center justify-center">
@@ -316,30 +347,42 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                     </div>
                     <div>
                       <span className="font-mono text-xs font-bold text-white block">
-                        {orderModeLabel(orderMode)} Cart & Status
+                        {t("cartAndStatus", { mode: modeLabel })}
                       </span>
                       <span className="font-sans text-[11px] text-white/60">
-                        {totalItems > 0 ? `${totalItems} unplaced items` : activeOrdersCount > 0 ? `${activeOrdersCount} order${activeOrdersCount > 1 ? "s" : ""} in progress` : "No items yet"}
+                        {/* ICU plurals, not string concatenation: Arabic selects
+                            between six forms here, which `+ "s"` can never express. */}
+                        {totalItems > 0
+                          ? t("unplacedItems", { count: totalItems })
+                          : activeOrdersCount > 0
+                            ? t("ordersInProgress", { count: activeOrdersCount })
+                            : t("noItems")}
                       </span>
                     </div>
                   </div>
                   <span className="font-mono text-xs text-[#F1E6C3] font-bold">
-                    View ↗
+                    {t("view")} <span className="inline-block rtl:-scale-x-100">↗</span>
                   </span>
                 </button>
               </div>
             </div>
 
             {/* Bottom Sheet Footer */}
-            <div className="sheet-anim-item flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mx-auto pt-6 border-t border-white/10 gap-4 text-center sm:text-left">
+            <div className="sheet-anim-item flex flex-col sm:flex-row justify-between items-center w-full max-w-5xl mx-auto pt-6 border-t border-white/10 gap-4 text-center sm:text-start">
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 text-xs text-white/50 font-mono">
-                <span>123 Voyage Street, New Cairo</span>
+                <span>{tContact("address")}</span>
                 <span className="hidden sm:inline">·</span>
-                <span>07:00 &mdash; 23:00 Daily</span>
+                <span>{tContact("hours")}</span>
               </div>
 
               <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-widest text-[#F1E6C3]">
-                <a href="mailto:concierge@voyahouse.com" className="hover:underline">
+                {/* An address is a literal, not a phrase — it stays LTR so the
+                    local part doesn't get reordered around the @ in Arabic. */}
+                <a
+                  href="mailto:concierge@voyahouse.com"
+                  dir="ltr"
+                  className="hover:underline"
+                >
                   concierge@voyahouse.com
                 </a>
               </div>

@@ -176,12 +176,12 @@ function EditOrderForm({ order, onDone }: { order: OrderDTO; onDone: () => void 
           )}
 
           <div className="relative">
-            <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+            <SearchIcon className="pointer-events-none absolute top-1/2 start-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={menuLoading ? "Loading menu…" : "Add an item — start typing"}
-              className="pl-8"
+              placeholder={menuLoading ? "Loading menu…" : "Add an item — left typing"}
+              className="ps-8"
             />
             {searchResults.length > 0 && (
               <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-md">
@@ -190,7 +190,7 @@ function EditOrderForm({ order, onDone }: { order: OrderDTO; onDone: () => void 
                     key={item.id}
                     type="button"
                     onClick={() => addItem(item)}
-                    className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-sm hover:bg-muted"
+                    className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-start text-sm hover:bg-muted"
                   >
                     <span className="min-w-0">
                       <span className="block truncate">{item.name}</span>

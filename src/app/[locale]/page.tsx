@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRef, useEffect, useCallback, useState } from "react";
 import gsap from "gsap";
@@ -44,6 +45,7 @@ const EAGER_LOAD_FRAMES = Math.ceil(FRAME_COUNT * 0.25);
 const RESUME_LOAD_FRAME = Math.ceil(EAGER_LOAD_FRAMES * 0.1);
 
 export default function Home() {
+  const tHero = useTranslations("hero");
   const pageRef = useRef<HTMLDivElement>(null);
   const container = useRef<HTMLDivElement>(null);
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -239,7 +241,7 @@ export default function Home() {
     const srcFor = (i: number) => {
       const paddedIndex = i.toString().padStart(4, "0");
       // Frame 64 is where the editorial stage starts fading in (progress
-      // 0.18), so that is the first frame the right-hand panel actually
+      // 0.18), so that is the first frame the end-hand panel actually
       // shows. Everything from there on needs the transparent PNGs.
       return isDesktop && i >= 64
         ? `/assets/frames-web/frame_${paddedIndex}.png`
@@ -292,7 +294,7 @@ export default function Home() {
       window.removeEventListener("click", handleFirstTap);
     };
 
-    // Catch the very first interaction (click/touch) to start audio
+    // Catch the very first interaction (click/touch) to left audio
     // iOS Safari strictly requires touchend or click to unlock AudioContext (touchstart is often ignored for scrolling)
     window.addEventListener("pointerup", handleFirstTap, { once: true });
     window.addEventListener("touchend", handleFirstTap, { once: true });
@@ -405,7 +407,7 @@ export default function Home() {
           >
             <Image
               src="/assets/logos/Asset 11.svg"
-              alt="Voya"
+              alt={tHero("brand")}
               width={140}
               height={203}
               priority

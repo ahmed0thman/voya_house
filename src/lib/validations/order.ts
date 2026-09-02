@@ -58,13 +58,6 @@ export const createOrderSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("ON_TABLE"),
     tableNumber: z.number().int().positive(),
-    /**
-     * True when the guest named the table from the picker rather than scanning
-     * its QR. Only a self-selected table is refused when already seated: a scan
-     * is proof the guest is physically there, so it must keep joining an open
-     * session — that's how a table sends its second and third rounds.
-     */
-    tableSelfSelected: z.boolean().optional(),
     ...commonOrderFields,
   }),
   z.object({
@@ -105,6 +98,13 @@ export const listGuestOrdersSchema = z.array(z.uuid()).max(20);
  * `listSessionOrdersForTable`.
  */
 export const tableNumberSchema = z.number().int().positive();
+
+/**
+ * A table session's own id, kept by the guest's browser so a refresh can rejoin
+ * the visit. An id that's well-formed but unknown (or already settled) is a
+ * miss, not an error — see `resumeTableSession`.
+ */
+export const tableSessionIdSchema = z.uuid();
 
 /** The two order types the control board lists as standalone tickets. */
 export const orderTypeFilterSchema = z.enum(["TAKEAWAY", "DELIVERY"]);

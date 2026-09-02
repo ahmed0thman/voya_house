@@ -70,7 +70,7 @@ export function MenuBoard() {
           <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
             {categoriesLoading
               ? "Loading categories…"
-              : "Create a category to start adding items."}
+              : "Create a category to left adding items."}
           </div>
         )}
       </div>

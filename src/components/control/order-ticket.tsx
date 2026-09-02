@@ -93,7 +93,7 @@ const NOTE_MAX_LENGTH = 300;
 /**
  * Preset and note are two halves of one sentence, and either half can stand
  * alone — a preset says the category, the note says which item or when to call
- * back. Both end up in the single reason the guest reads.
+ * back. Both right up in the single reason the guest reads.
  */
 function composeReason(
   presetId: RejectionPresetId | null,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { forwardRef, useState, useEffect } from "react";
 import Image from "next/image";
 import { Coffee01Icon, Leaf01Icon, Pizza01Icon } from "hugeicons-react";
@@ -18,35 +19,21 @@ interface BookletCardProps {
 const BRAND_COVERS = {
   coffee: {
     num: "01",
-    title: "Voya Coffee",
-    sub: "SIGNATURE ROASTS",
     mascot: "/assets/illustrations/voya-character-4.svg",
-    tagline: "Quality in everyday rituals. Sourced & roasted with intention.",
-    tag: "CAFE & ARTISAN BAKERY",
     icon: Coffee01Icon,
     accentGlow: "rgba(241, 230, 195, 0.4)",
     borderTone: "border-[#3E3424]/15",
   },
   papa: {
     num: "02",
-    title: "Papa Voya",
-    sub: "WELLNESS & NOURISHMENT",
     mascot: "/assets/illustrations/papa-character-1.svg",
-    tagline:
-      "Balanced meals and clean energy. Strength, balance, and vitality.",
-    tag: "HEALTHY KITCHEN & BOWLS",
     icon: Leaf01Icon,
     accentGlow: "rgba(183, 211, 154, 0.4)",
     borderTone: "border-[#2D421A]/15",
   },
   mama: {
     num: "03",
-    title: "Mama Voya",
-    sub: "WARMTH & HOSPITALITY",
     mascot: "/assets/illustrations/mama-character-1.svg",
-    tagline:
-      "Nurturing flavors and generous portions. Comfort food that feels like home.",
-    tag: "COMFORT FOOD & PASTAS",
     icon: Pizza01Icon,
     accentGlow: "rgba(216, 169, 143, 0.4)",
     borderTone: "border-[#4A2E1F]/15",
@@ -66,6 +53,8 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
     { brandId, isActive, isInitialActive = false, style, className = "" },
     ref,
   ) => {
+    const tBrands = useTranslations("brands");
+    const tCovers = useTranslations("booklets.covers");
     const { data: categories, isLoading, isError } = usePublicMenu(brandId);
     const cover = BRAND_COVERS[brandId];
     const colors = BRAND_THEME[brandId];
@@ -82,7 +71,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
 
     const menu: BrandMenu = {
       brandId,
-      title: cover.title,
+      title: tBrands(brandId),
       colors,
       categories: categories ?? [],
     };
@@ -90,7 +79,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
     return (
       <div
         ref={ref}
-        className={`absolute top-0 left-0 w-full h-full rounded-[2rem] overflow-hidden ${menu.colors.bg} transform-gpu shadow-[0_20px_50px_rgba(0,0,0,0.3)] will-change-[transform,opacity] select-none ${className}`}
+        className={`absolute top-0 start-0 w-full h-full rounded-[2rem] overflow-hidden ${menu.colors.bg} transform-gpu shadow-[0_20px_50px_rgba(0,0,0,0.3)] will-change-[transform,opacity] select-none ${className}`}
         style={{
           transformStyle: "preserve-3d",
           pointerEvents: isActive ? "auto" : "none",
@@ -117,28 +106,28 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
 
             {/* Corner Indices (Playing Card Style) */}
             <div
-              className={`absolute top-3 left-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
+              className={`absolute top-3 start-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
             >
               <span>{cover.num}</span>
               <IconComponent size={14} />
             </div>
 
             <div
-              className={`absolute top-3 right-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
+              className={`absolute top-3 end-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
             >
               <IconComponent size={14} />
               <span>{cover.num}</span>
             </div>
 
             <div
-              className={`absolute bottom-3 left-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
+              className={`absolute bottom-3 start-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
             >
               <span>{cover.num}</span>
               <IconComponent size={14} />
             </div>
 
             <div
-              className={`absolute bottom-3 right-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
+              className={`absolute bottom-3 end-4 flex items-center gap-1.5 font-mono text-[11px] font-bold ${menu.colors.text} opacity-70`}
             >
               <IconComponent size={14} />
               <span>{cover.num}</span>
@@ -149,12 +138,12 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
               <span
                 className={`font-mono text-[9px] md:text-[10px] uppercase tracking-[0.3em] font-bold ${menu.colors.text} opacity-60`}
               >
-                {cover.sub}
+                {tCovers(`${brandId}.sub`)}
               </span>
               <h3
                 className={`font-serif text-2xl md:text-4xl font-bold tracking-tight mt-1 ${menu.colors.text}`}
               >
-                {cover.title}
+                {tBrands(brandId)}
               </h3>
             </div>
 
@@ -163,7 +152,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
               <div className="relative w-44 h-44 md:w-56 md:h-56 max-h-[35vh]">
                 <Image
                   src={cover.mascot}
-                  alt={`${cover.title} Mascot`}
+                  alt={tBrands(brandId)}
                   fill
                   sizes="(max-width: 768px) 180px, 240px"
                   className="object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.25)] transition-transform duration-500 hover:scale-105"
@@ -177,7 +166,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
               <p
                 className={`font-serif italic text-xs md:text-sm ${menu.colors.text} opacity-80 leading-relaxed mb-3`}
               >
-                &ldquo;{cover.tagline}&rdquo;
+                &ldquo;{tCovers(`${brandId}.tagline`)}&rdquo;
               </p>
               <div
                 className={`px-4 py-1 rounded-full border ${cover.borderTone} bg-black/5 backdrop-blur-md`}
@@ -185,7 +174,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
                 <span
                   className={`font-mono text-[9px] uppercase tracking-[0.2em] font-bold ${menu.colors.text} opacity-90`}
                 >
-                  {cover.tag}
+                  {tCovers(`${brandId}.tag`)}
                 </span>
               </div>
             </div>

@@ -162,7 +162,7 @@ function TableList({
             type="button"
             onClick={() => onSelect(session.id)}
             className={cn(
-              "flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors",
+              "flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-start transition-colors",
               isSelected ? "border-foreground/30 bg-muted" : "border-transparent hover:bg-muted/60",
             )}
           >

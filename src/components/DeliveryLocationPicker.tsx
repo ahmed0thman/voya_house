@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { MapPinpoint01Icon, GpsSignal01Icon } from "hugeicons-react";
 import type { LatLng } from "./DeliveryMapPicker";
+import { useTranslations } from "next-intl";
 
 const DeliveryMapPicker = dynamic(() => import("./DeliveryMapPicker"), {
   ssr: false,
@@ -24,6 +25,7 @@ export default function DeliveryLocationPicker({
   onAddressChange: (address: string) => void;
   error?: string;
 }) {
+  const t = useTranslations("delivery");
   const [showMap, setShowMap] = useState(false);
   const [location, setLocation] = useState<LatLng | null>(null);
   const [locating, setLocating] = useState(false);
@@ -91,7 +93,7 @@ export default function DeliveryLocationPicker({
           rows={2}
           value={address}
           onChange={(e) => onAddressChange(e.target.value)}
-          placeholder="Delivery address — building, floor, apartment, landmark"
+          placeholder={t("addressPlaceholder")}
           autoComplete="street-address"
           className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none resize-none"
         />
@@ -123,13 +125,13 @@ export default function DeliveryLocationPicker({
       </div>
 
       {geoNotice && <span className="block px-1 text-[10px] text-red-400 font-mono">{geoNotice}</span>}
-      {geocoding && <span className="block px-1 text-[10px] text-white/40 font-mono">Looking up address…</span>}
+      {geocoding && <span className="block px-1 text-[10px] text-white/40 font-mono">{t("lookingUp")}</span>}
 
       {showMap && (
         <div className="rounded-xl overflow-hidden border border-white/10">
           <DeliveryMapPicker center={location ?? DEFAULT_CENTER} onPick={handlePick} />
           <span className="block px-2 py-1.5 bg-black/40 text-[9px] font-mono text-white/40 text-center">
-            Tap the map or drag the pin to set your delivery point
+            {t("mapHint")}
           </span>
         </div>
       )}

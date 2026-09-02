@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
 import gsap from "gsap";
@@ -21,11 +22,7 @@ interface BookletShowroomProps {
 
 interface CardData {
   id: "papa" | "coffee" | "mama";
-  tabLabel: string;
   num: string;
-  tag: string;
-  title: string;
-  desc: string;
   bg: string;
   borderTone: string;
   textColor: string;
@@ -39,11 +36,7 @@ interface CardData {
 const CARDS: CardData[] = [
   {
     id: "papa",
-    tabLabel: "Papa",
     num: "02",
-    tag: "WELLNESS & NOURISHMENT",
-    title: "Papa Voya",
-    desc: "Balanced meals and clean energy. Strength and vitality.",
     bg: "bg-[#B7D39A]",
     borderTone: "border-[#2D421A]/15",
     textColor: "text-[#2D421A]",
@@ -55,11 +48,7 @@ const CARDS: CardData[] = [
   },
   {
     id: "coffee",
-    tabLabel: "Voya",
     num: "01",
-    tag: "SIGNATURE ROASTS",
-    title: "Voya Coffee",
-    desc: "Quality in everyday rituals. Sourced & roasted with intention.",
     bg: "bg-[#F1E6C3]",
     borderTone: "border-[#3E3424]/15",
     textColor: "text-[#3E3424]",
@@ -71,11 +60,7 @@ const CARDS: CardData[] = [
   },
   {
     id: "mama",
-    tabLabel: "Mama",
     num: "03",
-    tag: "WARMTH & HOSPITALITY",
-    title: "Mama Voya",
-    desc: "Comfort food that feels like coming home.",
     bg: "bg-[#D8A98F]",
     borderTone: "border-[#4A2E1F]/15",
     textColor: "text-[#4A2E1F]",
@@ -90,6 +75,8 @@ const CARDS: CardData[] = [
 export default function BookletShowroom({
   onOpenBooklet,
 }: BookletShowroomProps) {
+  const t = useTranslations("showroom");
+  const tBrands = useTranslations("brands");
   // centerIndex: 0 = Papa, 1 = Coffee (default center), 2 = Mama
   const [centerIndex, setCenterIndex] = useState<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -407,16 +394,14 @@ export default function BookletShowroom({
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-md mb-4">
             <span className="w-2 h-2 rounded-full bg-[#F1E6C3] animate-pulse" />
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 font-bold">
-              The House of Voya
+              {t("eyebrow")}
             </span>
           </div>
           <h2 className="font-serif text-3xl md:text-6xl font-medium text-white tracking-tight leading-tight">
-            Three Flavors. One House.
+            {t("heading")}
           </h2>
           <p className="font-sans text-sm md:text-base text-white/70 mt-3 md:mt-4 leading-relaxed">
-            Explore our complete trilogy of crafted menus. Swipe or select any
-            booklet to unveil our curated roasts, mindful wellness recipes, and
-            comforting home classics.
+            {t("intro")}
           </p>
         </div>
 
@@ -460,25 +445,25 @@ export default function BookletShowroom({
 
                   {/* Corner Indices */}
                   <div
-                    className={`absolute top-2.5 left-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                    className={`absolute top-2.5 start-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
                   >
                     <span>{card.num}</span>
                     <IconComponent size={12} />
                   </div>
                   <div
-                    className={`absolute top-2.5 right-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                    className={`absolute top-2.5 end-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
                   >
                     <IconComponent size={12} />
                     <span>{card.num}</span>
                   </div>
                   <div
-                    className={`absolute bottom-2.5 left-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                    className={`absolute bottom-2.5 start-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
                   >
                     <span>{card.num}</span>
                     <IconComponent size={12} />
                   </div>
                   <div
-                    className={`absolute bottom-2.5 right-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
+                    className={`absolute bottom-2.5 end-3 flex items-center gap-1 font-mono text-[10px] sm:text-[11px] font-bold ${card.textColor} opacity-70`}
                   >
                     <IconComponent size={12} />
                     <span>{card.num}</span>
@@ -489,12 +474,12 @@ export default function BookletShowroom({
                     <span
                       className={`font-mono text-[8px] sm:text-[9px] uppercase tracking-[0.25em] font-bold ${card.textColor} opacity-60`}
                     >
-                      {card.tag}
+                      {t(`cards.${card.id}.tag`)}
                     </span>
                     <h3
                       className={`font-serif text-xl sm:text-2xl md:text-3xl font-bold tracking-tight mt-0.5 ${card.textColor}`}
                     >
-                      {card.title}
+                      {tBrands(card.id)}
                     </h3>
                   </div>
 
@@ -503,7 +488,7 @@ export default function BookletShowroom({
                     <div className="relative w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44">
                       <Image
                         src={card.svg}
-                        alt={`${card.title} Mascot`}
+                        alt={tBrands(card.id)}
                         fill
                         sizes="(max-width: 768px) 120px, 180px"
                         className="object-contain pointer-events-none drop-shadow-[0_12px_20px_rgba(0,0,0,0.2)]"
@@ -516,15 +501,15 @@ export default function BookletShowroom({
                     <p
                       className={`font-serif italic text-[10px] sm:text-[11px] md:text-xs ${card.textColor} opacity-80 leading-relaxed mb-2 line-clamp-2`}
                     >
-                      {card.desc}
+                      {t(`${card.id}Desc`)}
                     </p>
                     <div
                       className={`w-full py-2 sm:py-2.5 px-3 rounded-full ${card.btnBg} ${card.btnText} font-bold text-[10px] sm:text-xs uppercase tracking-widest flex items-center justify-center gap-1.5 shadow-md transition-transform ${
                         isCenter ? "group-hover:scale-105" : ""
                       }`}
                     >
-                      <span>{isCenter ? "Open Booklet" : "Select"}</span>
-                      <ArrowRight01Icon size={12} />
+                      <span>{isCenter ? t("openBooklet") : t("select")}</span>
+                      <ArrowRight01Icon className="icon-auto-dir" size={12} />
                     </div>
                   </div>
                 </div>
@@ -537,10 +522,10 @@ export default function BookletShowroom({
         <div className="flex items-center gap-3 mt-4 z-20">
           <button
             onClick={() => setCenterIndex((prev) => (prev - 1 + 3) % 3)}
-            aria-label="Previous booklet"
+            aria-label={t("previous")}
             className="w-10 h-10 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white/80 hover:text-white transition-all backdrop-blur-md"
           >
-            <ArrowLeft01Icon size={16} />
+            <ArrowLeft01Icon className="icon-auto-dir" size={16} />
           </button>
 
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-md">
@@ -556,7 +541,7 @@ export default function BookletShowroom({
                       : "text-white/60 hover:text-white"
                   }`}
                 >
-                  {card.tabLabel}
+                  {t(`cards.${card.id}.tab`)}
                 </button>
               );
             })}
@@ -564,15 +549,15 @@ export default function BookletShowroom({
 
           <button
             onClick={() => setCenterIndex((prev) => (prev + 1) % 3)}
-            aria-label="Next booklet"
+            aria-label={t("next")}
             className="w-10 h-10 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white/80 hover:text-white transition-all backdrop-blur-md"
           >
-            <ArrowRight01Icon size={16} />
+            <ArrowRight01Icon className="icon-auto-dir" size={16} />
           </button>
         </div>
 
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 mt-3">
-          Swipe or Click to Cycle
+          {t("hint")}
         </span>
       </div>
     </div>

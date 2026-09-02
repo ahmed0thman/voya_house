@@ -49,12 +49,12 @@ export function UsersTable() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full max-w-sm">
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search by name, username or role…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="pl-8"
+            className="ps-8"
           />
         </div>
         <UserFormDialog mode="create" />

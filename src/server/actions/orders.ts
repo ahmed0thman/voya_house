@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, OrderStatus, OrderType, TableSessionStatus } from "@/generated/prisma/client";
 import { ActionError } from "@/lib/action-error";
+import { getTranslations } from "next-intl/server";
 import { defineAction } from "@/server/define-action";
 import { resolveImageUrl } from "@/lib/storage/r2";
 import { findActiveOfferByCode } from "@/server/actions/offers";
@@ -14,6 +15,7 @@ import {
   rejectOrderSchema,
   settleTableSessionSchema,
   tableNumberSchema,
+  tableSessionIdSchema,
   orderTypeFilterSchema,
 } from "@/lib/validations/order";
 
@@ -33,6 +35,11 @@ export type OrderDTO = {
   type: OrderType;
   /** Only set for ON_TABLE orders. */
   tableNumber: number | null;
+  /**
+   * The visit this ticket joined — ON_TABLE only. Handed to the guest so their
+   * browser can rejoin the same tab after a refresh; see `resumeTableSession`.
+   */
+  tableSessionId: string | null;
   status: OrderStatus;
   /** Collected on every order type — who to call. */
   customerName: string | null;
@@ -81,6 +88,7 @@ function toOrderDTO(order: OrderWithItems, tableNumber: number | null): OrderDTO
     id: order.id,
     type: order.type,
     tableNumber,
+    tableSessionId: order.tableSessionId,
     status: order.status,
     customerName: order.customerName,
     customerPhone: order.customerPhone,
@@ -111,13 +119,18 @@ export const createOrder = defineAction({
   auth: "public",
   schema: createOrderSchema,
   handler: async (input): Promise<OrderDTO> => {
+  // Every message below reaches a guest as a toast, so it has to speak their
+  // language. There's no `[locale]` segment on a Server Action to read, so the
+  // locale comes from the `NEXT_LOCALE` cookie — see `src/i18n/request.ts`.
+  const t = await getTranslations("errors");
+
   // Only a dine-in ticket is tied to a physical table (and therefore to a session).
   const table =
     input.type === "ON_TABLE"
       ? await prisma.restaurantTable.findUnique({ where: { number: input.tableNumber } })
       : null;
   if (input.type === "ON_TABLE" && (!table || !table.isActive)) {
-    throw new ActionError("This table isn't available. Please rescan the table QR code.", "NOT_FOUND");
+    throw new ActionError(t("tableUnavailable"), "NOT_FOUND");
   }
 
   const itemIds = input.items.map((i) => i.itemId);
@@ -132,10 +145,7 @@ export const createOrder = defineAction({
     return !item || !item.isAvailable;
   });
   if (missingOrUnavailable) {
-    throw new ActionError(
-      "One of the items in your order is no longer available. Please review your cart.",
-      "VALIDATION",
-    );
+    throw new ActionError(t("itemUnavailable"), "VALIDATION");
   }
 
   const orderItemsData = input.items.map((requested) => {
@@ -160,7 +170,7 @@ export const createOrder = defineAction({
   if (input.offerCode) {
     const offer = await findActiveOfferByCode(input.offerCode);
     if (!offer) {
-      throw new ActionError("This code isn't valid or has expired.", "VALIDATION");
+      throw new ActionError(t("offerInvalid"), "VALIDATION");
     }
     offerCode = offer.code;
     discountAmount =
@@ -199,25 +209,14 @@ export const createOrder = defineAction({
   }
 
   const dineInTable = table!;
-  const selfSelected = input.type === "ON_TABLE" && input.tableSelfSelected === true;
   const order = await prisma.$transaction(async (tx) => {
-    // One open session per table, shared by every ticket the guest sends
-    // during this visit — opened by whichever order gets here first.
+    // One open session per table, shared by every ticket every guest at that
+    // table sends — whether they scanned its QR or picked it from the list,
+    // and whichever order got here first opened it. A friend joining a table
+    // that's already ordering lands on the same tab as the rest of the party.
     const existingSession = await tx.tableSession.findFirst({
       where: { tableId: dineInTable.id, status: TableSessionStatus.OPEN },
     });
-
-    // A table picked from the list must be a free one. Checked here rather than
-    // only when building that list, so two walk-ins racing for the last free
-    // table can't both claim it — the loser is told, not silently seated on the
-    // winner's tab. A scanned table is exempt: joining its open session is the
-    // whole point, and is how a seated guest sends another round.
-    if (existingSession && selfSelected) {
-      throw new ActionError(
-        "That table has just been taken. Please pick another table, or scan the QR code on your table.",
-        "CONFLICT",
-      );
-    }
 
     const session =
       existingSession ?? (await tx.tableSession.create({ data: { tableId: dineInTable.id } }));
@@ -257,6 +256,34 @@ export const listSessionOrdersForTable = defineAction({
     if (!session) return [];
 
     return session.orders.map((order) => toOrderDTO(order, table.number));
+  },
+});
+
+/**
+ * Public on purpose — lets a browser rejoin the visit it already ordered on
+ * after a refresh, or a return trip that didn't come through the table's QR.
+ *
+ * The stored id is only good while the bill is still open: once staff settle
+ * the table this answers null, the browser drops what it kept, and the guest
+ * starts clean. That's what makes remembering a table safe at all — a number
+ * on its own would happily hand a finished visit the next party's tab, since
+ * the same table is reseated under a brand new session id.
+ *
+ * The id is the credential, exactly as it is for takeaway tickets in
+ * `listGuestOrders`, and it reveals nothing `listSessionOrdersForTable`
+ * doesn't already give anyone who can read a table number.
+ */
+export const resumeTableSession = defineAction({
+  auth: "public",
+  schema: tableSessionIdSchema,
+  handler: async (sessionId): Promise<{ tableNumber: number } | null> => {
+    const session = await prisma.tableSession.findUnique({
+      where: { id: sessionId },
+      include: { table: true },
+    });
+    if (!session || session.status !== TableSessionStatus.OPEN) return null;
+
+    return { tableNumber: session.table.number };
   },
 });
 

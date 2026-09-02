@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useRef, forwardRef, useImperativeHandle } from "react";
 import Image from "next/image";
 import gsap from "gsap";
@@ -20,6 +21,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
   function CinematicFooter(props, ref) {
+    const t = useTranslations("footer");
     const internalFooterRef = useRef<HTMLElement>(null);
     useImperativeHandle(ref, () => internalFooterRef.current as HTMLElement);
 
@@ -90,15 +92,15 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
               <div className="flex items-center gap-2 text-[#F1E6C3]">
                 <Location01Icon size={16} />
                 <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/50 font-bold">
-                  Flagship Location
+                  {t("flagshipLocation")}
                 </span>
               </div>
               <p className="font-serif text-lg sm:text-xl text-white font-medium">
-                Voya House
+                {t("brand")}
               </p>
               <p className="font-sans text-xs text-white/60 leading-relaxed">
                 123 Voyage Street <br />
-                New Cairo, Egypt
+                {t("city")}
               </p>
             </div>
 
@@ -107,21 +109,21 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
               <div className="flex items-center gap-2 text-[#F1E6C3]">
                 <SparklesIcon size={16} />
                 <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/50 font-bold">
-                  The Repertoire
+                  {t("repertoire")}
                 </span>
               </div>
               <div className="flex flex-col space-y-2 text-xs text-white/80">
                 <div className="flex items-center gap-2">
                   <Coffee01Icon size={13} className="text-[#F1E6C3]" />
-                  <span>01 · Voya Specialty Coffee</span>
+                  <span>{t("rep1")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Leaf01Icon size={13} className="text-[#B7D39A]" />
-                  <span>02 · Papa Voya Healthy Food</span>
+                  <span>{t("rep2")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Pizza01Icon size={13} className="text-[#D8A98F]" />
-                  <span>03 · Mama Voya Comfort Table</span>
+                  <span>{t("rep3")}</span>
                 </div>
               </div>
             </div>
@@ -131,15 +133,15 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
               <div className="flex items-center gap-2 text-[#F1E6C3]">
                 <Clock01Icon size={16} />
                 <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/50 font-bold">
-                  Daily Hours
+                  {t("dailyHours")}
                 </span>
               </div>
               <p className="font-serif text-lg sm:text-xl text-white font-medium">
                 07:00 &mdash; 23:00
               </p>
               <p className="font-sans text-xs text-white/60 leading-relaxed">
-                Seven days a week <br />
-                Dine-in · Pickup Window
+                {t("sevenDays")} <br />
+                {t("service")}
               </p>
             </div>
 
@@ -148,11 +150,12 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
               <div className="flex items-center gap-2 text-[#F1E6C3]">
                 <Mail01Icon size={16} />
                 <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-white/50 font-bold">
-                  Concierge
+                  {t("concierge")}
                 </span>
               </div>
               <a
                 href="mailto:concierge@voyahouse.com"
+                dir="ltr"
                 className="font-mono text-xs text-white/90 hover:text-[#F1E6C3] transition-colors select-all"
               >
                 concierge@voyahouse.com
@@ -162,20 +165,20 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
                   href="https://instagram.com"
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="Instagram"
+                  aria-label={t("instagram")}
                   className="font-mono text-[11px] uppercase tracking-widest text-white/60 hover:text-[#F1E6C3] transition-colors"
                 >
-                  Instagram
+                  {t("instagram")}
                 </a>
                 <span className="text-white/20">·</span>
                 <a
                   href="https://twitter.com"
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="Twitter / X"
+                  aria-label={t("twitterX")}
                   className="font-mono text-[11px] uppercase tracking-widest text-white/60 hover:text-[#F1E6C3] transition-colors"
                 >
-                  Twitter
+                  {t("twitter")}
                 </a>
               </div>
             </div>
@@ -184,17 +187,17 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
 
           {/* ─── Middle: Replay the Voyage & Tagline ─── */}
           <div className="flex flex-col sm:flex-row items-center justify-between py-8 gap-6">
-            <div className="flex items-center gap-3 text-center sm:text-left">
+            <div className="flex items-center gap-3 text-center sm:text-start">
               <Image
                 src="/assets/logos/Asset 8.svg"
-                alt="Voya Logo"
+                alt={t("logoAlt")}
                 width={24}
                 height={24}
                 className="opacity-90 brightness-110 shrink-0"
               />
               <div className="w-1.5 h-1.5 rounded-full bg-[#F1E6C3] animate-pulse shrink-0 hidden sm:block" />
               <span className="font-serif italic text-xs sm:text-sm text-white/70">
-                &ldquo;Every sip a new trip. Designed for the journey.&rdquo;
+                &ldquo;{t("quote")}&rdquo;
               </span>
             </div>
 
@@ -204,7 +207,7 @@ const CinematicFooter = forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement
               className="group inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full border border-white/15 bg-white/[0.04] hover:bg-white/10 hover:border-white/40 active:scale-95 transition-all duration-300 backdrop-blur-md cursor-pointer shrink-0"
             >
               <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/80 group-hover:text-white font-medium">
-                Back to Top
+                {t("backToTop")}
               </span>
               <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-white/80 group-hover:text-black group-hover:bg-[#F1E6C3] transition-all">
                 <ArrowUp01Icon size={11} className="transform group-hover:-translate-y-0.5 transition-transform" />

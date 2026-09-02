@@ -26,10 +26,11 @@ export function useTables() {
 }
 
 /**
- * The free tables a guest can claim, for someone who walked in without scanning
- * a QR. Occupancy is live state — a table can be taken while this guest is still
- * browsing — so it's kept short-lived and refetched whenever they come back to
- * the tab, rather than cached like the admin's static table list.
+ * The active tables a guest can pick from, for someone who walked in without
+ * scanning a QR — includes tables already seated, so a friend joining a party
+ * can find and pick the same one. Kept short-lived and refetched whenever the
+ * guest comes back to the tab, rather than cached like the admin's static
+ * table list, since which tables exist can still change underneath them.
  */
 export function useGuestTables(enabled = true) {
   return useQuery({

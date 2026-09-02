@@ -56,7 +56,7 @@ export function NotificationMenu() {
       >
         <BellIcon />
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center">
+          <span className="absolute -top-0.5 -end-0.5 flex size-4 items-center justify-center">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-destructive opacity-60" />
             <span className="relative inline-flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white tabular-nums">
               {unreadCount > 9 ? "9+" : unreadCount}

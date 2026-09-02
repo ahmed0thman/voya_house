@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import type { CodeOffer } from "@/generated/prisma/client";
 import { ActionError } from "@/lib/action-error";
+import { getTranslations } from "next-intl/server";
 import { defineAction } from "@/server/define-action";
 import { resolveImageUrl, deleteObject } from "@/lib/storage/r2";
 import {
@@ -96,9 +97,12 @@ export const validateOfferCode = defineAction({
   auth: "public",
   schema: codeSchema,
   handler: async (code): Promise<OfferPreviewDTO> => {
+    // Reaches the guest as a toast under the offer field, so it follows their
+    // language like every other public action's failures.
+    const t = await getTranslations("errors");
     const offer = await findActiveOfferByCode(code);
     if (!offer) {
-      throw new ActionError("This code isn't valid or has expired.", "NOT_FOUND");
+      throw new ActionError(t("offerInvalid"), "NOT_FOUND");
     }
     return {
       code: offer.code,

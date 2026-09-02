@@ -13,6 +13,7 @@ import {
 } from "hugeicons-react";
 import { useEffect, useRef, useState } from "react";
 import BookletCard from "./BookletCard";
+import { useTranslations } from "next-intl";
 
 type BrandId = "coffee" | "papa" | "mama";
 const BRANDS: BrandId[] = ["coffee", "papa", "mama"];
@@ -26,6 +27,7 @@ export default function MenuStackOverlay({
   initialBrandId,
   onClose,
 }: MenuStackOverlayProps) {
+  const t = useTranslations("menuOverlay");
   const [activeBrand, setActiveBrand] = useState<BrandId>(initialBrandId);
   const [isSwitching, setIsSwitching] = useState(false);
   const [hoverBrand, setHoverBrand] = useState<BrandId | null>(null);
@@ -365,7 +367,7 @@ export default function MenuStackOverlay({
         <button
           onClick={openCart}
           aria-label={`View Table Order (${totalItems} items)`}
-          className="overlay-control absolute top-3.5 left-4 sm:top-5 sm:left-6 z-50 group flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#E05D3A] hover:bg-[#F26A45] text-white border border-white/20 hover:border-white/40 backdrop-blur-xl shadow-[0_8px_25px_rgba(224,93,58,0.4)] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
+          className="overlay-control absolute top-3.5 start-4 sm:top-5 sm:start-6 z-50 group flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#E05D3A] hover:bg-[#F26A45] text-white border border-white/20 hover:border-white/40 backdrop-blur-xl shadow-[0_8px_25px_rgba(224,93,58,0.4)] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         >
           <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/80 opacity-75"></span>
@@ -386,8 +388,8 @@ export default function MenuStackOverlay({
             </span>
           </div>
 
-          <span className="font-mono text-[10px] uppercase tracking-wider text-white/80 group-hover:text-white transition-colors pl-0.5 hidden sm:inline">
-            View ↗
+          <span className="font-mono text-[10px] uppercase tracking-wider text-white/80 group-hover:text-white transition-colors ps-0.5 hidden sm:inline">
+            {t("view")} <span className="inline-block rtl:-scale-x-100">↗</span>
           </span>
           <Tap01Icon
             size={20}
@@ -399,8 +401,8 @@ export default function MenuStackOverlay({
       {/* Global Close Button (Symmetrically aligned on the right) */}
       <button
         onClick={handleClose}
-        aria-label="Close Booklet Menu"
-        className="overlay-control opacity-0 absolute top-3.5 right-4 sm:top-5 sm:right-6 z-50 p-2 sm:p-2.5 bg-black/80 hover:bg-black/95 text-white/80 hover:text-white rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white/20 hover:border-white/40 backdrop-blur-xl transition-all hover:scale-105 active:scale-95 group cursor-pointer"
+        aria-label={t("close")}
+        className="overlay-control opacity-0 absolute top-3.5 end-4 sm:top-5 sm:end-6 z-50 p-2 sm:p-2.5 bg-black/80 hover:bg-black/95 text-white/80 hover:text-white rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white/20 hover:border-white/40 backdrop-blur-xl transition-all hover:scale-105 active:scale-95 group cursor-pointer"
       >
         <div className="absolute inset-0 rounded-full bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
         <Cancel01Icon size={18} className="relative z-10" />
@@ -436,20 +438,20 @@ export default function MenuStackOverlay({
       <div className="overlay-control opacity-0 absolute bottom-3 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
         {isSwitching && (
           <span className="text-white/80 text-[10px] uppercase tracking-widest font-mono font-bold animate-pulse absolute -top-6 w-max">
-            Swipe to switch
+            {t("swipeToSwitch")}
           </span>
         )}
 
         <div className="relative flex items-center">
           {/* HOLD Label and Wiggling Arrow */}
           {!isSwitching && (
-            <div className="absolute right-full mr-3 flex items-center gap-1.5 pointer-events-none opacity-90">
+            <div className="absolute end-full me-3 flex items-center gap-1.5 pointer-events-none opacity-90">
               <span className="text-white text-sm font-mono font-bold uppercase tracking-widest pt-0.5">
-                Hold
+                {t("hold")}
               </span>
               <ArrowRight01Icon
                 size={18}
-                className="animate-wiggle-arrow text-white"
+                className="animate-wiggle-arrow text-white icon-auto-dir"
                 strokeWidth={2.5}
               />
             </div>

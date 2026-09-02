@@ -9,6 +9,7 @@ import { useGSAP } from "@gsap/react";
 import SplitText from "@/components/SplitText";
 import { findNearestLoadedFrame } from "@/lib/frame-sequence";
 
+import { useTranslations } from "next-intl";
 import {
   Coffee01Icon,
   Leaf01Icon,
@@ -47,6 +48,9 @@ export default function MobileStage({
   onOpenMenu,
   updateProgress,
 }: MobileStageProps) {
+  const tHero = useTranslations("hero");
+  const tMobile = useTranslations("mobile");
+  const tStage = useTranslations("stage");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const groundGlowRef = useRef<HTMLDivElement>(null);
@@ -457,7 +461,7 @@ export default function MobileStage({
       {/* GROUND GLOW */}
       <div
         ref={groundGlowRef}
-        className="absolute bottom-0 left-0 w-full h-[7vh] blur-[30px] pointer-events-none"
+        className="absolute bottom-0 start-0 w-full h-[7vh] blur-[30px] pointer-events-none"
         style={{ backgroundColor: "rgba(0, 0, 0, 0)" }}
       />
 
@@ -470,7 +474,7 @@ export default function MobileStage({
           <div className="s1-logo opacity-0">
             <Image
               src="/assets/logos/Asset 26.svg"
-              alt="Voya House"
+              alt={tHero("brand")}
               width={230}
               height={50}
               loading="eager"
@@ -483,18 +487,18 @@ export default function MobileStage({
           {/* Primary Tagline */}
           <div className="s1-subtitle-wrapper flex flex-col items-center opacity-0">
             <p className="text-[12px] font-sans font-semibold uppercase tracking-[0.24em] text-[#080907]">
-              Where people come together
+              {tHero("tagline")}
             </p>
           </div>
 
           {/* Scroll Down Indicator */}
           <button
             onClick={onExploreHouse}
-            aria-label="Scroll to explore"
+            aria-label={tHero("scrollToExplore")}
             className="s1-scroll-indicator group flex flex-col items-center gap-3 mt-36 cursor-pointer pointer-events-auto opacity-0"
           >
             <span className="font-sans font-semibold uppercase tracking-[0.24em] text-[10px] text-brand-black/70">
-              Scroll
+              {tHero("scroll")}
             </span>
             <span className="w-6 h-10 rounded-full border-2 border-black/30 overflow-hidden flex justify-center pt-2 group-hover:border-black/50 transition-colors">
               <span className="w-1.5 h-1.5 rounded-full bg-black/50 scroll-dot-anim" />
@@ -505,39 +509,39 @@ export default function MobileStage({
 
       {/* Section 2: Family Reveal */}
       <div className="ui-section-2 absolute inset-0 text-white opacity-0 invisible">
-        <div className="absolute top-30 left-0 w-full text-center px-6">
+        <div className="absolute top-30 start-0 w-full text-center px-6">
           <h2 className="s2-title font-serif text-4xl sm:text-5xl font-medium leading-[1.15] whitespace-break-spaces">
-            <SplitText text="A Modern Family" />
+            <SplitText text={tMobile("familyTitle1")} />
             <br />
-            <SplitText text="Experience" />
+            <SplitText text={tMobile("familyTitle2")} />
           </h2>
         </div>
-        <div className="absolute top-72 left-0 w-full flex flex-col items-center text-center px-6">
+        <div className="absolute top-72 start-0 w-full flex flex-col items-center text-center px-6">
           <p className="s2-desc max-w-lg text-sm text-white/90 font-medium mb-8 whitespace-break-spaces">
-            <SplitText text="Everyday rituals, mindful choices, and sweet moments made for sharing." />
+            <SplitText text={tMobile("familyDesc")} />
           </p>
         </div>
       </div>
 
       {/* Section 3: Voya Coffee */}
       <div className="ui-section-3 absolute inset-0 text-white opacity-0 invisible">
-        <div className="absolute left-2 top-24 flex flex-col items-center">
+        <div className="absolute start-2 top-24 flex flex-col items-center">
           <div className="s3-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             <Coffee01Icon size={32} className="text-[#F1E6C3]" />
           </div>
           <div className="s3-vertical-text mt-6 font-mono uppercase text-[12px] text-[#F1E6C3] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
-            <SplitText text="VOYA " />
+            <SplitText text={tMobile("coffeeVertical")} />
           </div>
         </div>
-        <div className="absolute top-[20%] left-0 w-full text-center">
+        <div className="absolute top-[20%] start-0 w-full text-center">
           <h2 className="s3-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center whitespace-break-spaces">
-            <SplitText text="Quality in" />
-            <SplitText text="everyday rituals." />
+            <SplitText text={tMobile("coffeeTitle1")} />
+            <SplitText text={tMobile("coffeeTitle2")} />
           </h2>
         </div>
-        <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
+        <div className="absolute top-[70%] start-0 w-full flex flex-col items-center text-center px-6">
           <p className="s3-desc max-w-lg text-sm text-white/90 font-medium mb-8">
-            <SplitText text="A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup." />
+            <SplitText text={tStage("coffeeBodyMobile")} />
           </p>
           <button
             onClick={() => onOpenMenu("coffee")}
@@ -548,11 +552,11 @@ export default function MobileStage({
               <Coffee01Icon size={16} className="text-black" />
             </div>
             <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
-              Discover the Roast
+              {tStage("coffee.cta")}
             </span>
             <ArrowRight01Icon
               size={16}
-              className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+              className="text-black transform translate-x-0 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 transition-all duration-300 icon-auto-dir"
             />
           </button>
         </div>
@@ -560,23 +564,23 @@ export default function MobileStage({
 
       {/* Section 4: Papa Voya */}
       <div className="ui-section-4 absolute inset-0 text-white opacity-0 invisible">
-        <div className="absolute left-[5%] top-24 flex flex-col items-center">
+        <div className="absolute start-[5%] top-24 flex flex-col items-center">
           <div className="s4-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             <Leaf01Icon size={32} className="text-[#B7D39A]" />
           </div>
           <div className="s4-vertical-text mt-6 font-mono uppercase text-[12px] text-[#B7D39A] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
-            <SplitText text="PAPA VOYA" />
+            <SplitText text={tMobile("papaVertical")} />
           </div>
         </div>
-        <div className="absolute top-[20%] left-0 w-full text-center">
+        <div className="absolute top-[20%] start-0 w-full text-center">
           <h2 className="s4-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center whitespace-break-spaces">
-            <SplitText text="Nourishment" />
-            <SplitText text="and strength." />
+            <SplitText text={tMobile("papaTitle1")} />
+            <SplitText text={tMobile("papaTitle2")} />
           </h2>
         </div>
-        <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
+        <div className="absolute top-[70%] start-0 w-full flex flex-col items-center text-center px-6">
           <p className="s4-desc max-w-lg text-sm text-white/90 font-medium mb-8">
-            <SplitText text="Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence." />
+            <SplitText text={tStage("papaBodyMobile")} />
           </p>
           <button
             onClick={() => onOpenMenu("papa")}
@@ -588,11 +592,11 @@ export default function MobileStage({
               <Leaf01Icon size={16} className="text-black" />
             </div>
             <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
-              Explore Healthy Menu
+              {tStage("papa.cta")}
             </span>
             <ArrowRight01Icon
               size={16}
-              className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+              className="text-black transform translate-x-0 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 transition-all duration-300 icon-auto-dir"
             />
           </button>
         </div>
@@ -600,23 +604,23 @@ export default function MobileStage({
 
       {/* Section 5: Mama Voya */}
       <div className="ui-section-5 absolute inset-0 text-white opacity-0 invisible">
-        <div className="absolute left-[5%] top-24 flex flex-col items-center">
+        <div className="absolute start-[5%] top-24 flex flex-col items-center">
           <div className="s5-icon p-4 bg-black/40 rounded-2xl border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
             <Pizza01Icon size={32} className="text-[#D8A98F]" />
           </div>
           <div className="s5-vertical-text mt-6 font-mono uppercase text-[12px] text-[#D8A98F] font-bold tracking-[0.3em] [writing-mode:vertical-rl] [text-orientation:upright]">
-            <SplitText text="MAMA VOYA" />
+            <SplitText text={tMobile("mamaVertical")} />
           </div>
         </div>
-        <div className="absolute top-[20%] left-0 w-full text-center">
+        <div className="absolute top-[20%] start-0 w-full text-center">
           <h2 className="s5-title font-serif text-4xl font-medium leading-[1.15] flex flex-col items-center whitespace-break-spaces">
-            <SplitText text="Warmth &" />
-            <SplitText text="Hospitality." />
+            <SplitText text={tMobile("mamaTitle1")} />
+            <SplitText text={tMobile("mamaTitle2")} />
           </h2>
         </div>
-        <div className="absolute top-[70%] left-0 w-full flex flex-col items-center text-center px-6">
+        <div className="absolute top-[70%] start-0 w-full flex flex-col items-center text-center px-6">
           <p className="s5-desc max-w-lg text-sm text-white/90 font-medium mb-8">
-            <SplitText text="Nurturing flavors and generous portions. Comfort food that feels like coming home." />
+            <SplitText text={tStage("mamaBodyMobile")} />
           </p>
           <button
             onClick={() => onOpenMenu("mama")}
@@ -628,11 +632,11 @@ export default function MobileStage({
               <Pizza01Icon size={16} className="text-black" />
             </div>
             <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
-              Taste the Comfort
+              {tStage("mama.cta")}
             </span>
             <ArrowRight01Icon
               size={16}
-              className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+              className="text-black transform translate-x-0 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 transition-all duration-300 icon-auto-dir"
             />
           </button>
         </div>

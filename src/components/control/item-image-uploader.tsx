@@ -108,7 +108,7 @@ export function ItemImageUploader({
           <button
             type="button"
             onClick={() => handleRemove(image.key)}
-            className="absolute top-0.5 right-0.5 rounded-full bg-black/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+            className="absolute top-0.5 end-0.5 rounded-full bg-black/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
             aria-label="Remove image"
           >
             <XIcon className="size-3" />

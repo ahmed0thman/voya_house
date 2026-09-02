@@ -63,7 +63,7 @@ export function ItemPanel({ categoryId }: { categoryId: string }) {
               <TableHead>Item</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Available</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-end">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,7 +128,7 @@ export function ItemPanel({ categoryId }: { categoryId: string }) {
                     }
                   />
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-end">
                   <div className="flex justify-end gap-1">
                     <ItemFormDialog mode="edit" item={item} />
                     <DeleteConfirmButton

@@ -1,0 +1,421 @@
+{
+  "metadata": {
+    "title": "Voya House",
+    "description": "A high-end experience bringing together specialty coffee, healthy food, and comfort experiences."
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  },
+  "common": {
+    "tableNumber": "Table {number}",
+    "currency": "EGP"
+  },
+  "orderMode": {
+    "ON_TABLE": "Dine In",
+    "TAKEAWAY": "Pickup",
+    "DELIVERY": "Delivery",
+    "unset": "Order"
+  },
+  "brands": {
+    "coffee": "Voya Coffee",
+    "papa": "Papa Voya",
+    "mama": "Mama Voya"
+  },
+  "nav": {
+    "directory": "Navigation Directory",
+    "booklets": {
+      "label": "The Trilogy Showroom",
+      "short": "Trilogy Showroom",
+      "tag": "Collectible Menus"
+    },
+    "story": {
+      "label": "About Voya House",
+      "short": "Voya House",
+      "tag": "Our Story & Sanctuary"
+    },
+    "contact": {
+      "label": "Visit & Concierge",
+      "short": "Visit & Concierge",
+      "tag": "Flagship & Inquiries"
+    }
+  },
+  "booklets": {
+    "sectionLabel": "Instant Menu Booklets",
+    "open": "Open",
+    "coffee": {
+      "label": "Voya Coffee",
+      "desc": "Specialty Roasts & Rituals"
+    },
+    "papa": {
+      "label": "Papa Voya",
+      "desc": "Mindful Meals & Vitality"
+    },
+    "mama": {
+      "label": "Mama Voya",
+      "desc": "Comfort Food & Family Table"
+    },
+    "covers": {
+      "coffee": {
+        "sub": "SIGNATURE ROASTS",
+        "tagline": "Quality in everyday rituals. Sourced & roasted with intention.",
+        "tag": "CAFE & ARTISAN BAKERY"
+      },
+      "papa": {
+        "sub": "WELLNESS & NOURISHMENT",
+        "tagline": "Balanced meals and clean energy. Strength, balance, and vitality.",
+        "tag": "HEALTHY KITCHEN & BOWLS"
+      },
+      "mama": {
+        "sub": "WARMTH & HOSPITALITY",
+        "tagline": "Nurturing flavors and generous portions. Comfort food that feels like home.",
+        "tag": "COMFORT FOOD & PASTAS"
+      }
+    }
+  },
+  "header": {
+    "houseTag": "House",
+    "openMenu": "Open Navigation Menu",
+    "closeMenu": "Close Menu",
+    "brandLogoAlt": "Voya Logo",
+    "cartAria": "{mode} Cart ({count} items)",
+    "order": "Order",
+    "orderWithCount": "Order ({count})",
+    "ordersWithCount": "Orders ({count})",
+    "cartAndStatus": "{mode} Cart & Status",
+    "unplacedItems": "{count, plural, one {# unplaced item} other {# unplaced items}}",
+    "ordersInProgress": "{count, plural, one {# order in progress} other {# orders in progress}}",
+    "noItems": "No items yet",
+    "view": "View"
+  },
+  "contact": {
+    "address": "123 Voyage Street, New Cairo",
+    "hours": "07:00 — 23:00 Daily"
+  },
+  "tablePicker": {
+    "question": "Which Table Are You At?",
+    "loading": "Loading tables…",
+    "error": "Couldn't load tables",
+    "none": "No tables available",
+    "select": "Select your table",
+    "help": "Ask a member of staff, or scan the QR code on your table."
+  },
+  "validation": {
+    "name": "Please enter your name.",
+    "phone": "Please enter a valid phone number.",
+    "address": "Please enter a full delivery address.",
+    "table": "Please select the table you're sitting at."
+  },
+  "cart": {
+    "closeCart": "Close Cart",
+    "tickets": "Tickets:",
+    "allTickets": "All {mode} Tickets ({count} sent):",
+    "subtotal": "Subtotal",
+    "requestMoreItems": "Request More Items",
+    "browseMenus": "Browse Menus",
+    "clearAll": "Clear All",
+    "toggleDetails": "Toggle details",
+    "removeItem": "Remove item",
+    "decreaseQuantity": "Decrease quantity",
+    "increaseQuantity": "Increase quantity",
+    "namePlaceholder": "Your name",
+    "phonePlaceholder": "Phone number",
+    "birthday": "Birthday",
+    "birthdayAria": "Birthday (optional)",
+    "optional": "Optional",
+    "kitchenNotes": "Kitchen Notes (Optional)",
+    "offerCode": "Offer Code (Optional)",
+    "removeOfferCode": "Remove offer code",
+    "hospitality": "Hospitality",
+    "included": "Included",
+    "roundTotal": "Round Total",
+    "orderTotal": "Order Total",
+    "footerBrand": "Voya Sanctuary",
+    "footerTagline": "Every Sip a New Trip",
+    "chooseMethodFirst": "Choose how you'd like your order first.",
+    "progress": {
+      "received": "1. Received",
+      "receivedHint": "Barista / Chef",
+      "preparing": "2. Preparing",
+      "preparingHint": "Crafting Order",
+      "toTable": "To {table}"
+    },
+    "status": {
+      "rejected": "Rejected",
+      "inPreparation": "In Preparation",
+      "orderReceived": "Order Received"
+    },
+    "rejected": {
+      "notice": "Staff rejected this ticket before preparing it.",
+      "itemsRestored": "Its items were moved back to your cart to review and resend."
+    },
+    "modeHint": {
+      "ON_TABLE": "Served at your table",
+      "DELIVERY": "Sent to your door",
+      "TAKEAWAY": "Collect at the counter"
+    },
+    "modes": {
+      "UNCHOSEN": {
+        "cartTitle": "Your Order",
+        "ordersTitle": "Your Orders",
+        "subtitle": "Choose How to Receive It · Sanctuary",
+        "cartTabLabel": "New Order",
+        "emptyTitle": "Your Order is Empty",
+        "emptyBody": "Explore our 3D menu booklets to pick specialty coffee, healthy dishes, or comfort food — you'll choose dine in, pickup or delivery at checkout.",
+        "destinationHeading": "How Would You Like It?",
+        "submitLabel": "Choose How to Receive It",
+        "submitPendingLabel": "Sending...",
+        "submitNote": "Pick a method above to continue",
+        "readyStepLabel": "3. Ready",
+        "readyStepHint": "Almost there",
+        "finalStepLabel": "4. Handed Over",
+        "finalStepHint": "All yours",
+        "readyLabel": "Ready",
+        "servedLabel": "Completed"
+      },
+      "ON_TABLE": {
+        "cartTitle": "Table Cart",
+        "ordersTitle": "Table Orders",
+        "subtitle": "In-House Dining · Sanctuary",
+        "cartTabLabel": "New Round",
+        "emptyTitle": "Your Table Order is Empty",
+        "emptyBody": "Explore our 3D menu booklets to select specialty coffee, healthy dishes, or comfort food for your table.",
+        "destinationHeading": "Your Table & Details",
+        "submitLabel": "Send Request to Kitchen",
+        "submitPendingLabel": "Transmitting...",
+        "submitNote": "No payment online · Settle at table",
+        "readyStepLabel": "3. Ready",
+        "readyStepHint": "Plated up",
+        "finalStepLabel": "4. Served",
+        "finalStepHint": "At your table",
+        "readyLabel": "Ready to Serve",
+        "servedLabel": "Served"
+      },
+      "TAKEAWAY": {
+        "cartTitle": "Pickup Bag",
+        "ordersTitle": "Pickup Orders",
+        "subtitle": "Collect at Counter · Sanctuary",
+        "cartTabLabel": "New Bag",
+        "emptyTitle": "Your Pickup Bag is Empty",
+        "emptyBody": "Explore our 3D menu booklets and build a bag to collect at the counter — we'll call you the moment it's ready.",
+        "destinationHeading": "Pickup Details",
+        "submitLabel": "Send Pickup Order",
+        "submitPendingLabel": "Sending...",
+        "submitNote": "No payment online · Pay at the counter",
+        "readyStepLabel": "3. Ready",
+        "readyStepHint": "Collect at counter",
+        "finalStepLabel": "4. Picked Up",
+        "finalStepHint": "Enjoy it",
+        "readyLabel": "Ready for Pickup",
+        "servedLabel": "Picked Up"
+      },
+      "DELIVERY": {
+        "cartTitle": "Delivery Cart",
+        "ordersTitle": "Delivery Orders",
+        "subtitle": "Straight to Your Door · Sanctuary",
+        "cartTabLabel": "New Cart",
+        "emptyTitle": "Your Delivery Cart is Empty",
+        "emptyBody": "Explore our 3D menu booklets to order specialty coffee, healthy dishes, or comfort food straight to your door.",
+        "destinationHeading": "Delivery Details",
+        "submitLabel": "Send Delivery Order",
+        "submitPendingLabel": "Sending...",
+        "submitNote": "Cash on delivery · Pay the rider",
+        "readyStepLabel": "3. Ready",
+        "readyStepHint": "Packed for the rider",
+        "finalStepLabel": "4. On the Way",
+        "finalStepHint": "Out for delivery",
+        "readyLabel": "Ready to Dispatch",
+        "servedLabel": "Out for Delivery"
+      }
+    },
+    "tableLabel": "Table",
+    "notesPlaceholder": "e.g. Extra hot, ice on side...",
+    "offerPlaceholder": "e.g. VOYA10"
+  },
+  "errors": {
+    "tableUnavailable": "This table isn't available. Please rescan the table QR code.",
+    "itemUnavailable": "One of the items in your order is no longer available. Please review your cart.",
+    "offerInvalid": "This code isn't valid or has expired.",
+    "unexpected": "Something went wrong on our side. Please try again."
+  },
+  "hero": {
+    "tagline": "Where people come together",
+    "cta": "Explore the House",
+    "scroll": "Scroll",
+    "scrollToExplore": "Scroll to explore",
+    "brand": "Voya House"
+  },
+  "stage": {
+    "featured": "FEATURED EXPERIENCES",
+    "theVoya": "The Voya",
+    "experience": "Experience",
+    "modernCollective": "The Modern Collective",
+    "houses": "HOUSES",
+    "experienceLabel": "EXPERIENCE",
+    "allDaySanctuary": "All-Day Sanctuary",
+    "coffee": {
+      "heading": "Quality in Everyday Rituals",
+      "roastOriginLabel": "ROAST ORIGIN",
+      "roastOrigin": "Ethiopia & Colombia",
+      "brewCraftLabel": "BREW CRAFT",
+      "brewCraft": "Pour-Over V60",
+      "cta": "Discover the Roast"
+    },
+    "papa": {
+      "heading": "Nourishment and Strength",
+      "philosophyLabel": "PHILOSOPHY",
+      "philosophy": "Mindful Nutrition",
+      "sourcingLabel": "SOURCING",
+      "cta": "Explore Healthy Menu",
+      "sourcing": "100% Organic"
+    },
+    "mama": {
+      "heading": "Warmth & Hospitality",
+      "bakeryLabel": "BAKERY",
+      "bakery": "Artisanal Sourdough",
+      "portionsLabel": "PORTIONS",
+      "portions": "Generous & Shared",
+      "cta": "Taste the Comfort"
+    },
+    "housesValue": "3 Artisanal Brands",
+    "familyTagline": "Handcrafted culinary crafts and mindful rituals designed for the whole family.",
+    "collectiveBody": "A private, bespoke sanctuary bringing specialty coffee, mindful nourishment, and artisanal comfort together under one warm roof.",
+    "coffeeBody": "A reflection of calmness and exploration. We source and roast with intention to craft the perfect specialty cup for every moment.",
+    "papaBody": "Balanced meals and mindful choices. Clean energy and wholesome ingredients that reflect vitality, balance, and confidence.",
+    "mamaBody": "Nurturing flavors and generous portions. Comfort food, freshly baked sourdough, and handcrafted treats that feel like coming home.",
+    "coffeeBodyMobile": "A reflection of calmness and exploration. We source and roast with intention to bring you the perfect cup.",
+    "papaBodyMobile": "Balanced meals and mindful choices. Clean energy that reflects strength, balance, and confidence.",
+    "mamaBodyMobile": "Nurturing flavors and generous portions. Comfort food that feels like coming home."
+  },
+  "showroom": {
+    "eyebrow": "The House of Voya",
+    "heading": "Three Flavors. One House.",
+    "hint": "Swipe or Click to Cycle",
+    "previous": "Previous booklet",
+    "next": "Next booklet",
+    "coffeeDesc": "Quality in everyday rituals. Sourced & roasted with intention.",
+    "papaDesc": "Balanced meals and clean energy. Strength and vitality.",
+    "mamaDesc": "Comfort food that feels like coming home.",
+    "intro": "Explore our complete trilogy of crafted menus. Swipe or select any booklet to unveil our curated roasts, mindful wellness recipes, and comforting home classics.",
+    "cards": {
+      "papa": {
+        "tab": "Papa",
+        "tag": "WELLNESS & NOURISHMENT"
+      },
+      "coffee": {
+        "tab": "Voya",
+        "tag": "SIGNATURE ROASTS"
+      },
+      "mama": {
+        "tab": "Mama",
+        "tag": "WARMTH & HOSPITALITY"
+      }
+    },
+    "openBooklet": "Open Booklet",
+    "select": "Select"
+  },
+  "story": {
+    "eyebrow": "About Voya House",
+    "headingLine1": "A house built around",
+    "headingLine2": "everyday moments.",
+    "morningRitual": "The Morning Ritual",
+    "discoverRoasts": "Discover the Roasts",
+    "mindfulNourishment": "Mindful Nourishment",
+    "exploreHealthy": "Explore Healthy Food",
+    "familyTable": "The Family Table",
+    "tasteComfort": "Taste Comfort Food",
+    "community": "Our Community",
+    "communityText": "Where coffee, food, and people come together.",
+    "visitUs": "Visit Us",
+    "intro": "Voya House is more than just a destination — it is a welcoming sanctuary where specialty coffee, nourishing healthy food, and comforting family meals live together under one roof.",
+    "communityBody": "Whether you’re stopping by for a quick morning espresso, enjoying a fresh healthy meal, or sharing a table with your loved ones on the weekend — there is always a place for you at Voya House.",
+    "coffeeBody": "From single-origin beans to intentional roasting, our specialty coffee is an invitation to slow down, explore delicate notes, and enjoy quiet moments of calm.",
+    "papaBody": "Wholesome bowls, crisp salads, and clean balanced meals crafted to give you steady energy, strength, and vibrant vitality throughout your day.",
+    "mamaBody": "Generous comfort dishes, artisanal pizzas, and sweet treats made for sharing. Warm hospitality and familiar recipes that make you feel right at home."
+  },
+  "footer": {
+    "flagshipLocation": "Flagship Location",
+    "brand": "Voya House",
+    "city": "New Cairo, Egypt",
+    "repertoire": "The Repertoire",
+    "dailyHours": "Daily Hours",
+    "sevenDays": "Seven days a week",
+    "service": "Dine-in · Pickup Window",
+    "concierge": "Concierge",
+    "instagram": "Instagram",
+    "twitter": "Twitter",
+    "twitterX": "Twitter / X",
+    "backToTop": "Back to Top",
+    "logoAlt": "Voya Logo",
+    "rep1": "01 · Voya Specialty Coffee",
+    "rep2": "02 · Papa Voya Healthy Food",
+    "rep3": "03 · Mama Voya Comfort Table",
+    "quote": "Every sip a new trip. Designed for the journey."
+  },
+  "contactForm": {
+    "eyebrow": "Concierge & Inquiries",
+    "join": "JOIN",
+    "voyaHouse": "VOYA HOUSE.",
+    "houseOfVoya": "The House of Voya",
+    "flagshipSanctuary": "Flagship Sanctuary",
+    "address": "Address",
+    "houseHours": "House Hours",
+    "hoursValue": "Monday – Sunday · 07:00 – 23:00",
+    "conciergeDesk": "Concierge Desk",
+    "est": "EST. 2026",
+    "messageReceived": "Message Received",
+    "sendAnother": "Send Another Message",
+    "selectTopic": "Select Topic",
+    "yourName": "Your Name",
+    "emailAddress": "Email Address",
+    "howCanWeWelcome": "How can we welcome you?",
+    "directReply": "Direct reply within 24 hours.",
+    "emblemAlt": "Voya Emblem",
+    "deliverMessage": "Deliver Message",
+    "namePlaceholder": "e.g. Alexander Vance",
+    "emailPlaceholder": "name@example.com",
+    "messagePlaceholder": "Tell us about your inquiry, event date, or coffee preferences...",
+    "topics": {
+      "general": "General Hello",
+      "coffee": "Coffee Allocation",
+      "catering": "Papa Wellness Catering",
+      "events": "Mama Family Events"
+    },
+    "addressValue": "123 Voyage Street, New Cairo, EG",
+    "thankYou": "Thank you, <b>{name}</b>. Our house concierge will be in touch with you shortly.",
+    "delivering": "Delivering...",
+    "intro": "Whether you are reserving a table, inquiring about our seasonal bean allocations, or planning a private gathering — our house is always open.",
+    "harmony": "Experience the harmony of specialty roasting, mindful nourishment, and generous comfort hospitality.",
+    "quote": "Every sip a new trip."
+  },
+  "delivery": {
+    "lookingUp": "Looking up address…",
+    "mapHint": "Tap the map or drag the pin to set your delivery point",
+    "addressPlaceholder": "Delivery address — building, floor, apartment, landmark"
+  },
+  "menuOverlay": {
+    "view": "View",
+    "swipeToSwitch": "Swipe to switch",
+    "hold": "Hold",
+    "close": "Close Booklet Menu"
+  },
+  "menuItem": {
+    "addToOrder": "Add to order",
+    "increaseQuantity": "Increase quantity"
+  },
+  "mobile": {
+    "familyTitle1": "A Modern Family",
+    "familyTitle2": "Experience",
+    "familyDesc": "Everyday rituals, mindful choices, and sweet moments made for sharing.",
+    "coffeeVertical": "VOYA",
+    "coffeeTitle1": "Quality in",
+    "coffeeTitle2": "everyday rituals.",
+    "papaVertical": "PAPA VOYA",
+    "papaTitle1": "Nourishment",
+    "papaTitle2": "and strength.",
+    "mamaVertical": "MAMA VOYA",
+    "mamaTitle1": "Warmth &",
+    "mamaTitle2": "Hospitality."
+  }
+}

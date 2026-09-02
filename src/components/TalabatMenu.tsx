@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
-import { BrandMenu, MenuItem } from '@/data/mockMenu';
-import { useCartStore } from '@/store/useCartStore';
-import { formatPrice } from '@/constants/config';
-import MorphingCartButton from './MorphingCartButton';
-import { OfferBanner } from './OfferBanner';
-
+import React, { useEffect, useRef, useState } from "react";
+import { BrandMenu, MenuItem } from "@/data/mockMenu";
+import { useCartStore } from "@/store/useCartStore";
+import { formatPrice } from "@/constants/config";
+import MorphingCartButton from "./MorphingCartButton";
+import { OfferBanner } from "./OfferBanner";
 
 function MenuItemCartButton({
   item,
@@ -26,14 +25,14 @@ function MenuItemCartButton({
       initialQuantity={quantity}
       onQuantityChange={(qty) => {
         if (qty > 0 && quantity === 0) {
-            addItem({
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              description: item.description,
-              image: item.image,
-              brandId,
-            });
+          addItem({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            description: item.description,
+            image: item.image,
+            brandId,
+          });
           if (qty > 1) {
             updateQuantity(item.id, qty);
           }
@@ -51,11 +50,16 @@ interface TalabatMenuProps {
   autoHintFirstItem?: boolean;
 }
 
-export default function TalabatMenu({ menu, autoHintFirstItem = false }: TalabatMenuProps) {
-  const [activeCategory, setActiveCategory] = useState<string>(menu.categories[0].id);
+export default function TalabatMenu({
+  menu,
+  autoHintFirstItem = false,
+}: TalabatMenuProps) {
+  const [activeCategory, setActiveCategory] = useState<string>(
+    menu.categories[0].id,
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  
+
   // Create refs for each category section to track intersection
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
 
@@ -75,10 +79,16 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
               const header = headerRef.current;
               const pillRect = pill.getBoundingClientRect();
               const headerRect = header.getBoundingClientRect();
-              
-              if (pillRect.left < headerRect.left || pillRect.right > headerRect.right) {
-                const scrollLeft = pill.offsetLeft - header.clientWidth / 2 + pill.clientWidth / 2;
-                header.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+
+              if (
+                pillRect.left < headerRect.left ||
+                pillRect.right > headerRect.right
+              ) {
+                const scrollLeft =
+                  pill.offsetLeft -
+                  header.clientWidth / 2 +
+                  pill.clientWidth / 2;
+                header.scrollTo({ left: scrollLeft, behavior: "smooth" });
               }
             }
           }
@@ -86,9 +96,9 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
       },
       {
         root,
-        rootMargin: '-20% 0px -60% 0px', // Trigger when section is roughly near the top
+        rootMargin: "-20% 0px -60% 0px", // Trigger when section is roughly near the top
         threshold: 0.1,
-      }
+      },
     );
 
     sectionRefs.current.forEach((ref) => {
@@ -105,7 +115,7 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
       const topPos = element.offsetTop - 80; // offset for sticky header
       scrollRef.current.scrollTo({
         top: topPos,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     }
   };
@@ -113,10 +123,10 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
   return (
     <div className="w-full h-full flex flex-col relative text-black min-h-0 overflow-hidden">
       {/* Sticky Category Header */}
-      <div 
+      <div
         ref={headerRef}
         className="shrink-0 z-20 w-full overflow-x-auto whitespace-nowrap scrollbar-hide py-4 px-6 border-b border-black/10 backdrop-blur-xl bg-white/30"
-        style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+        style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
       >
         <div className="flex space-x-3">
           {menu.categories.map((category) => {
@@ -129,7 +139,7 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
                 className={`px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 ${
                   isActive
                     ? `${menu.colors.text} bg-white shadow-md`
-                    : 'text-black/60 hover:text-black hover:bg-white/50'
+                    : "text-black/60 hover:text-black hover:bg-white/50"
                 }`}
               >
                 {category.title}
@@ -140,11 +150,11 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
       </div>
 
       {/* Main Scrollable Menu Content */}
-      <div 
+      <div
         ref={scrollRef}
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain pb-32 px-6 relative touch-pan-y"
         style={{
-          WebkitOverflowScrolling: 'touch',
+          WebkitOverflowScrolling: "touch",
         }}
       >
         <div className="pt-4">
@@ -160,20 +170,22 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
             }}
             className="pt-8 pb-12 border-b border-black/10 last:border-b-0"
           >
-            <h3 className={`text-2xl font-serif font-bold mb-6 ${menu.colors.text}`}>
+            <h3
+              className={`text-2xl font-serif font-bold mb-6 ${menu.colors.text}`}
+            >
               {category.title}
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {category.items.map((item, itemIndex) => (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className="bg-white/40 backdrop-blur-md rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-white/40 overflow-visible relative"
                 >
                   {/* Top: Image + Text */}
                   <div className="flex items-start gap-4">
                     {/* Single Normal Image */}
-                    <div 
+                    <div
                       className="relative shrink-0 rounded-[16px] overflow-hidden bg-white/70 backdrop-blur-2xl border border-white/30 shadow-[0_4px_10px_rgba(0,0,0,0.1)]"
                       style={{ width: 100, height: 100 }}
                     >
@@ -188,7 +200,9 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
                     </div>
 
                     <div className="flex-1 min-w-0 py-1">
-                      <h4 className="font-bold text-base text-black mb-1">{item.name}</h4>
+                      <h4 className="font-bold text-base text-black mb-1">
+                        {item.name}
+                      </h4>
                       <p className="text-sm text-black/60 leading-relaxed line-clamp-3">
                         {item.description}
                       </p>
@@ -197,10 +211,16 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
 
                   {/* Bottom: Price + Cart Button */}
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/5">
-                    <span className={`font-semibold text-base sm:text-lg font-mono ${menu.colors.text}`}>
+                    <span
+                      className={`font-semibold text-base sm:text-lg font-mono ${menu.colors.text}`}
+                    >
                       {formatPrice(item.price)}
                     </span>
-                    <MenuItemCartButton item={item} brandId={menu.brandId} brandColors={menu.colors} />
+                    <MenuItemCartButton
+                      item={item}
+                      brandId={menu.brandId}
+                      brandColors={menu.colors}
+                    />
                   </div>
                 </div>
               ))}
@@ -209,9 +229,13 @@ export default function TalabatMenu({ menu, autoHintFirstItem = false }: Talabat
         ))}
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-      ` }} />
+      `,
+        }}
+      />
     </div>
   );
 }

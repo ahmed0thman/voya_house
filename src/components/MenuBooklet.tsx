@@ -107,7 +107,7 @@ export default function MenuBooklet({ brandId, onClose }: MenuBookletProps) {
         {/* Close Button */}
         <button 
           onClick={handleClose}
-          className="absolute top-6 right-6 z-40 p-3 bg-black text-white hover:bg-black/80 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/20 transition-all hover:scale-105 active:scale-95 group"
+          className="absolute top-6 end-6 z-40 p-3 bg-black text-white hover:bg-black/80 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.8)] border border-white/20 transition-all hover:scale-105 active:scale-95 group"
         >
           <div className="absolute inset-0 rounded-full bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
           <Cancel01Icon size={24} className="relative z-10" />

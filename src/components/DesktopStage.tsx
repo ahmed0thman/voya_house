@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useDirectionFactor } from "@/lib/direction";
 import { useRef, useEffect } from "react";
 import Image from "next/image";
 import gsap from "gsap";
@@ -50,6 +52,10 @@ export default function DesktopStage({
   onOpenMenu,
   updateProgress,
 }: DesktopStageProps) {
+  const t = useTranslations("stage");
+  // GSAP moves raw pixels, which don't know about `dir` — see useDirectionFactor.
+  const dirFactor = useDirectionFactor();
+  const tHero = useTranslations("hero");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Draw the first frame as soon as it is available. On a slow connection the
@@ -166,7 +172,7 @@ export default function DesktopStage({
         )
         .to(
           ".exp-item-1",
-          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          { opacity: 1, x: 20 * dirFactor, duration: 0.03, ease: "power2.out" },
           0.22
         )
         .to(
@@ -184,7 +190,7 @@ export default function DesktopStage({
         )
         .to(
           ".exp-item-2",
-          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          { opacity: 1, x: 20 * dirFactor, duration: 0.03, ease: "power2.out" },
           0.42
         )
         .to(
@@ -202,7 +208,7 @@ export default function DesktopStage({
         )
         .to(
           ".exp-item-3",
-          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          { opacity: 1, x: 20 * dirFactor, duration: 0.03, ease: "power2.out" },
           0.62
         )
         .to(
@@ -220,7 +226,7 @@ export default function DesktopStage({
         )
         .to(
           ".exp-item-4",
-          { opacity: 1, x: 20, duration: 0.03, ease: "power2.out" },
+          { opacity: 1, x: 20 * dirFactor, duration: 0.03, ease: "power2.out" },
           0.82
         );
 
@@ -311,7 +317,7 @@ export default function DesktopStage({
           <div className="s1-desktop-logo mb-6 opacity-0">
             <Image
               src="/assets/logos/Asset 26.svg"
-              alt="Voya House"
+              alt={tHero("brand")}
               width={340}
               height={75}
               loading="eager"
@@ -322,15 +328,15 @@ export default function DesktopStage({
           </div>
           <div className="s1-desktop-subtitle-wrapper flex flex-col items-center opacity-0">
             <p className="text-sm font-sans font-medium uppercase tracking-[0.3em] text-[#F4EFE9] mb-6">
-              Where people come together
+              {tHero("tagline")}
             </p>
           </div>
           <button
             onClick={onExploreHouse}
             className="s1-desktop-explore-btn pointer-events-auto group flex items-center gap-2 mt-8 opacity-0 px-9 py-3.5 rounded-lg border border-[#F1E6C3] bg-[#F1E6C3] hover:bg-white active:scale-95 transition-all text-black font-sans font-medium text-xs uppercase tracking-[0.28em] cursor-none shadow-lg"
           >
-            <span>Explore the House</span>
-            <ArrowRight01Icon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            <span>{tHero("cta")}</span>
+            <ArrowRight01Icon className="w-5 h-5 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform icon-auto-dir" />
           </button>
         </div>
       </div>
@@ -360,7 +366,7 @@ export default function DesktopStage({
                 fontSize: "10px",
               }}
             >
-              FEATURED EXPERIENCES
+              {t("featured")}
             </p>
             <h2
               className="font-serif text-white"
@@ -370,7 +376,7 @@ export default function DesktopStage({
                 marginBottom: "1rem",
               }}
             >
-              The Voya <span style={{ color: "#F1E6C3" }}>Experience</span>
+              {t("theVoya")} <span style={{ color: "#F1E6C3" }}>{t("experience")}</span>
             </h2>
             <p
               style={{
@@ -380,8 +386,7 @@ export default function DesktopStage({
                 lineHeight: 1.6,
               }}
             >
-              Handcrafted culinary crafts and mindful rituals designed for
-              the whole family.
+              {t("familyTagline")}
             </p>
           </div>
 
@@ -408,7 +413,7 @@ export default function DesktopStage({
                     marginBottom: "1.25rem",
                   }}
                 >
-                  The Modern Collective
+                  {t("modernCollective")}
                 </h3>
                 <p
                   style={{
@@ -419,9 +424,7 @@ export default function DesktopStage({
                     lineHeight: 1.7,
                   }}
                 >
-                  A private, bespoke sanctuary bringing specialty coffee,
-                  mindful nourishment, and artisanal comfort together under
-                  one warm roof.
+                  {t("collectiveBody")}
                 </p>
 
                 <div
@@ -438,13 +441,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      HOUSES
+                      {t("houses")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#F1E6C3", fontSize: "13px" }}
                     >
-                      3 Artisanal Brands
+                      {t("housesValue")}
                     </div>
                   </div>
                   <div
@@ -464,13 +467,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      EXPERIENCE
+                      {t("experienceLabel")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#F1E6C3", fontSize: "13px" }}
                     >
-                      All-Day Sanctuary
+                      {t("allDaySanctuary")}
                     </div>
                   </div>
                 </div>
@@ -488,11 +491,11 @@ export default function DesktopStage({
                   >
                     <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 pointer-events-none" />
                     <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
-                      Explore the House
+                      {tHero("cta")}
                     </span>
                     <ArrowRight01Icon
                       size={16}
-                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 transition-all duration-300 icon-auto-dir"
                     />
                   </button>
                 </div>
@@ -515,7 +518,7 @@ export default function DesktopStage({
                     marginBottom: "1.25rem",
                   }}
                 >
-                  Quality in Everyday Rituals
+                  {t("coffee.heading")}
                 </h3>
                 <p
                   style={{
@@ -526,9 +529,7 @@ export default function DesktopStage({
                     lineHeight: 1.7,
                   }}
                 >
-                  A reflection of calmness and exploration. We source and
-                  roast with intention to craft the perfect specialty cup
-                  for every moment.
+                  {t("coffeeBody")}
                 </p>
 
                 <div
@@ -545,13 +546,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      ROAST ORIGIN
+                      {t("coffee.roastOriginLabel")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#F1E6C3", fontSize: "13px" }}
                     >
-                      Ethiopia &amp; Colombia
+                      {t("coffee.roastOrigin")}
                     </div>
                   </div>
                   <div
@@ -571,13 +572,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      BREW CRAFT
+                      {t("coffee.brewCraftLabel")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#F1E6C3", fontSize: "13px" }}
                     >
-                      Pour-Over V60
+                      {t("coffee.brewCraft")}
                     </div>
                   </div>
                 </div>
@@ -592,11 +593,11 @@ export default function DesktopStage({
                       <Coffee01Icon size={16} className="text-black" />
                     </div>
                     <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
-                      Discover the Roast
+                      {t("coffee.cta")}
                     </span>
                     <ArrowRight01Icon
                       size={16}
-                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 transition-all duration-300 icon-auto-dir"
                     />
                   </button>
                 </div>
@@ -619,7 +620,7 @@ export default function DesktopStage({
                     marginBottom: "1.25rem",
                   }}
                 >
-                  Nourishment and Strength
+                  {t("papa.heading")}
                 </h3>
                 <p
                   style={{
@@ -630,9 +631,7 @@ export default function DesktopStage({
                     lineHeight: 1.7,
                   }}
                 >
-                  Balanced meals and mindful choices. Clean energy and
-                  wholesome ingredients that reflect vitality, balance, and
-                  confidence.
+                  {t("papaBody")}
                 </p>
 
                 <div
@@ -649,13 +648,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      PHILOSOPHY
+                      {t("papa.philosophyLabel")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#B7D39A", fontSize: "13px" }}
                     >
-                      Mindful Nutrition
+                      {t("papa.philosophy")}
                     </div>
                   </div>
                   <div
@@ -675,13 +674,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      SOURCING
+                      {t("papa.sourcingLabel")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#B7D39A", fontSize: "13px" }}
                     >
-                      100% Organic
+                      {t("papa.sourcing")}
                     </div>
                   </div>
                 </div>
@@ -696,11 +695,11 @@ export default function DesktopStage({
                       <Leaf01Icon size={16} className="text-black" />
                     </div>
                     <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
-                      Explore Healthy Menu
+                      {t("papa.cta")}
                     </span>
                     <ArrowRight01Icon
                       size={16}
-                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 transition-all duration-300 icon-auto-dir"
                     />
                   </button>
                 </div>
@@ -723,7 +722,7 @@ export default function DesktopStage({
                     marginBottom: "1.25rem",
                   }}
                 >
-                  Warmth &amp; Hospitality
+                  {t("mama.heading")}
                 </h3>
                 <p
                   style={{
@@ -734,9 +733,7 @@ export default function DesktopStage({
                     lineHeight: 1.7,
                   }}
                 >
-                  Nurturing flavors and generous portions. Comfort food,
-                  freshly baked sourdough, and handcrafted treats that feel
-                  like coming home.
+                  {t("mamaBody")}
                 </p>
 
                 <div
@@ -753,13 +750,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      BAKERY
+                      {t("mama.bakeryLabel")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#D8A98F", fontSize: "13px" }}
                     >
-                      Artisanal Sourdough
+                      {t("mama.bakery")}
                     </div>
                   </div>
                   <div
@@ -779,13 +776,13 @@ export default function DesktopStage({
                         marginBottom: "0.375rem",
                       }}
                     >
-                      PORTIONS
+                      {t("mama.portionsLabel")}
                     </div>
                     <div
                       className="font-bold"
                       style={{ color: "#D8A98F", fontSize: "13px" }}
                     >
-                      Generous &amp; Shared
+                      {t("mama.portions")}
                     </div>
                   </div>
                 </div>
@@ -800,11 +797,11 @@ export default function DesktopStage({
                       <Pizza01Icon size={16} className="text-black" />
                     </div>
                     <span className="font-sans font-bold text-xs tracking-widest uppercase text-black">
-                      Taste the Comfort
+                      {t("mama.cta")}
                     </span>
                     <ArrowRight01Icon
                       size={16}
-                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 transition-all duration-300"
+                      className="text-black transform translate-x-0 group-hover:translate-x-1.5 rtl:group-hover:-translate-x-1.5 transition-all duration-300 icon-auto-dir"
                     />
                   </button>
                 </div>

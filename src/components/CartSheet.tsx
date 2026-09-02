@@ -27,17 +27,16 @@ import {
 } from "hugeicons-react";
 import { toast } from "sonner";
 import DeliveryLocationPicker from "@/components/DeliveryLocationPicker";
-import { useCartStore, formatTableNumber, ORDER_MODE_LABEL } from "@/store/useCartStore";
-import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { useCartStore, formatTableDigits } from "@/store/useCartStore";
 import { useGuestOrders, usePlaceOrder, useValidateOfferCode } from "@/hooks/use-table-orders";
 import { useGuestTables } from "@/hooks/use-tables";
-import { queryKeys } from "@/lib/query-keys";
-import { ActionError } from "@/lib/action-error";
 import { useRejectedOrderRecovery } from "@/hooks/use-rejected-order-recovery";
 import { useOrderUpdateNotice } from "@/hooks/use-order-update-notice";
 import {
   EMPTY_CONTACT,
   readGuestContact,
+  rememberTableSession,
   saveGuestContact,
   type OrderMode,
 } from "@/lib/guest-session";
@@ -57,10 +56,11 @@ function formatTicketId(id: string): string {
   return `#${id.slice(0, 8).toUpperCase()}`;
 }
 
+/** Colour and icon only — the name comes from the `brands` namespace. */
 const BRAND_CONFIG = {
-  coffee: { label: "Voya Coffee", color: "#F1E6C3", icon: Coffee01Icon },
-  papa: { label: "Papa Voya", color: "#B7D39A", icon: Leaf01Icon },
-  mama: { label: "Mama Voya", color: "#D8A98F", icon: Pizza01Icon },
+  coffee: { color: "#F1E6C3", icon: Coffee01Icon },
+  papa: { color: "#B7D39A", icon: Leaf01Icon },
+  mama: { color: "#D8A98F", icon: Pizza01Icon },
 };
 
 /**
@@ -72,111 +72,17 @@ const BRAND_CONFIG = {
 /** The sheet also has to render before the guest has told us how they want their order. */
 type SheetMode = OrderMode | "UNCHOSEN";
 
-const MODE_CONFIG: Record<
-  SheetMode,
-  {
-    icon: typeof Location01Icon;
-    cartTitle: string;
-    ordersTitle: string;
-    subtitle: string;
-    cartTabLabel: string;
-    emptyTitle: string;
-    emptyBody: string;
-    destinationHeading: string;
-    submitLabel: string;
-    submitPendingLabel: string;
-    submitNote: string;
-    /** Third step: the kitchen is done, nobody has handed it over yet. */
-    readyStepLabel: string;
-    readyStepHint: string;
-    /** Fourth and final step — what "handed over" means for this order type. */
-    finalStepLabel: string;
-    finalStepHint: string;
-    readyLabel: string;
-    servedLabel: string;
-  }
-> = {
-  UNCHOSEN: {
-    icon: ShoppingBag01Icon,
-    cartTitle: "Your Order",
-    ordersTitle: "Your Orders",
-    subtitle: "Choose How to Receive It · Sanctuary",
-    cartTabLabel: "New Order",
-    emptyTitle: "Your Order is Empty",
-    emptyBody:
-      "Explore our 3D menu booklets to pick specialty coffee, healthy dishes, or comfort food — you'll choose dine in, pickup or delivery at checkout.",
-    destinationHeading: "How Would You Like It?",
-    submitLabel: "Choose How to Receive It",
-    submitPendingLabel: "Sending...",
-    submitNote: "Pick a method above to continue",
-    // Never rendered: a placed ticket always carries a real order type.
-    readyStepLabel: "3. Ready",
-    readyStepHint: "Almost there",
-    finalStepLabel: "4. Handed Over",
-    finalStepHint: "All yours",
-    readyLabel: "Ready",
-    servedLabel: "Completed",
-  },
-  ON_TABLE: {
-    icon: Location01Icon,
-    cartTitle: "Table Cart",
-    ordersTitle: "Table Orders",
-    subtitle: "In-House Dining · Sanctuary",
-    cartTabLabel: "New Round",
-    emptyTitle: "Your Table Order is Empty",
-    emptyBody:
-      "Explore our 3D menu booklets to select specialty coffee, healthy dishes, or comfort food for your table.",
-    destinationHeading: "Your Table & Details",
-    submitLabel: "Send Request to Kitchen",
-    submitPendingLabel: "Transmitting...",
-    submitNote: "No payment online · Settle at table",
-    readyStepLabel: "3. Ready",
-    readyStepHint: "Plated up",
-    finalStepLabel: "4. Served",
-    finalStepHint: "At your table",
-    readyLabel: "Ready to Serve",
-    servedLabel: "Served",
-  },
-  TAKEAWAY: {
-    icon: Store01Icon,
-    cartTitle: "Pickup Bag",
-    ordersTitle: "Pickup Orders",
-    subtitle: "Collect at Counter · Sanctuary",
-    cartTabLabel: "New Bag",
-    emptyTitle: "Your Pickup Bag is Empty",
-    emptyBody:
-      "Explore our 3D menu booklets and build a bag to collect at the counter — we'll call you the moment it's ready.",
-    destinationHeading: "Pickup Details",
-    submitLabel: "Send Pickup Order",
-    submitPendingLabel: "Sending...",
-    submitNote: "No payment online · Pay at the counter",
-    readyStepLabel: "3. Ready",
-    readyStepHint: "Collect at counter",
-    finalStepLabel: "4. Picked Up",
-    finalStepHint: "Enjoy it",
-    readyLabel: "Ready for Pickup",
-    servedLabel: "Picked Up",
-  },
-  DELIVERY: {
-    icon: DeliveryTruck01Icon,
-    cartTitle: "Delivery Cart",
-    ordersTitle: "Delivery Orders",
-    subtitle: "Straight to Your Door · Sanctuary",
-    cartTabLabel: "New Cart",
-    emptyTitle: "Your Delivery Cart is Empty",
-    emptyBody:
-      "Explore our 3D menu booklets to order specialty coffee, healthy dishes, or comfort food straight to your door.",
-    destinationHeading: "Delivery Details",
-    submitLabel: "Send Delivery Order",
-    submitPendingLabel: "Sending...",
-    submitNote: "Cash on delivery · Pay the rider",
-    readyStepLabel: "3. Ready",
-    readyStepHint: "Packed for the rider",
-    finalStepLabel: "4. On the Way",
-    finalStepHint: "Out for delivery",
-    readyLabel: "Ready to Dispatch",
-    servedLabel: "Out for Delivery",
-  },
+/**
+ * Only the icon is structural. Every word that used to live here now comes from
+ * the `cart.modes.<MODE>` namespace, keyed by the same mode name, so the three
+ * voices stay side by side in the catalogue where a translator can see them
+ * together rather than scattered through the markup.
+ */
+const MODE_ICON: Record<SheetMode, typeof Location01Icon> = {
+  UNCHOSEN: ShoppingBag01Icon,
+  ON_TABLE: Location01Icon,
+  TAKEAWAY: Store01Icon,
+  DELIVERY: DeliveryTruck01Icon,
 };
 
 /**
@@ -185,12 +91,6 @@ const MODE_CONFIG: Record<
  * the QR on their table — they just have to say which table they're at.
  */
 const MODE_CHOICES = ["ON_TABLE", "DELIVERY", "TAKEAWAY"] as const;
-
-const MODE_CHOICE_HINT: Record<(typeof MODE_CHOICES)[number], string> = {
-  ON_TABLE: "Served at your table",
-  DELIVERY: "Sent to your door",
-  TAKEAWAY: "Collect at the counter",
-};
 
 /**
  * Lets a guest name the table they're sitting at when they didn't scan its QR.
@@ -206,8 +106,10 @@ function TablePicker({
   onSelect: (table: number | null) => void;
   error?: string;
 }) {
+  const t = useTranslations("tablePicker");
+  const tCommon = useTranslations("common");
   const { data: tables = [], isLoading, isError } = useGuestTables();
-  /** Every table is seated. Not an error — just nothing this guest can claim from here. */
+  /** No active tables configured at all. Not an error — just nothing to offer. */
   const noneFree = !isLoading && !isError && tables.length === 0;
 
   return (
@@ -216,7 +118,7 @@ function TablePicker({
         htmlFor="cart-table-picker"
         className="block font-mono text-[9px] uppercase tracking-widest text-white/50 mb-1.5"
       >
-        Which Table Are You At?
+        {t("question")}
       </label>
       <div
         className={`flex items-center gap-2 px-3 rounded-xl bg-black/30 border transition-all ${
@@ -234,16 +136,16 @@ function TablePicker({
         >
           <option value="">
             {isLoading
-              ? "Loading tables…"
+              ? t("loading")
               : isError
-                ? "Couldn't load tables"
+                ? t("error")
                 : noneFree
-                  ? "No free tables right now"
-                  : "Select your table"}
+                  ? t("none")
+                  : t("select")}
           </option>
           {tables.map((table) => (
             <option key={table.number} value={table.number}>
-              {formatTableNumber(table.number)}
+              {tCommon("tableNumber", { number: formatTableDigits(table.number) })}
               {table.label ? ` · ${table.label}` : ""}
             </option>
           ))}
@@ -254,9 +156,7 @@ function TablePicker({
       )}
       {(isError || noneFree) && !error && (
         <span className="block px-1 mt-1 text-[10px] text-white/40 font-mono">
-          {noneFree
-            ? "Already seated? Scan the QR code on your table to order to it."
-            : "Ask a member of staff, or scan the QR code on your table."}
+          {t("help")}
         </span>
       )}
     </div>
@@ -268,17 +168,21 @@ const PROGRESS_ORDER = ["RECEIVED", "PREPARING", "READY", "SERVED"] as const;
 
 /** Reads the table off the ticket itself — a placed order's own table is the authority, not whatever the cart is set to now. */
 function OrderProgressTracker({ order }: { order: OrderDTO }) {
-  const copy = MODE_CONFIG[order.type];
+  const t = useTranslations("cart");
+  const tCommon = useTranslations("common");
+  const mode = useTranslations(`cart.modes.${order.type}`);
   const steps = [
-    { label: "1. Received", hint: "Barista / Chef" },
-    { label: "2. Preparing", hint: "Crafting Order" },
-    { label: copy.readyStepLabel, hint: copy.readyStepHint },
+    { label: t("progress.received"), hint: t("progress.receivedHint") },
+    { label: t("progress.preparing"), hint: t("progress.preparingHint") },
+    { label: mode("readyStepLabel"), hint: mode("readyStepHint") },
     {
-      label: copy.finalStepLabel,
+      label: mode("finalStepLabel"),
       hint:
         order.type === "ON_TABLE" && order.tableNumber !== null
-          ? `To ${formatTableNumber(order.tableNumber)}`
-          : copy.finalStepHint,
+          ? t("progress.toTable", {
+              table: tCommon("tableNumber", { number: formatTableDigits(order.tableNumber) }),
+            })
+          : mode("finalStepHint"),
     },
   ];
   const currentIndex = PROGRESS_ORDER.indexOf(order.status as (typeof PROGRESS_ORDER)[number]);
@@ -342,14 +246,20 @@ export default function CartSheet() {
     getTotalItems,
   } = useCartStore();
 
-  const queryClient = useQueryClient();
   const { data: activeOrders = [] } = useGuestOrders();
   const placeOrderMutation = usePlaceOrder();
   const validateOfferMutation = useValidateOfferCode();
   useRejectedOrderRecovery(activeOrders);
   useOrderUpdateNotice(activeOrders);
 
-  const copy = MODE_CONFIG[orderMode ?? "UNCHOSEN"];
+  const t = useTranslations("cart");
+  const tCommon = useTranslations("common");
+  const tMode = useTranslations("orderMode");
+  const tBrands = useTranslations("brands");
+  const tValidation = useTranslations("validation");
+  /** Copy for the mode in play; the sheet still renders before one is chosen. */
+  const copy = useTranslations(`cart.modes.${orderMode ?? "UNCHOSEN"}`);
+  const SheetModeIcon = MODE_ICON[orderMode ?? "UNCHOSEN"];
   // No table scanned and nothing remembered — we refuse to guess where the food goes.
   const needsModeChoice = orderMode === null;
 
@@ -456,13 +366,13 @@ export default function CartSheet() {
 /** Mirrors the server's schema so the guest sees the same rule highlighted on the field, not a raw Zod error. */
   const validateContact = (): typeof fieldErrors => {
     const next: typeof fieldErrors = {};
-    if (contact.name.trim().length < 2) next.name = "Please enter your name.";
-    if ((contact.phone.match(/\d/g)?.length ?? 0) < 7) next.phone = "Please enter a valid phone number.";
+    if (contact.name.trim().length < 2) next.name = tValidation("name");
+    if ((contact.phone.match(/\d/g)?.length ?? 0) < 7) next.phone = tValidation("phone");
     if (orderMode === "DELIVERY" && contact.address.trim().length < 10) {
-      next.address = "Please enter a full delivery address.";
+      next.address = tValidation("address");
     }
     if (orderMode === "ON_TABLE" && tableNumber === null) {
-      next.table = "Please select the table you're sitting at.";
+      next.table = tValidation("table");
     }
     return next;
   };
@@ -471,7 +381,7 @@ export default function CartSheet() {
     e.preventDefault();
     if (items.length === 0) return;
     if (orderMode === null) {
-      toast.error("Choose how you'd like your order first.");
+      toast.error(t("chooseMethodFirst"));
       return;
     }
 
@@ -497,10 +407,6 @@ export default function CartSheet() {
         ? {
             type: "ON_TABLE",
             tableNumber: tableNumber!,
-            // Once confirmed this is the guest's own already-open session — a
-            // second round must join it, not be re-checked as a fresh claim
-            // on the table (which would wrongly read as "already taken").
-            tableSelfSelected: !tableConfirmed,
             ...common,
           }
         : orderMode === "TAKEAWAY"
@@ -516,21 +422,20 @@ export default function CartSheet() {
         setAppliedOffer(null);
         clearCart();
         setViewingOrderStatus(true);
-        // A self-selected table is now settled fact: it just got a real order
-        // sent to it, so the next round should behave exactly like a scanned
-        // table — locked in, no picker, no re-litigating whether it's "taken".
-        if (orderMode === "ON_TABLE") confirmTable();
+        // A self-picked table is now fact rather than a guess: it just got a
+        // real order sent to it, so the next round behaves exactly like a
+        // scanned table — locked in, no picker. Storing the visit it opened is
+        // what lets a refresh (or a later trip back without the QR) land on
+        // this same tab instead of an empty page with no table and no tickets.
+        if (orderMode === "ON_TABLE") {
+          confirmTable();
+          if (newOrder.tableSessionId && newOrder.tableNumber !== null) {
+            rememberTableSession(newOrder.tableSessionId, newOrder.tableNumber);
+          }
+        }
       },
       onError: (error) => {
         toast.error(error.message);
-        // Lost the race for a table someone else just sat at. Drop the dead
-        // pick and refresh the list so they're choosing from what's actually
-        // free, rather than re-submitting into the same rejection.
-        if (error instanceof ActionError && error.code === "CONFLICT" && orderMode === "ON_TABLE") {
-          setTableNumber(null);
-          setFieldErrors((f) => ({ ...f, table: "Please pick another table." }));
-          queryClient.invalidateQueries({ queryKey: queryKeys.tables.guest });
-        }
       },
     });
   };
@@ -577,30 +482,30 @@ export default function CartSheet() {
       <div className="cart-anim-item flex justify-between items-center w-full max-w-4xl mx-auto pb-3 sm:pb-4 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2.5 sm:gap-3">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#F1E6C3] shrink-0">
-            <copy.icon size={18} />
+            <SheetModeIcon size={18} />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="font-serif text-lg sm:text-2xl text-white font-medium">
-                {showOrderStatus ? copy.ordersTitle : copy.cartTitle}
+                {showOrderStatus ? copy("ordersTitle") : copy("cartTitle")}
               </h2>
               {orderMode && (
                 <span className="px-2 py-0.5 rounded-full border border-[#F1E6C3]/30 bg-[#F1E6C3]/10 font-mono text-[9px] sm:text-[10px] text-[#F1E6C3] font-bold">
                   {orderMode === "ON_TABLE" && tableNumber !== null
-                    ? formatTableNumber(tableNumber)
-                    : ORDER_MODE_LABEL[orderMode]}
+                    ? tCommon("tableNumber", { number: formatTableDigits(tableNumber) })
+                    : tMode(orderMode)}
                 </span>
               )}
             </div>
             <p className="font-mono text-[9px] sm:text-[10px] uppercase tracking-widest text-white/50">
-              {copy.subtitle}
+              {copy("subtitle")}
             </p>
           </div>
         </div>
 
         <button
           onClick={closeCart}
-          aria-label="Close Cart"
+          aria-label={t("closeCart")}
           className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-white/20 bg-white/5 hover:bg-white/15 active:scale-95 flex items-center justify-center text-white/80 hover:text-white transition-all cursor-pointer shrink-0"
         >
           <Cancel01Icon size={16} />
@@ -621,7 +526,7 @@ export default function CartSheet() {
               }`}
             >
               <ShoppingBag01Icon size={13} />
-              <span>{copy.cartTabLabel} ({totalItems})</span>
+              <span>{copy("cartTabLabel")} ({totalItems})</span>
             </button>
             
             <button
@@ -656,8 +561,8 @@ export default function CartSheet() {
             {/* Multi-Ticket Interactive Switcher */}
             {activeOrders.length > 1 && (
               <div className="w-full flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide mb-4">
-                <span className="font-mono text-[9px] uppercase tracking-wider text-white/40 shrink-0 mr-1">
-                  Tickets:
+                <span className="font-mono text-[9px] uppercase tracking-wider text-white/40 shrink-0 me-1">
+                  {t("tickets")}
                 </span>
                 {activeOrders.map((order, idx) => {
                   const isSelected = order.id === activeSelectedOrder.id;
@@ -682,7 +587,7 @@ export default function CartSheet() {
             )}
 
             {/* Selected Ticket Status Card */}
-            <div className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 sm:p-6 mb-5 sm:mb-8 text-left shadow-xl">
+            <div className="w-full bg-white/[0.03] border border-white/10 rounded-2xl p-4 sm:p-6 mb-5 sm:mb-8 text-start shadow-xl">
               
               {/* Ticket Top Header */}
               <div className="flex justify-between items-center pb-4 mb-4 border-b border-white/10">
@@ -697,8 +602,10 @@ export default function CartSheet() {
                     <span className="font-mono text-[10px] text-white/50">
                       Placed at {formatOrderTime(activeSelectedOrder.createdAt)} ·{" "}
                       {activeSelectedOrder.tableNumber !== null
-                        ? formatTableNumber(activeSelectedOrder.tableNumber)
-                        : ORDER_MODE_LABEL[activeSelectedOrder.type]}
+                        ? tCommon("tableNumber", {
+                            number: formatTableDigits(activeSelectedOrder.tableNumber),
+                          })
+                        : tMode(activeSelectedOrder.type)}
                     </span>
                   </div>
                 </div>
@@ -728,14 +635,14 @@ export default function CartSheet() {
                     />
                   )}
                   {activeSelectedOrder.status === "REJECTED"
-                    ? "Rejected"
+                    ? t("status.rejected")
                     : activeSelectedOrder.status === "SERVED"
-                      ? MODE_CONFIG[activeSelectedOrder.type].servedLabel
+                      ? t(`modes.${activeSelectedOrder.type}.servedLabel`)
                       : activeSelectedOrder.status === "READY"
-                        ? MODE_CONFIG[activeSelectedOrder.type].readyLabel
+                        ? t(`modes.${activeSelectedOrder.type}.readyLabel`)
                         : activeSelectedOrder.status === "PREPARING"
-                          ? "In Preparation"
-                          : "Order Received"}
+                          ? t("status.inPreparation")
+                          : t("status.orderReceived")}
                 </span>
               </div>
 
@@ -743,12 +650,12 @@ export default function CartSheet() {
                 /* Rejected Ticket Notice — no kitchen tracker, this one never got made */
                 <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center">
                   <p className="text-sm text-red-300 font-medium mb-1">
-                    Staff rejected this ticket before preparing it.
+                    {t("rejected.notice")}
                   </p>
                   <p className="text-xs text-white/50">
                     {activeSelectedOrder.rejectionReason
                       ? `Reason: "${activeSelectedOrder.rejectionReason}"`
-                      : "Its items were moved back to your cart to review and resend."}
+                      : t("rejected.itemsRestored")}
                   </p>
                 </div>
               ) : (
@@ -774,7 +681,7 @@ export default function CartSheet() {
                 {activeSelectedOrder.discountAmount > 0 && (
                   <div className="pt-2 border-t border-white/5 space-y-1 text-[11px] text-white/50">
                     <div className="flex justify-between">
-                      <span>Subtotal</span>
+                      <span>{t("subtotal")}</span>
                       <span className="font-mono">{formatPrice(activeSelectedOrder.subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-[#B7D39A]">
@@ -813,9 +720,12 @@ export default function CartSheet() {
 
             {/* List of All Other Tickets (Expandable Cards) */}
             {activeOrders.length > 1 && (
-              <div className="w-full space-y-2.5 mb-6 text-left">
+              <div className="w-full space-y-2.5 mb-6 text-start">
                 <span className="font-mono text-[9px] uppercase tracking-widest text-white/40 block px-1">
-                  All {ORDER_MODE_LABEL[activeSelectedOrder.type]} Tickets ({activeOrders.length} sent):
+                  {t("allTickets", {
+                    mode: tMode(activeSelectedOrder.type),
+                    count: activeOrders.length,
+                  })}
                 </span>
 
                 {activeOrders.map((order, idx) => {
@@ -836,7 +746,7 @@ export default function CartSheet() {
                         <button
                           type="button"
                           onClick={() => setSelectedOrderId(order.id)}
-                          className="flex items-center gap-3 text-left cursor-pointer flex-1"
+                          className="flex items-center gap-3 text-start cursor-pointer flex-1"
                         >
                           <div className="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center font-mono text-xs font-bold text-white">
                             R{roundNum}
@@ -860,11 +770,11 @@ export default function CartSheet() {
                                 }`}
                               >
                                 {order.status === "REJECTED"
-                                  ? "Rejected"
+                                  ? t("status.rejected")
                                   : order.status === "SERVED"
-                                    ? MODE_CONFIG[order.type].servedLabel
+                                    ? t(`modes.${order.type}.servedLabel`)
                                     : order.status === "READY"
-                                      ? MODE_CONFIG[order.type].readyLabel
+                                      ? t(`modes.${order.type}.readyLabel`)
                                       : order.status === "PREPARING"
                                         ? "Preparing"
                                         : "Received"}
@@ -881,7 +791,7 @@ export default function CartSheet() {
                             type="button"
                             onClick={() => toggleOrderExpand(order.id)}
                             className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-all cursor-pointer"
-                            aria-label="Toggle details"
+                            aria-label={t("toggleDetails")}
                           >
                             <ArrowDown01Icon
                               size={16}
@@ -916,7 +826,7 @@ export default function CartSheet() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full bg-[#F1E6C3] text-black font-extrabold text-xs uppercase tracking-widest transition-all duration-300 hover:bg-white hover:scale-105 active:scale-95 shadow-[0_4px_25px_rgba(241,230,195,0.35)] cursor-pointer"
               >
                 <Add01Icon size={16} className="text-black" />
-                <span>Request More Items</span>
+                <span>{t("requestMoreItems")}</span>
               </button>
 
               {hasItems && (
@@ -938,17 +848,17 @@ export default function CartSheet() {
               <ShoppingBag01Icon size={24} />
             </div>
             <h3 className="font-serif text-xl sm:text-2xl text-white font-medium mb-1.5 sm:mb-2">
-              {copy.emptyTitle}
+              {copy("emptyTitle")}
             </h3>
             <p className="font-sans text-xs sm:text-sm text-white/60 mb-6 sm:mb-8 leading-relaxed">
-              {copy.emptyBody}
+              {copy("emptyBody")}
             </p>
             <button
               onClick={navigateToMenus}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#F1E6C3] text-black font-mono text-xs font-bold uppercase tracking-wider hover:bg-white hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-md"
             >
               <SparklesIcon size={14} />
-              <span>Browse Menus</span>
+              <span>{t("browseMenus")}</span>
             </button>
           </div>
         ) : (
@@ -956,16 +866,16 @@ export default function CartSheet() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start w-full">
             
             {/* Left: Items List */}
-            <div className="lg:col-span-7 flex flex-col space-y-2.5 sm:space-y-3 max-h-[48vh] sm:max-h-[55vh] overflow-y-auto pr-1.5">
+            <div className="lg:col-span-7 flex flex-col space-y-2.5 sm:space-y-3 max-h-[48vh] sm:max-h-[55vh] overflow-y-auto pe-1.5">
               <div className="flex justify-between items-center mb-1">
                 <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">
-                  {copy.cartTabLabel} Items ({totalItems})
+                  {copy("cartTabLabel")} Items ({totalItems})
                 </span>
                 <button
                   onClick={clearCart}
                   className="font-mono text-[10px] uppercase tracking-wider text-white/40 hover:text-red-400 transition-colors cursor-pointer"
                 >
-                  Clear All
+                  {t("clearAll")}
                 </button>
               </div>
 
@@ -996,7 +906,7 @@ export default function CartSheet() {
                               className="font-mono text-[8px] uppercase tracking-wider px-1.5 py-0.2 rounded font-bold shrink-0"
                               style={{ background: `${brand.color}25`, color: brand.color }}
                             >
-                              {brand.label}
+                              {tBrands(item.brandId)}
                             </span>
                           </div>
                           <span className="font-mono text-[11px] text-white/50 hidden sm:inline">
@@ -1008,7 +918,7 @@ export default function CartSheet() {
                       {/* Delete button (Mobile top right) */}
                       <button
                         onClick={() => removeItem(item.id)}
-                        aria-label="Remove item"
+                        aria-label={t("removeItem")}
                         className="text-white/30 hover:text-red-400 transition-colors p-1 cursor-pointer sm:hidden"
                       >
                         <Delete02Icon size={16} />
@@ -1016,7 +926,7 @@ export default function CartSheet() {
                     </div>
 
                     {/* Bottom part on mobile: Price & Quantity Controls */}
-                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0 border-t border-white/5 sm:border-0 sm:ml-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-1 sm:pt-0 border-t border-white/5 sm:border-0 sm:ms-3">
                       <span className="font-mono text-xs text-white/60 sm:hidden">
                         {formatPrice(item.price)} each
                       </span>
@@ -1026,7 +936,7 @@ export default function CartSheet() {
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="w-6 h-6 rounded-lg hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer"
-                            aria-label="Decrease quantity"
+                            aria-label={t("decreaseQuantity")}
                           >
                             <Remove01Icon size={11} />
                           </button>
@@ -1036,20 +946,20 @@ export default function CartSheet() {
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="w-6 h-6 rounded-lg hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all cursor-pointer"
-                            aria-label="Increase quantity"
+                            aria-label={t("increaseQuantity")}
                           >
                             <Add01Icon size={11} />
                           </button>
                         </div>
 
-                        <span className="font-mono text-sm font-bold text-white min-w-16 text-right">
+                        <span className="font-mono text-sm font-bold text-white min-w-16 text-end">
                           {formatPrice(item.price * item.quantity)}
                         </span>
 
                         {/* Delete button (Desktop) */}
                         <button
                           onClick={() => removeItem(item.id)}
-                          aria-label="Remove item"
+                          aria-label={t("removeItem")}
                           className="text-white/30 hover:text-red-400 transition-colors p-1 cursor-pointer hidden sm:block"
                         >
                           <Delete02Icon size={16} />
@@ -1065,7 +975,7 @@ export default function CartSheet() {
             <div className="lg:col-span-5 rounded-2xl border border-white/15 bg-white/[0.04] p-4 sm:p-6 backdrop-blur-xl flex flex-col justify-between shadow-2xl">
               <div>
                 <span className="font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-[#F1E6C3] font-bold block mb-3">
-                  {copy.destinationHeading}
+                  {copy("destinationHeading")}
                 </span>
 
                 {needsModeChoice ? (
@@ -1075,7 +985,7 @@ export default function CartSheet() {
                      opened the site directly instead of scanning their table's QR. */
                   <div className="grid grid-cols-3 gap-2 mb-3">
                     {MODE_CHOICES.map((mode) => {
-                      const ModeIcon = MODE_CONFIG[mode].icon;
+                      const ModeIcon = MODE_ICON[mode];
                       return (
                         <button
                           key={mode}
@@ -1087,10 +997,10 @@ export default function CartSheet() {
                             <ModeIcon size={17} />
                           </span>
                           <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-white">
-                            {ORDER_MODE_LABEL[mode]}
+                            {tMode(mode)}
                           </span>
                           <span className="font-sans text-[10px] leading-tight text-white/45">
-                            {MODE_CHOICE_HINT[mode]}
+                            {t(`modeHint.${mode}`)}
                           </span>
                         </button>
                       );
@@ -1104,10 +1014,12 @@ export default function CartSheet() {
                       <div className="flex items-center justify-between p-3 rounded-xl bg-black/40 border border-white/10 mb-3">
                         <div className="flex items-center gap-2">
                           <Location01Icon size={15} className="text-[#F1E6C3]" />
-                          <span className="font-serif text-xs sm:text-sm text-white font-medium">Table</span>
+                          <span className="font-serif text-xs sm:text-sm text-white font-medium">{t("tableLabel")}</span>
                         </div>
                         <span className="font-mono text-xs font-bold text-[#F1E6C3]">
-                          {tableNumber !== null ? formatTableNumber(tableNumber) : "—"}
+                          {tableNumber !== null
+                            ? tCommon("tableNumber", { number: formatTableDigits(tableNumber) })
+                            : "—"}
                         </span>
                       </div>
                     ) : (
@@ -1116,7 +1028,7 @@ export default function CartSheet() {
                             may decide to swing by and collect it, or to sit down instead. */}
                         <div className="p-1 rounded-xl bg-black/40 border border-white/10 grid grid-cols-3 gap-1 font-mono text-[10px] mb-3">
                           {MODE_CHOICES.map((mode) => {
-                            const ModeIcon = MODE_CONFIG[mode].icon;
+                            const ModeIcon = MODE_ICON[mode];
                             const isActive = orderMode === mode;
                             return (
                               <button
@@ -1130,7 +1042,7 @@ export default function CartSheet() {
                                 }`}
                               >
                                 <ModeIcon size={13} />
-                                <span>{ORDER_MODE_LABEL[mode]}</span>
+                                <span>{tMode(mode)}</span>
                               </button>
                             );
                           })}
@@ -1167,7 +1079,7 @@ export default function CartSheet() {
                               setContact((c) => ({ ...c, name: e.target.value }));
                               setFieldErrors((f) => ({ ...f, name: undefined }));
                             }}
-                            placeholder="Your name"
+                            placeholder={t("namePlaceholder")}
                             autoComplete="name"
                             aria-invalid={!!fieldErrors.name}
                             className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none"
@@ -1193,7 +1105,7 @@ export default function CartSheet() {
                               setContact((c) => ({ ...c, phone: e.target.value }));
                               setFieldErrors((f) => ({ ...f, phone: undefined }));
                             }}
-                            placeholder="Phone number"
+                            placeholder={t("phonePlaceholder")}
                             autoComplete="tel"
                             aria-invalid={!!fieldErrors.phone}
                             className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white placeholder-white/30 outline-none"
@@ -1209,18 +1121,18 @@ export default function CartSheet() {
                       <div className="flex items-center gap-2 px-3 rounded-xl bg-black/30 border border-white/10 focus-within:border-[#F1E6C3] transition-all">
                         <BirthdayCakeIcon size={14} className="text-white/40 shrink-0" />
                         <span className="font-mono text-[10px] uppercase tracking-wider text-white/35 shrink-0">
-                          Birthday
+                          {t("birthday")}
                         </span>
                         <input
                           type="date"
                           value={contact.birthday}
                           max={TODAY_ISO}
                           onChange={(e) => setContact((c) => ({ ...c, birthday: e.target.value }))}
-                          aria-label="Birthday (optional)"
+                          aria-label={t("birthdayAria")}
                           className="flex-1 min-w-0 bg-transparent py-2.5 text-xs text-white/80 outline-none [color-scheme:dark]"
                         />
                         <span className="font-mono text-[9px] uppercase tracking-wider text-white/25 shrink-0">
-                          Optional
+                          {t("optional")}
                         </span>
                       </div>
 
@@ -1243,13 +1155,13 @@ export default function CartSheet() {
                 {/* Special Kitchen Notes */}
                 <div className="mb-4">
                   <label className="block font-mono text-[9px] uppercase tracking-widest text-white/50 mb-1.5">
-                    Kitchen Notes (Optional)
+                    {t("kitchenNotes")}
                   </label>
                   <textarea
                     rows={2}
                     value={specialNotes}
                     onChange={(e) => setSpecialNotes(e.target.value)}
-                    placeholder="e.g. Extra hot, ice on side..."
+                    placeholder={t("notesPlaceholder")}
                     className="w-full bg-black/30 border border-white/10 focus:border-[#F1E6C3] rounded-xl p-2.5 text-xs text-white placeholder-white/30 outline-none transition-all resize-none"
                   />
                 </div>
@@ -1257,7 +1169,7 @@ export default function CartSheet() {
                 {/* Offer Code */}
                 <div className="mb-4">
                   <label className="block font-mono text-[9px] uppercase tracking-widest text-white/50 mb-1.5">
-                    Offer Code (Optional)
+                    {t("offerCode")}
                   </label>
                   {appliedOffer ? (
                     <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#B7D39A]/10 border border-[#B7D39A]/30">
@@ -1274,8 +1186,8 @@ export default function CartSheet() {
                           setAppliedOffer(null);
                           setOfferCodeInput("");
                         }}
-                        aria-label="Remove offer code"
-                        className="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0 ml-2"
+                        aria-label={t("removeOfferCode")}
+                        className="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0 ms-2"
                       >
                         <Cancel01Icon size={14} />
                       </button>
@@ -1292,7 +1204,7 @@ export default function CartSheet() {
                             handleApplyOfferCode();
                           }
                         }}
-                        placeholder="e.g. VOYA10"
+                        placeholder={t("offerPlaceholder")}
                         className="flex-1 min-w-0 bg-black/30 border border-white/10 focus:border-[#F1E6C3] rounded-xl p-2.5 text-xs text-white placeholder-white/30 outline-none transition-all uppercase"
                       />
                       <button
@@ -1322,11 +1234,11 @@ export default function CartSheet() {
                     </div>
                   )}
                   <div className="flex justify-between">
-                    <span>Hospitality</span>
-                    <span className="font-mono text-[#B7D39A]">Included</span>
+                    <span>{t("hospitality")}</span>
+                    <span className="font-mono text-[#B7D39A]">{t("included")}</span>
                   </div>
                   <div className="flex justify-between pt-1.5 border-t border-white/10 text-sm sm:text-base text-white font-serif font-medium">
-                    <span>{orderMode === "ON_TABLE" ? "Round Total" : "Order Total"}</span>
+                    <span>{orderMode === "ON_TABLE" ? t("roundTotal") : t("orderTotal")}</span>
                     <span className="font-mono font-bold text-[#F1E6C3] text-base sm:text-lg">
                       {formatPrice(finalTotal)}
                     </span>
@@ -1343,11 +1255,11 @@ export default function CartSheet() {
                   className="group relative w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-full bg-[#F1E6C3] text-black font-extrabold text-xs uppercase tracking-widest transition-all duration-300 hover:bg-white hover:scale-[1.02] active:scale-98 shadow-[0_4px_25px_rgba(241,230,195,0.35)] disabled:opacity-50 cursor-pointer overflow-hidden"
                 >
                   <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 pointer-events-none" />
-                  <span>{placeOrderMutation.isPending ? copy.submitPendingLabel : copy.submitLabel}</span>
-                  <ArrowRight01Icon size={14} className="transform group-hover:translate-x-1 transition-transform" />
+                  <span>{placeOrderMutation.isPending ? copy("submitPendingLabel") : copy("submitLabel")}</span>
+                  <ArrowRight01Icon size={14} className="transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform icon-auto-dir" />
                 </button>
                 <span className="block text-center font-mono text-[9px] text-white/40 mt-2">
-                  {copy.submitNote}
+                  {copy("submitNote")}
                 </span>
               </div>
 
@@ -1360,8 +1272,8 @@ export default function CartSheet() {
 
       {/* ─── Bottom Footer ─── */}
       <div className="cart-anim-item flex justify-between items-center w-full max-w-4xl mx-auto pt-3 border-t border-white/10 text-[9px] sm:text-[10px] text-white/40 font-mono uppercase tracking-widest shrink-0">
-        <span>Voya Sanctuary</span>
-        <span>Every Sip a New Trip</span>
+        <span>{t("footerBrand")}</span>
+        <span>{t("footerTagline")}</span>
       </div>
     </div>
   );

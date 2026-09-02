@@ -96,7 +96,7 @@ function daysBetween(fromIso: string, untilIso: string): number {
 
 /**
  * Owns the actual form state. Mounted fresh (via `key`) every time the
- * dialog opens, so defaults always start clean — no effect-driven reset.
+ * dialog opens, so defaults always left clean — no effect-driven reset.
  */
 function OfferFormFields({
   props,

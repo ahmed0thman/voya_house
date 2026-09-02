@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
@@ -23,31 +24,28 @@ gsap.registerPlugin(ScrollTrigger);
 const TOPICS = [
   {
     id: "general",
-    label: "General Hello",
     icon: SparklesIcon,
     color: "#F1E6C3",
   },
   {
     id: "coffee",
-    label: "Coffee Allocation",
     icon: Coffee01Icon,
     color: "#F1E6C3",
   },
   {
     id: "catering",
-    label: "Papa Wellness Catering",
     icon: Leaf01Icon,
     color: "#B7D39A",
   },
   {
     id: "events",
-    label: "Mama Family Events",
     icon: Pizza01Icon,
     color: "#D8A98F",
   },
 ];
 
 export default function ContactSection() {
+  const t = useTranslations("contactForm");
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedTopic, setSelectedTopic] = useState("general");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -112,7 +110,7 @@ export default function ContactSection() {
           background: `radial-gradient(circle, ${activeTopicObj.color} 0%, rgba(0,0,0,0) 70%)`,
         }}
       />
-      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-[#F1E6C3]/5 blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute bottom-10 end-10 w-[350px] h-[350px] bg-[#F1E6C3]/5 blur-[120px] pointer-events-none rounded-full" />
 
       <div className="max-w-6xl w-full mx-auto relative z-10">
         {/* ─── Top Section Header ─── */}
@@ -120,18 +118,16 @@ export default function ContactSection() {
           <div className="contact-reveal inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/15 bg-white/5 backdrop-blur-md mb-5">
             <span className="w-2 h-2 rounded-full bg-[#F1E6C3] animate-pulse" />
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/80 font-bold">
-              Concierge & Inquiries
+              {t("eyebrow")}
             </span>
           </div>
 
           <h2 className="contact-reveal font-serif text-4xl sm:text-6xl md:text-7xl font-medium tracking-tight text-white leading-tight">
-            JOIN <span className="text-[#F1E6C3] italic">VOYA HOUSE.</span>
+            {t("join")} <span className="text-[#F1E6C3] italic">{t("voyaHouse")}</span>
           </h2>
 
           <p className="contact-reveal font-sans text-sm sm:text-base text-white/70 max-w-lg mt-4 leading-relaxed">
-            Whether you are reserving a table, inquiring about our seasonal bean
-            allocations, or planning a private gathering — our house is always
-            open.
+            {t("intro")}
           </p>
         </div>
 
@@ -139,14 +135,14 @@ export default function ContactSection() {
         <div className="contact-reveal grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-stretch">
           {/* Left Column: Direct House Touchpoints */}
           <div className="lg:col-span-5 rounded-[2rem] border border-white/15 bg-gradient-to-b from-white/[0.06] via-white/[0.03] to-transparent p-6 sm:p-8 md:p-10 backdrop-blur-2xl flex flex-col justify-between shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-48 h-48 bg-[#F1E6C3]/10 blur-3xl pointer-events-none rounded-full" />
+            <div className="absolute top-0 end-0 w-48 h-48 bg-[#F1E6C3]/10 blur-3xl pointer-events-none rounded-full" />
 
             <div>
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center p-2">
                   <Image
                     src="/assets/logos/Asset 21.svg"
-                    alt="Voya Emblem"
+                    alt={t("emblemAlt")}
                     width={24}
                     height={24}
                     className="opacity-90 object-contain"
@@ -154,17 +150,16 @@ export default function ContactSection() {
                 </div>
                 <div>
                   <h3 className="font-serif text-xl font-medium text-white">
-                    The House of Voya
+                    {t("houseOfVoya")}
                   </h3>
                   <span className="font-mono text-[10px] uppercase tracking-widest text-[#F1E6C3]">
-                    Flagship Sanctuary
+                    {t("flagshipSanctuary")}
                   </span>
                 </div>
               </div>
 
               <p className="font-sans text-sm text-white/70 leading-relaxed mb-8">
-                Experience the harmony of specialty roasting, mindful
-                nourishment, and generous comfort hospitality.
+                {t("harmony")}
               </p>
 
               {/* Information Rows */}
@@ -175,10 +170,10 @@ export default function ContactSection() {
                   </div>
                   <div>
                     <span className="block font-mono text-[10px] uppercase tracking-widest text-white/50">
-                      Address
+                      {t("address")}
                     </span>
                     <p className="font-serif text-sm sm:text-base text-white/90 leading-snug mt-0.5">
-                      123 Voyage Street, New Cairo, EG
+                      {t("addressValue")}
                     </p>
                   </div>
                 </div>
@@ -189,10 +184,10 @@ export default function ContactSection() {
                   </div>
                   <div>
                     <span className="block font-mono text-[10px] uppercase tracking-widest text-white/50">
-                      House Hours
+                      {t("houseHours")}
                     </span>
                     <p className="font-serif text-sm sm:text-base text-white/90 leading-snug mt-0.5">
-                      Monday – Sunday · 07:00 – 23:00
+                      {t("hoursValue")}
                     </p>
                   </div>
                 </div>
@@ -203,9 +198,9 @@ export default function ContactSection() {
                   </div>
                   <div>
                     <span className="block font-mono text-[10px] uppercase tracking-widest text-white/50">
-                      Concierge Desk
+                      {t("conciergeDesk")}
                     </span>
-                    <p className="font-mono text-sm text-white/90 leading-snug mt-0.5 select-all">
+                    <p dir="ltr" className="font-mono text-sm text-white/90 leading-snug mt-0.5 select-all">
                       concierge@voyahouse.com
                     </p>
                   </div>
@@ -216,10 +211,10 @@ export default function ContactSection() {
             {/* Bottom Ornamental Indicator */}
             <div className="pt-8 mt-8 border-t border-white/10 flex items-center justify-between">
               <span className="font-serif italic text-xs text-white/50">
-                &ldquo;Every sip a new trip.&rdquo;
+                &ldquo;{t("quote")}&rdquo;
               </span>
               <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#F1E6C3] font-bold">
-                EST. 2026
+                {t("est")}
               </span>
             </div>
           </div>
@@ -232,12 +227,13 @@ export default function ContactSection() {
                   <CheckmarkCircle02Icon size={32} />
                 </div>
                 <h3 className="font-serif text-3xl font-medium text-white mb-2">
-                  Message Received
+                  {t("messageReceived")}
                 </h3>
                 <p className="font-sans text-sm text-white/70 max-w-sm mb-8 leading-relaxed">
-                  Thank you,{" "}
-                  <strong className="text-white">{formData.name}</strong>. Our
-                  house concierge will be in touch with you shortly.
+                  {t.rich("thankYou", {
+                    name: formData.name,
+                    b: (chunks) => <strong className="text-white">{chunks}</strong>,
+                  })}
                 </p>
                 <button
                   type="button"
@@ -247,7 +243,7 @@ export default function ContactSection() {
                   }}
                   className="px-6 py-2.5 rounded-full border border-white/20 hover:border-white text-xs font-mono uppercase tracking-widest text-white/80 hover:text-white transition-all"
                 >
-                  Send Another Message
+                  {t("sendAnother")}
                 </button>
               </div>
             ) : (
@@ -259,7 +255,7 @@ export default function ContactSection() {
                   {/* Topic Selector Chips */}
                   <div className="mb-6">
                     <label className="block font-mono text-[10px] uppercase tracking-widest text-white/60 mb-3">
-                      Select Topic
+                      {t("selectTopic")}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {TOPICS.map((topic) => {
@@ -282,7 +278,7 @@ export default function ContactSection() {
                                 isSelected ? "text-black" : "text-white/60"
                               }
                             />
-                            <span>{topic.label}</span>
+                            <span>{t(`topics.${topic.id}`)}</span>
                           </button>
                         );
                       })}
@@ -298,7 +294,7 @@ export default function ContactSection() {
                           htmlFor="contact-name"
                           className="block font-mono text-[10px] uppercase tracking-widest text-white/60"
                         >
-                          Your Name
+                          {t("yourName")}
                         </label>
                         <div className="relative">
                           <input
@@ -309,8 +305,8 @@ export default function ContactSection() {
                             onChange={(e) =>
                               setFormData({ ...formData, name: e.target.value })
                             }
-                            placeholder="e.g. Alexander Vance"
-                            className="w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/15 focus:border-[#F1E6C3] rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all duration-300 focus:shadow-[0_0_20px_rgba(241,230,195,0.15)]"
+                            placeholder={t("namePlaceholder")}
+                            className="w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/15 focus:border-[#F1E6C3] rounded-2xl py-3.5 ps-11 pe-4 text-sm text-white placeholder-white/25 outline-none transition-all duration-300 focus:shadow-[0_0_20px_rgba(241,230,195,0.15)]"
                           />
                           <svg
                             width="16"
@@ -321,7 +317,7 @@ export default function ContactSection() {
                             strokeWidth="1.5"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none"
+                            className="absolute start-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none"
                           >
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
@@ -334,7 +330,7 @@ export default function ContactSection() {
                           htmlFor="contact-email"
                           className="block font-mono text-[10px] uppercase tracking-widest text-white/60"
                         >
-                          Email Address
+                          {t("emailAddress")}
                         </label>
                         <div className="relative">
                           <input
@@ -348,12 +344,12 @@ export default function ContactSection() {
                                 email: e.target.value,
                               })
                             }
-                            placeholder="name@example.com"
-                            className="w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/15 focus:border-[#F1E6C3] rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all duration-300 focus:shadow-[0_0_20px_rgba(241,230,195,0.15)]"
+                            placeholder={t("emailPlaceholder")}
+                            className="w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/15 focus:border-[#F1E6C3] rounded-2xl py-3.5 ps-11 pe-4 text-sm text-white placeholder-white/25 outline-none transition-all duration-300 focus:shadow-[0_0_20px_rgba(241,230,195,0.15)]"
                           />
                           <Mail01Icon
                             size={16}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none"
+                            className="absolute start-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none"
                           />
                         </div>
                       </div>
@@ -365,7 +361,7 @@ export default function ContactSection() {
                         htmlFor="contact-message"
                         className="block font-mono text-[10px] uppercase tracking-widest text-white/60"
                       >
-                        How can we welcome you?
+                        {t("howCanWeWelcome")}
                       </label>
                       <div className="relative">
                         <textarea
@@ -379,12 +375,12 @@ export default function ContactSection() {
                               message: e.target.value,
                             })
                           }
-                          placeholder="Tell us about your inquiry, event date, or coffee preferences..."
-                          className="w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/15 focus:border-[#F1E6C3] rounded-2xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all duration-300 focus:shadow-[0_0_20px_rgba(241,230,195,0.15)] resize-none"
+                          placeholder={t("messagePlaceholder")}
+                          className="w-full bg-white/[0.04] hover:bg-white/[0.06] focus:bg-white/[0.08] border border-white/15 focus:border-[#F1E6C3] rounded-2xl py-3.5 ps-11 pe-4 text-sm text-white placeholder-white/25 outline-none transition-all duration-300 focus:shadow-[0_0_20px_rgba(241,230,195,0.15)] resize-none"
                         />
                         <Message01Icon
                           size={16}
-                          className="absolute left-4 top-4 text-white/40 pointer-events-none"
+                          className="absolute start-4 top-4 text-white/40 pointer-events-none"
                         />
                       </div>
                     </div>
@@ -394,7 +390,7 @@ export default function ContactSection() {
                 {/* Submit Action */}
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t border-white/10 gap-4">
                   <span className="font-mono text-[10px] text-white/40">
-                    Direct reply within 24 hours.
+                    {t("directReply")}
                   </span>
 
                   <button
@@ -404,11 +400,11 @@ export default function ContactSection() {
                   >
                     <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 pointer-events-none" />
                     <span>
-                      {isSubmitting ? "Delivering..." : "Deliver Message"}
+                      {isSubmitting ? t("delivering") : t("deliverMessage")}
                     </span>
                     <ArrowRight01Icon
                       size={14}
-                      className="transform group-hover:translate-x-1 transition-transform"
+                      className="transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform icon-auto-dir"
                     />
                   </button>
                 </div>

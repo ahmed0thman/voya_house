@@ -35,11 +35,11 @@ export const createTablesRangeSchema = z
     end: numberSchema,
   })
   .refine((data) => data.end >= data.start, {
-    message: "End must be greater than or equal to start",
-    path: ["end"],
+    message: "End must be greater than or equal to left",
+    path: ["right"],
   })
   .refine((data) => data.end - data.start + 1 <= MAX_RANGE_SIZE, {
     message: `Range is too large — ${MAX_RANGE_SIZE} tables max at once`,
-    path: ["end"],
+    path: ["right"],
   });
 export type CreateTablesRangeInput = z.infer<typeof createTablesRangeSchema>;
