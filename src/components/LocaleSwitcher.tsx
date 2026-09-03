@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { Suspense, useTransition } from "react";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { locales, type Locale } from "@/i18n/routing";
 
@@ -22,7 +22,7 @@ interface LocaleSwitcherProps {
   variant?: "pill" | "compact";
 }
 
-export default function LocaleSwitcher({ className = "", variant = "pill" }: LocaleSwitcherProps) {
+function LocaleSwitcherInner({ className = "", variant = "pill" }: LocaleSwitcherProps) {
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -85,5 +85,13 @@ export default function LocaleSwitcher({ className = "", variant = "pill" }: Loc
         );
       })}
     </div>
+  );
+}
+
+export default function LocaleSwitcher(props: LocaleSwitcherProps) {
+  return (
+    <Suspense fallback={null}>
+      <LocaleSwitcherInner {...props} />
+    </Suspense>
   );
 }
