@@ -39,9 +39,9 @@
       "tag": "حكايتنا وملاذنا"
     },
     "contact": {
-      "label": "الزيارة والكونسيرج",
-      "short": "الزيارة",
-      "tag": "الفرع والاستفسارات"
+      "label": "تواصل معنا",
+      "short": "تواصل",
+      "tag": "كلمنا وزورنا"
     }
   },
   "booklets": {
@@ -75,7 +75,10 @@
         "tagline": "نكهات حنونة وحصص سخية. أكل بيتي بطعم الحضن.",
         "tag": "أكل بيتي ومكرونة"
       }
-    }
+    },
+    "loading": "بنجهّز القائمة…",
+    "loadError": "معرفناش نجيب القائمة. جرب تاني.",
+    "empty": "لسه مفيش أصناف متاحة."
   },
   "header": {
     "houseTag": "هاوس",
@@ -93,7 +96,7 @@
     "view": "عرض"
   },
   "contact": {
-    "address": "123 شارع فوياج، القاهرة الجديدة",
+    "address": "الجزيرة · مدينة نصر",
     "hours": "07:00 — 23:00 يوميًا"
   },
   "tablePicker": {
@@ -108,7 +111,8 @@
     "name": "اكتب اسمك من فضلك.",
     "phone": "اكتب رقم موبايل صحيح من فضلك.",
     "address": "اكتب عنوان التوصيل كامل من فضلك.",
-    "table": "اختار الطاولة اللي انت قاعد عليها من فضلك."
+    "table": "اختار الطاولة اللي انت قاعد عليها من فضلك.",
+    "offerCode": "اكتب كود صحيح — 3 حروف على الأقل، وحروف أو أرقام أو - أو _ بس."
   },
   "cart": {
     "closeCart": "قفل السلة",
@@ -151,7 +155,11 @@
     },
     "rejected": {
       "notice": "الفريق مقدرش ياخد الطلب ده قبل ما يبدأ تحضيره.",
-      "itemsRestored": "رجّعنا أصنافه لسلتك تراجعها وتبعتها تاني."
+      "itemsRestored": "رجّعنا أصنافه لسلتك تراجعها وتبعتها تاني.",
+      "reasonLabel": "السبب: \"{reason}\"",
+      "toastReason": "الطلب اتلغى: {reason}",
+      "toastGeneric": "في طلب اتلغى من الفريق.",
+      "toastDescription": "رجّعنا أصنافه لسلتك، راجعها وابعتها تاني لما تجهز."
     },
     "modeHint": {
       "ON_TABLE": "هيوصلك على طاولتك",
@@ -234,20 +242,42 @@
     },
     "tableLabel": "طاولة",
     "notesPlaceholder": "مثال: حامي أوي، الثلج على جنب...",
-    "offerPlaceholder": "مثال: VOYA10"
+    "offerPlaceholder": "مثال: VOYA10",
+    "ticket": "الطلب {id}",
+    "round": "جولة {number}",
+    "myOrders": "طلباتي ({count})",
+    "placedAt": "اتبعت الساعة {time}",
+    "itemsInTicket": "أصناف الطلب {id} ({count}):",
+    "discount": "الخصم",
+    "note": "ملحوظة: \"{note}\"",
+    "reviewNewCart": "راجع السلة الجديدة ({count})",
+    "itemsListHeading": "أصناف {mode} ({count})",
+    "itemsSummaryLabel": "الأصناف ({count})",
+    "priceEach": "{price} للقطعة",
+    "applyOfferCode": "طبّق",
+    "checkingOfferCode": "بنتأكد…",
+    "offerPercentApplied": "خصم {percent}% اتطبق",
+    "offerAmountApplied": "خصم {amount} اتطبق",
+    "itemTypeCount": "{count, plural, zero {مفيش أصناف} one {صنف واحد} two {صنفين} few {# أصناف} many {# صنفًا} other {# صنف}}",
+    "orderUpdated": {
+      "title": "الفريق عدّل طلبك",
+      "description": "شوف الأصناف والإجمالي تحت — كلمنا لو في حاجة مش مظبوطة."
+    }
   },
   "errors": {
     "tableUnavailable": "الطاولة دي مش متاحة دلوقتي. امسح كود الـQR بتاعها تاني من فضلك.",
     "itemUnavailable": "في صنف من طلبك خلص دلوقتي. راجع سلتك من فضلك.",
     "offerInvalid": "الكود ده مش شغال أو خلصت صلاحيته.",
-    "unexpected": "حصل عندنا خطأ. حاول تاني من فضلك."
+    "unexpected": "حصل عندنا خطأ. حاول تاني من فضلك.",
+    "checkDetails": "راجع البيانات اللي كتبتها."
   },
   "hero": {
     "tagline": "هنا الناس بتتجمع",
     "cta": "اكتشف البيت",
     "scroll": "مرّر",
     "scrollToExplore": "مرّر تستكشف",
-    "brand": "فويا هاوس"
+    "brand": "فويا هاوس",
+    "entranceAlt": "مدخل فويا"
   },
   "stage": {
     "featured": "تجارب مختارة",
@@ -338,23 +368,36 @@
     "mamaBody": "أطباق دافية وسخية وبيتزا حرفية وحلويات تتاكل مع اللي بتحبهم. ضيافة حقيقية ووصفات مألوفة هتحسسك إنك في بيتك."
   },
   "footer": {
-    "flagshipLocation": "المقر الرئيسي",
+    "flagshipLocation": "فروعنا",
     "brand": "فويا هاوس",
-    "city": "القاهرة الجديدة، مصر",
     "repertoire": "القوائم",
     "dailyHours": "مواعيد العمل",
     "sevenDays": "كل أيام الأسبوع",
     "service": "قعدة في المكان · شباك الاستلام",
     "concierge": "الكونسيرج",
     "instagram": "إنستغرام",
-    "twitter": "تويتر",
-    "twitterX": "تويتر / إكس",
+    "tiktok": "تيك توك",
+    "facebook": "فيسبوك",
+    "whatsapp": "واتساب",
     "backToTop": "ارجع لفوق",
     "logoAlt": "شعار فويا",
     "rep1": "01 · قهوة فويا المختصة",
     "rep2": "02 · طعام بابا فويا الصحي",
     "rep3": "03 · سفرة ماما فويا الدافئة",
-    "quote": "كل رشفة رحلة جديدة. مصمّمة للرحلة."
+    "quote": "كل رشفة رحلة جديدة. مصمّمة للرحلة.",
+    "copyright": "2026 فويا هاوس. جميع الحقوق محفوظة"
+  },
+  "locations": {
+    "heading": "فروعنا",
+    "viewOnMap": "المسار على الخريطة",
+    "elGazira": {
+      "label": "الجزيرة",
+      "address": "النادي الأهلي، الجزيرة، القاهرة"
+    },
+    "nasrCity": {
+      "label": "مدينة نصر",
+      "address": "النادي الأهلي، مدينة نصر، القاهرة"
+    }
   },
   "contactForm": {
     "eyebrow": "الكونسيرج والاستفسارات",
@@ -362,10 +405,11 @@
     "voyaHouse": "فويا هاوس.",
     "houseOfVoya": "بيت فويا",
     "flagshipSanctuary": "الملاذ الرئيسي",
-    "address": "العنوان",
     "houseHours": "مواعيد المكان",
     "hoursValue": "الاثنين – الأحد · 07:00 – 23:00",
-    "conciergeDesk": "مكتب الكونسيرج",
+    "conciergeDesk": "راسلنا",
+    "chatOnWhatsapp": "تواصل عبر واتساب",
+    "followUs": "تابعنا",
     "est": "تأسس 2026",
     "messageReceived": "وصلت رسالتك",
     "sendAnother": "ابعت رسالة تانية",
@@ -379,13 +423,6 @@
     "namePlaceholder": "مثال: أحمد عثمان",
     "emailPlaceholder": "name@example.com",
     "messagePlaceholder": "قول لنا عايز إيه بالظبط — استفسار، مناسبة، أو حتى تفضيلاتك في القهوة...",
-    "topics": {
-      "general": "تحية عامة",
-      "coffee": "حصة القهوة",
-      "catering": "ضيافة بابا فويا الصحية",
-      "events": "مناسبات ماما فويا العائلية"
-    },
-    "addressValue": "123 شارع فوياج، القاهرة الجديدة، مصر",
     "thankYou": "شكرًا يا <b>{name}</b>. هيتواصل معاك كونسيرج البيت قريب.",
     "delivering": "بنبعتها...",
     "intro": "سواء بتحجز طاولة، أو بتسأل عن حصص البن الموسمية، أو بتخطط لمناسبة خاصة — بيتنا مفتوح ليك دايمًا.",
@@ -395,21 +432,33 @@
   "delivery": {
     "lookingUp": "بنحدد العنوان…",
     "mapHint": "دوس على الخريطة أو اسحب الدبوس تحدد نقطة التوصيل",
-    "addressPlaceholder": "عنوان التوصيل — العمارة، الدور، الشقة، أقرب علامة"
+    "addressPlaceholder": "عنوان التوصيل — العمارة، الدور، الشقة، أقرب علامة",
+    "locating": "بنحدد موقعك…",
+    "useMyLocation": "استخدم موقعي",
+    "hideMap": "اخفي الخريطة",
+    "pickOnMap": "حدد على الخريطة",
+    "geoUnsupported": "المتصفح بتاعك مش بيدعم تحديد الموقع.",
+    "geoLookupFailed": "معرفناش نجيب العنوان تلقائي — اكتبه إنت أحسن.",
+    "geoDenied": "معرفناش نوصل لموقعك — تأكد من صلاحيات الموقع، أو حدده على الخريطة."
   },
   "menuOverlay": {
     "view": "عرض",
     "swipeToSwitch": "اسحب تتنقل",
     "hold": "اضغط واستنى",
-    "close": "قفل الكتيب"
+    "close": "قفل الكتيب",
+    "itemsCount": "{count, plural, zero {مفيش أصناف} one {صنف واحد} two {صنفين} few {# أصناف} many {# صنفًا} other {# صنف}}",
+    "viewOrderAria": "{count, plural, zero {شوف طلب الطاولة} one {شوف طلب الطاولة (صنف واحد)} two {شوف طلب الطاولة (صنفين)} few {شوف طلب الطاولة (# أصناف)} many {شوف طلب الطاولة (# صنفًا)} other {شوف طلب الطاولة (# صنف)}}"
   },
   "menuItem": {
     "addToOrder": "ضيفه للطلب",
-    "increaseQuantity": "زوّد الكمية"
+    "increaseQuantity": "زوّد الكمية",
+    "add": "ضيف",
+    "removeItem": "شيل الصنف",
+    "decreaseQuantity": "قلل الكمية"
   },
   "mobile": {
-    "familyTitle1": "عائلة عصرية",
-    "familyTitle2": "تجربة",
+    "familyTitle1": "تجربة",
+    "familyTitle2": "عائلة عصرية",
     "familyDesc": "طقوس يومك، اختيارات بضمير، ولحظات حلوة تتقسم مع اللي بتحبهم.",
     "coffeeVertical": "فويا",
     "coffeeTitle1": "جودة في",
@@ -420,5 +469,12 @@
     "mamaVertical": "ماما فويا",
     "mamaTitle1": "دفء",
     "mamaTitle2": "وضيافة."
+  },
+  "soundToggle": {
+    "enable": "شغّل الصوت المحيطي",
+    "mute": "اكتم الصوت المحيطي"
+  },
+  "offerBanner": {
+    "alt": "عرض {code}"
   }
 }

@@ -24,17 +24,6 @@ export function formatTableDigits(number: number): string {
   return String(number).padStart(2, "0");
 }
 
-/**
- * English-only fallback, still read by `CartSheet`. The translated equivalent
- * is the `orderMode` namespace in `messages/*.json`; this constant goes away
- * once the cart moves onto it.
- */
-export const ORDER_MODE_LABEL: Record<OrderMode, string> = {
-  ON_TABLE: "Dine In",
-  TAKEAWAY: "Pickup",
-  DELIVERY: "Delivery",
-};
-
 interface CartStore {
   items: CartItem[];
   /**

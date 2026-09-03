@@ -1,5 +1,6 @@
 "use server";
 
+import { getLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { resolveImageUrl } from "@/lib/storage/r2";
 import { defineAction } from "@/server/define-action";
@@ -29,6 +30,8 @@ export const getPublicMenu = defineAction({
   auth: "public",
   schema: brandSlugSchema,
   handler: async (brandSlug): Promise<PublicMenuCategory[]> => {
+  const locale = await getLocale();
+
   const categories = await prisma.category.findMany({
     where: { brand: { slug: brandSlug }, isActive: true },
     orderBy: { sortOrder: "asc" },
@@ -42,11 +45,11 @@ export const getPublicMenu = defineAction({
 
   return categories.map((category) => ({
     id: category.id,
-    title: category.title,
+    title: (locale === "ar" && category.titleAr) || category.title,
     items: category.items.map((item) => ({
       id: item.id,
-      name: item.name,
-      description: item.description ?? "",
+      name: (locale === "ar" && item.nameAr) || item.name,
+      description: (locale === "ar" && item.descriptionAr) || item.description || "",
       price: item.price.toNumber(),
       image: item.images[0] ? resolveImageUrl(item.images[0]) : "",
     })),

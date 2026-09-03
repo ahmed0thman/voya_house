@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface SoundToggleProps {
   isMuted: boolean;
@@ -13,6 +14,7 @@ export default function SoundToggle({
   onToggle,
   isPageLoaded,
 }: SoundToggleProps) {
+  const t = useTranslations("soundToggle");
   const [isVisible, setIsVisible] = useState(false);
 
   // Delay entrance until after the loading screen is dismissed
@@ -28,12 +30,12 @@ export default function SoundToggle({
   return (
     <button
       onClick={onToggle}
-      aria-label={isMuted ? "Enable ambient sound" : "Mute ambient sound"}
+      aria-label={isMuted ? t("enable") : t("mute")}
       className="sound-toggle-btn"
       style={{
         position: "fixed",
         bottom: "1.5rem",
-        right: "1.5rem",
+        insetInlineEnd: "1.5rem",
         zIndex: 40,
         width: "3rem",
         height: "3rem",

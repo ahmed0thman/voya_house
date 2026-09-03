@@ -24,7 +24,9 @@ import type { ItemDTO, ItemImageDTO } from "@/server/actions/items";
 
 const formSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(160),
+  nameAr: z.string().trim().max(160, "Name is too long").optional(),
   description: z.string().trim().max(500, "Description is too long").optional(),
+  descriptionAr: z.string().trim().max(500, "Description is too long").optional(),
   price: z.number().positive("Price must be greater than 0"),
 });
 type FormValues = z.infer<typeof formSchema>;
@@ -63,10 +65,12 @@ function ItemFormFields({
     defaultValues: isEdit
       ? {
           name: props.item.name,
+          nameAr: props.item.nameAr ?? "",
           description: props.item.description ?? "",
+          descriptionAr: props.item.descriptionAr ?? "",
           price: props.item.price,
         }
-      : { name: "", description: "", price: 0 },
+      : { name: "", nameAr: "", description: "", descriptionAr: "", price: 0 },
   });
 
   const onSubmit = (values: FormValues) => {
@@ -110,6 +114,17 @@ function ItemFormFields({
           <FieldError errors={[errors.name]} />
         </Field>
 
+        <Field data-invalid={!!errors.nameAr}>
+          <FieldLabel htmlFor="item-name-ar">Name (Arabic)</FieldLabel>
+          <Input
+            id="item-name-ar"
+            dir="rtl"
+            placeholder="اختياري"
+            {...register("nameAr")}
+          />
+          <FieldError errors={[errors.nameAr]} />
+        </Field>
+
         <Field data-invalid={!!errors.description}>
           <FieldLabel htmlFor="item-description">Description</FieldLabel>
           <Textarea
@@ -119,6 +134,18 @@ function ItemFormFields({
             {...register("description")}
           />
           <FieldError errors={[errors.description]} />
+        </Field>
+
+        <Field data-invalid={!!errors.descriptionAr}>
+          <FieldLabel htmlFor="item-description-ar">Description (Arabic)</FieldLabel>
+          <Textarea
+            id="item-description-ar"
+            dir="rtl"
+            rows={2}
+            placeholder="اختياري"
+            {...register("descriptionAr")}
+          />
+          <FieldError errors={[errors.descriptionAr]} />
         </Field>
 
         <Field data-invalid={!!errors.price}>

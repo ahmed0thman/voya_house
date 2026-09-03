@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { useCartStore } from "@/store/useCartStore";
 import type { OrderDTO } from "@/server/actions/orders";
 
@@ -32,6 +33,7 @@ function saveRestoredIds(ids: Set<string>) {
  * only ever needs to fire once per order, ever, for this browser.
  */
 export function useRejectedOrderRecovery(orders: OrderDTO[]) {
+  const t = useTranslations("cart.rejected");
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
@@ -64,16 +66,14 @@ export function useRejectedOrderRecovery(orders: OrderDTO[]) {
       }
 
       toast.error(
-        order.rejectionReason ? `Ticket rejected: ${order.rejectionReason}` : "A ticket was rejected by staff.",
+        order.rejectionReason ? t("toastReason", { reason: order.rejectionReason }) : t("toastGeneric"),
         {
-          description: restoredAny
-            ? "Its items have been moved back to your cart — review and resend when ready."
-            : undefined,
+          description: restoredAny ? t("toastDescription") : undefined,
           duration: 10_000,
         },
       );
     }
 
     if (changed) saveRestoredIds(restored);
-  }, [orders, addItem]);
+  }, [orders, addItem, t]);
 }

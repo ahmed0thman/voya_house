@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
+import { getTranslations } from "next-intl/server";
 import { ActionError } from "@/lib/action-error";
 import type { ActionResult } from "@/lib/action-result";
 import { requireUser, requireAdmin } from "@/lib/dal";
@@ -23,8 +24,8 @@ type BaseConfig<TAuth extends AuthMode> = {
 };
 
 /** The most useful message for a toast: the first thing that actually failed. */
-function firstIssueMessage(error: z.ZodError): string {
-  return error.issues[0]?.message ?? "Please check the details you entered.";
+function firstIssueMessage(error: z.ZodError, fallback: string): string {
+  return error.issues[0]?.message ?? fallback;
 }
 
 export function defineAction<TAuth extends AuthMode, TInput, TOutput>(
@@ -53,6 +54,13 @@ export function defineAction<TAuth extends AuthMode>(config: {
   handler: (input: never, ctx: { user: SessionUser | null }) => Promise<unknown>;
 }) {
   return async (rawInput?: unknown): Promise<ActionResult<unknown>> => {
+    // Only public actions run in the guest's own locale — `/control` never
+    // renders in Arabic, and resolving it there risks a stale NEXT_LOCALE
+    // cookie (left over from the same browser visiting the guest site)
+    // bleeding an Arabic fallback into the staff UI. Admin/user actions keep
+    // these two generic fallbacks in English, unconditionally.
+    const t = config.auth === "public" ? await getTranslations("errors") : null;
+
     try {
       // Order matters: authenticate before looking at anything the caller sent.
       const user =
@@ -69,7 +77,10 @@ export function defineAction<TAuth extends AuthMode>(config: {
           return {
             ok: false,
             error: {
-              message: firstIssueMessage(parsed.error),
+              message: firstIssueMessage(
+                parsed.error,
+                t ? t("checkDetails") : "Please check the details you entered.",
+              ),
               code: "VALIDATION",
               fieldErrors: z.flattenError(parsed.error).fieldErrors,
             },
@@ -100,7 +111,7 @@ export function defineAction<TAuth extends AuthMode>(config: {
       return {
         ok: false,
         error: {
-          message: "Something went wrong on our side. Please try again.",
+          message: t ? t("unexpected") : "Something went wrong on our side. Please try again.",
           code: "UNEXPECTED",
         },
       };

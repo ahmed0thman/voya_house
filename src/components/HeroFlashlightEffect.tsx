@@ -3,8 +3,10 @@
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
+import { useTranslations } from "next-intl";
 
 export default function HeroFlashlightEffect() {
+  const t = useTranslations("hero");
   const mousePos = useRef({ x: -1000, y: -1000 });
   const maskRadius = useRef({ value: 175 });
   const pulseAnim = useRef<gsap.core.Tween | null>(null);
@@ -81,7 +83,7 @@ export default function HeroFlashlightEffect() {
       >
         <Image 
           src="/assets/3d-renders/entrance_3d.png" 
-          alt="Voya Entrance" 
+          alt={t("entranceAlt")}
           fill
           sizes="100vw"
           quality={75}

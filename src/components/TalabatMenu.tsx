@@ -142,6 +142,7 @@ export default function TalabatMenu({
                     ? `${menu.colors.text} bg-white shadow-md`
                     : "text-black/60 hover:text-black hover:bg-white/50"
                 }`}
+                dir="auto"
               >
                 {category.title}
               </button>
@@ -173,6 +174,7 @@ export default function TalabatMenu({
           >
             <h3
               className={`text-2xl font-serif font-bold mb-6 ${menu.colors.text}`}
+              dir="auto"
             >
               {category.title}
             </h3>
@@ -204,10 +206,10 @@ export default function TalabatMenu({
                     </div>
 
                     <div className="flex-1 min-w-0 py-1">
-                      <h4 className="font-bold text-base text-black mb-1">
+                      <h4 className="font-bold text-base text-black mb-1" dir="auto">
                         {item.name}
                       </h4>
-                      <p className="text-sm text-black/60 leading-relaxed line-clamp-3">
+                      <p className="text-sm text-black/60 leading-relaxed line-clamp-3" dir="auto">
                         {item.description}
                       </p>
                     </div>

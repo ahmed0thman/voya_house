@@ -18,6 +18,7 @@ export type CategoryDTO = {
   id: string;
   brandId: string;
   title: string;
+  titleAr: string | null;
   slug: string;
   isActive: boolean;
   sortOrder: number;
@@ -31,6 +32,7 @@ function toCategoryDTO(
     id: category.id,
     brandId: category.brandId,
     title: category.title,
+    titleAr: category.titleAr,
     slug: category.slug,
     isActive: category.isActive,
     sortOrder: category.sortOrder,
@@ -94,6 +96,7 @@ export const createCategory = defineAction({
       data: {
         brandId: input.brandId,
         title: input.title,
+        titleAr: input.titleAr || null,
         slug,
         sortOrder: (last?.sortOrder ?? -1) + 1,
       },
@@ -116,6 +119,7 @@ export const updateCategory = defineAction({
     where: { id: input.id },
     data: {
       title: input.title,
+      titleAr: input.titleAr === undefined ? undefined : input.titleAr || null,
       isActive: input.isActive,
     },
     include: { _count: { select: { items: true } } },

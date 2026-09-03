@@ -13,7 +13,7 @@ export const queryKeys = {
     orderable: ["items", "orderable"] as const,
   },
   publicMenu: {
-    brand: (brandSlug: string) => ["publicMenu", brandSlug] as const,
+    brand: (brandSlug: string, locale: string) => ["publicMenu", brandSlug, locale] as const,
   },
   orders: {
     /** Control board: every open table session with its tickets. */
@@ -49,5 +49,18 @@ export const queryKeys = {
   },
   auth: {
     currentUser: ["auth", "currentUser"] as const,
+  },
+  settings: {
+    /** Admin: the full editable settings row. */
+    all: ["settings"] as const,
+    /** Public: just the WhatsApp number, for the guest checkout handoff. */
+    whatsappOrderNumber: ["settings", "whatsappOrderNumber"] as const,
+  },
+  contact: {
+    /** Admin: every subject, active or not. */
+    subjects: ["contact", "subjects"] as const,
+    /** Public: active subjects only, for the landing page's topic chips. */
+    activeSubjects: ["contact", "activeSubjects"] as const,
+    messages: (filtersKey: string) => ["contact", "messages", filtersKey] as const,
   },
 };

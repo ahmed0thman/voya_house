@@ -23,6 +23,7 @@ import type { CategoryDTO } from "@/server/actions/categories";
 
 const formSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(120),
+  titleAr: z.string().trim().max(120, "Title is too long").optional(),
   isActive: z.boolean(),
 });
 type FormValues = z.infer<typeof formSchema>;
@@ -56,14 +57,23 @@ function CategoryFormFields({
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: isEdit
-      ? { title: props.category.title, isActive: props.category.isActive }
-      : { title: "", isActive: true },
+      ? {
+          title: props.category.title,
+          titleAr: props.category.titleAr ?? "",
+          isActive: props.category.isActive,
+        }
+      : { title: "", titleAr: "", isActive: true },
   });
 
   const onSubmit = (values: FormValues) => {
     if (isEdit) {
       updateCategory.mutate(
-        { id: props.category.id, title: values.title, isActive: values.isActive },
+        {
+          id: props.category.id,
+          title: values.title,
+          titleAr: values.titleAr,
+          isActive: values.isActive,
+        },
         {
           onSuccess: () => {
             toast.success("Category updated");
@@ -74,7 +84,7 @@ function CategoryFormFields({
       );
     } else {
       createCategory.mutate(
-        { brandId: props.brandId, title: values.title },
+        { brandId: props.brandId, title: values.title, titleAr: values.titleAr },
         {
           onSuccess: () => {
             toast.success("Category created");
@@ -97,6 +107,17 @@ function CategoryFormFields({
             {...register("title")}
           />
           <FieldError errors={[errors.title]} />
+        </Field>
+
+        <Field data-invalid={!!errors.titleAr}>
+          <FieldLabel htmlFor="category-title-ar">Title (Arabic)</FieldLabel>
+          <Input
+            id="category-title-ar"
+            dir="rtl"
+            placeholder="اختياري"
+            {...register("titleAr")}
+          />
+          <FieldError errors={[errors.titleAr]} />
         </Field>
 
         {isEdit && (

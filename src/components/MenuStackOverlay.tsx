@@ -366,7 +366,7 @@ export default function MenuStackOverlay({
       {totalItems > 0 && (
         <button
           onClick={openCart}
-          aria-label={`View Table Order (${totalItems} items)`}
+          aria-label={t("viewOrderAria", { count: totalItems })}
           className="overlay-control absolute top-3.5 start-4 sm:top-5 sm:start-6 z-50 group flex items-center gap-2 sm:gap-2.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-full bg-[#E05D3A] hover:bg-[#F26A45] text-white border border-white/20 hover:border-white/40 backdrop-blur-xl shadow-[0_8px_25px_rgba(224,93,58,0.4)] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer"
         >
           <span className="relative flex h-2.5 w-2.5 sm:h-3 sm:w-3">
@@ -380,7 +380,7 @@ export default function MenuStackOverlay({
 
           <div className="flex items-center gap-1.5 font-mono text-[11px] sm:text-xs">
             <span className="text-white font-bold tracking-wide">
-              {totalItems} Item{totalItems > 1 ? "s" : ""}
+              {t("itemsCount", { count: totalItems })}
             </span>
             <span className="text-white/50">·</span>
             <span className="text-white font-bold tracking-wide">

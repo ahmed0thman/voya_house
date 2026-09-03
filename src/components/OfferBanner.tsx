@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useFeaturedOfferBanner } from "@/hooks/use-offers";
 
 /**
@@ -11,6 +12,7 @@ import { useFeaturedOfferBanner } from "@/hooks/use-offers";
  * not drawn dynamically here.
  */
 export function OfferBanner() {
+  const t = useTranslations("offerBanner");
   const { data: banner } = useFeaturedOfferBanner();
   if (!banner) return null;
   if (!banner.bannerImageMobileUrl && !banner.bannerImageDesktopUrl)
@@ -22,7 +24,7 @@ export function OfferBanner() {
         <div className="relative block md:hidden w-full rounded-2xl overflow-hidden aspect-[3/1]">
           <Image
             src={banner.bannerImageMobileUrl}
-            alt={`${banner.code} offer`}
+            alt={t("alt", { code: banner.code })}
             fill
             sizes="100vw"
             quality={80}
@@ -34,7 +36,7 @@ export function OfferBanner() {
         <div className="relative hidden md:block w-full rounded-2xl overflow-hidden aspect-[8/1]">
           <Image
             src={banner.bannerImageDesktopUrl}
-            alt={`${banner.code} offer`}
+            alt={t("alt", { code: banner.code })}
             fill
             sizes="100vw"
             quality={80}

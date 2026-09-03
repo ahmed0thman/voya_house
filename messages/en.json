@@ -39,9 +39,9 @@
       "tag": "Our Story & Sanctuary"
     },
     "contact": {
-      "label": "Visit & Concierge",
-      "short": "Visit & Concierge",
-      "tag": "Flagship & Inquiries"
+      "label": "Contact Us",
+      "short": "Contact",
+      "tag": "Get in Touch"
     }
   },
   "booklets": {
@@ -75,7 +75,10 @@
         "tagline": "Nurturing flavors and generous portions. Comfort food that feels like home.",
         "tag": "COMFORT FOOD & PASTAS"
       }
-    }
+    },
+    "loading": "Loading menu…",
+    "loadError": "Couldn't load the menu. Please try again.",
+    "empty": "No items available yet."
   },
   "header": {
     "houseTag": "House",
@@ -93,7 +96,7 @@
     "view": "View"
   },
   "contact": {
-    "address": "123 Voyage Street, New Cairo",
+    "address": "El Gazira · Nasr City",
     "hours": "07:00 — 23:00 Daily"
   },
   "tablePicker": {
@@ -108,7 +111,8 @@
     "name": "Please enter your name.",
     "phone": "Please enter a valid phone number.",
     "address": "Please enter a full delivery address.",
-    "table": "Please select the table you're sitting at."
+    "table": "Please select the table you're sitting at.",
+    "offerCode": "Enter a valid code — at least 3 characters, letters, numbers, hyphens or underscores only."
   },
   "cart": {
     "closeCart": "Close Cart",
@@ -151,7 +155,11 @@
     },
     "rejected": {
       "notice": "Staff rejected this ticket before preparing it.",
-      "itemsRestored": "Its items were moved back to your cart to review and resend."
+      "itemsRestored": "Its items were moved back to your cart to review and resend.",
+      "reasonLabel": "Reason: “{reason}”",
+      "toastReason": "Ticket rejected: {reason}",
+      "toastGeneric": "A ticket was rejected by staff.",
+      "toastDescription": "Its items have been moved back to your cart — review and resend when ready."
     },
     "modeHint": {
       "ON_TABLE": "Served at your table",
@@ -234,20 +242,42 @@
     },
     "tableLabel": "Table",
     "notesPlaceholder": "e.g. Extra hot, ice on side...",
-    "offerPlaceholder": "e.g. VOYA10"
+    "offerPlaceholder": "e.g. VOYA10",
+    "ticket": "Ticket {id}",
+    "round": "Round {number}",
+    "myOrders": "My Orders ({count})",
+    "placedAt": "Placed at {time}",
+    "itemsInTicket": "Items in Ticket {id} ({count}):",
+    "discount": "Discount",
+    "note": "Note: “{note}”",
+    "reviewNewCart": "Review New Cart ({count})",
+    "itemsListHeading": "{mode} Items ({count})",
+    "itemsSummaryLabel": "Items ({count})",
+    "priceEach": "{price} each",
+    "applyOfferCode": "Apply",
+    "checkingOfferCode": "Checking…",
+    "offerPercentApplied": "{percent}% off applied",
+    "offerAmountApplied": "{amount} off applied",
+    "itemTypeCount": "{count, plural, one {# item type} other {# item types}}",
+    "orderUpdated": {
+      "title": "Your order was updated by our team",
+      "description": "Check the items and total below — call us if anything looks wrong."
+    }
   },
   "errors": {
     "tableUnavailable": "This table isn't available. Please rescan the table QR code.",
     "itemUnavailable": "One of the items in your order is no longer available. Please review your cart.",
     "offerInvalid": "This code isn't valid or has expired.",
-    "unexpected": "Something went wrong on our side. Please try again."
+    "unexpected": "Something went wrong on our side. Please try again.",
+    "checkDetails": "Please check the details you entered."
   },
   "hero": {
     "tagline": "Where people come together",
     "cta": "Explore the House",
     "scroll": "Scroll",
     "scrollToExplore": "Scroll to explore",
-    "brand": "Voya House"
+    "brand": "Voya House",
+    "entranceAlt": "Voya Entrance"
   },
   "stage": {
     "featured": "FEATURED EXPERIENCES",
@@ -338,23 +368,36 @@
     "mamaBody": "Generous comfort dishes, artisanal pizzas, and sweet treats made for sharing. Warm hospitality and familiar recipes that make you feel right at home."
   },
   "footer": {
-    "flagshipLocation": "Flagship Location",
+    "flagshipLocation": "Our Locations",
     "brand": "Voya House",
-    "city": "New Cairo, Egypt",
     "repertoire": "The Repertoire",
     "dailyHours": "Daily Hours",
     "sevenDays": "Seven days a week",
     "service": "Dine-in · Pickup Window",
     "concierge": "Concierge",
     "instagram": "Instagram",
-    "twitter": "Twitter",
-    "twitterX": "Twitter / X",
+    "tiktok": "TikTok",
+    "facebook": "Facebook",
+    "whatsapp": "WhatsApp",
     "backToTop": "Back to Top",
     "logoAlt": "Voya Logo",
     "rep1": "01 · Voya Specialty Coffee",
     "rep2": "02 · Papa Voya Healthy Food",
     "rep3": "03 · Mama Voya Comfort Table",
-    "quote": "Every sip a new trip. Designed for the journey."
+    "quote": "Every sip a new trip. Designed for the journey.",
+    "copyright": "2026 Voya House Inc. All Rights Reserved"
+  },
+  "locations": {
+    "heading": "Our Locations",
+    "viewOnMap": "View on map",
+    "elGazira": {
+      "label": "El Gazira",
+      "address": "Al Ahly Club, El Gazira, Cairo"
+    },
+    "nasrCity": {
+      "label": "Nasr City",
+      "address": "Al Ahly Club, Nasr City, Cairo"
+    }
   },
   "contactForm": {
     "eyebrow": "Concierge & Inquiries",
@@ -362,10 +405,11 @@
     "voyaHouse": "VOYA HOUSE.",
     "houseOfVoya": "The House of Voya",
     "flagshipSanctuary": "Flagship Sanctuary",
-    "address": "Address",
     "houseHours": "House Hours",
     "hoursValue": "Monday – Sunday · 07:00 – 23:00",
-    "conciergeDesk": "Concierge Desk",
+    "conciergeDesk": "Message Us",
+    "chatOnWhatsapp": "Chat on WhatsApp",
+    "followUs": "Follow Us",
     "est": "EST. 2026",
     "messageReceived": "Message Received",
     "sendAnother": "Send Another Message",
@@ -379,13 +423,6 @@
     "namePlaceholder": "e.g. Alexander Vance",
     "emailPlaceholder": "name@example.com",
     "messagePlaceholder": "Tell us about your inquiry, event date, or coffee preferences...",
-    "topics": {
-      "general": "General Hello",
-      "coffee": "Coffee Allocation",
-      "catering": "Papa Wellness Catering",
-      "events": "Mama Family Events"
-    },
-    "addressValue": "123 Voyage Street, New Cairo, EG",
     "thankYou": "Thank you, <b>{name}</b>. Our house concierge will be in touch with you shortly.",
     "delivering": "Delivering...",
     "intro": "Whether you are reserving a table, inquiring about our seasonal bean allocations, or planning a private gathering — our house is always open.",
@@ -395,17 +432,29 @@
   "delivery": {
     "lookingUp": "Looking up address…",
     "mapHint": "Tap the map or drag the pin to set your delivery point",
-    "addressPlaceholder": "Delivery address — building, floor, apartment, landmark"
+    "addressPlaceholder": "Delivery address — building, floor, apartment, landmark",
+    "locating": "Locating…",
+    "useMyLocation": "Use My Location",
+    "hideMap": "Hide Map",
+    "pickOnMap": "Pick On Map",
+    "geoUnsupported": "Your browser doesn't support GPS location.",
+    "geoLookupFailed": "Couldn't look up that address automatically — feel free to type it in.",
+    "geoDenied": "Couldn't get your location — check location permissions, or pick on the map instead."
   },
   "menuOverlay": {
     "view": "View",
     "swipeToSwitch": "Swipe to switch",
     "hold": "Hold",
-    "close": "Close Booklet Menu"
+    "close": "Close Booklet Menu",
+    "itemsCount": "{count, plural, one {# Item} other {# Items}}",
+    "viewOrderAria": "{count, plural, one {View Table Order (# item)} other {View Table Order (# items)}}"
   },
   "menuItem": {
     "addToOrder": "Add to order",
-    "increaseQuantity": "Increase quantity"
+    "increaseQuantity": "Increase quantity",
+    "add": "Add",
+    "removeItem": "Remove item",
+    "decreaseQuantity": "Decrease quantity"
   },
   "mobile": {
     "familyTitle1": "A Modern Family",
@@ -420,5 +469,12 @@
     "mamaVertical": "MAMA VOYA",
     "mamaTitle1": "Warmth &",
     "mamaTitle2": "Hospitality."
+  },
+  "soundToggle": {
+    "enable": "Enable ambient sound",
+    "mute": "Mute ambient sound"
+  },
+  "offerBanner": {
+    "alt": "{code} offer"
   }
 }

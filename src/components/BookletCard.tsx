@@ -54,6 +54,7 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
     ref,
   ) => {
     const tBrands = useTranslations("brands");
+    const tBooklets = useTranslations("booklets");
     const tCovers = useTranslations("booklets.covers");
     const { data: categories, isLoading, isError } = usePublicMenu(brandId);
     const cover = BRAND_COVERS[brandId];
@@ -198,10 +199,10 @@ const BookletCard = forwardRef<HTMLDivElement, BookletCardProps>(
                 className={`w-full h-full flex items-center justify-center px-8 text-center font-mono text-sm ${colors.text} opacity-70`}
               >
                 {isLoading
-                  ? "Loading menu…"
+                  ? tBooklets("loading")
                   : isError
-                    ? "Couldn't load the menu. Please try again."
-                    : "No items available yet."}
+                    ? tBooklets("loadError")
+                    : tBooklets("empty")}
               </div>
             )}
           </div>

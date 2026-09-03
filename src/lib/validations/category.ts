@@ -3,15 +3,24 @@ import { z } from "zod";
 /** Optionally narrow the category list to one brand; omitted means all brands. */
 export const listCategoriesSchema = z.uuid().optional();
 
+const titleArSchema = z
+  .string()
+  .trim()
+  .max(120, "Title is too long")
+  .optional()
+  .or(z.literal(""));
+
 export const createCategorySchema = z.object({
   brandId: z.uuid(),
   title: z.string().trim().min(1, "Title is required").max(120),
+  titleAr: titleArSchema,
 });
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
 
 export const updateCategorySchema = z.object({
   id: z.uuid(),
   title: z.string().trim().min(1, "Title is required").max(120).optional(),
+  titleAr: titleArSchema,
   isActive: z.boolean().optional(),
 });
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;

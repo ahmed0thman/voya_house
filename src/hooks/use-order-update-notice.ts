@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import type { OrderDTO } from "@/server/actions/orders";
 
 /** What the guest actually agreed to: the lines and what they owe. */
@@ -22,6 +23,7 @@ function contentSignature(order: OrderDTO): string {
  * Rejections are excluded — those get their own, more specific notice.
  */
 export function useOrderUpdateNotice(orders: OrderDTO[]) {
+  const t = useTranslations("cart.orderUpdated");
   const seen = useRef(new Map<string, string>());
 
   useEffect(() => {
@@ -33,11 +35,11 @@ export function useOrderUpdateNotice(orders: OrderDTO[]) {
       seen.current.set(order.id, signature);
 
       if (previous !== undefined && previous !== signature) {
-        toast("Your order was updated by our team", {
-          description: "Check the items and total below — call us if anything looks wrong.",
+        toast(t("title"), {
+          description: t("description"),
           duration: 10_000,
         });
       }
     }
-  }, [orders]);
+  }, [orders, t]);
 }

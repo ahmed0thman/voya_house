@@ -54,7 +54,7 @@ export default function MorphingCartButton({
         } font-mono text-xs font-bold uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer select-none`}
       >
         <Add01Icon size={15} strokeWidth={2.5} />
-        <span>Add</span>
+        <span>{t("add")}</span>
       </button>
     );
   }
@@ -66,7 +66,7 @@ export default function MorphingCartButton({
     >
       <button
         onClick={handleDecrement}
-        aria-label={quantity === 1 ? "Remove item" : "Decrease quantity"}
+        aria-label={quantity === 1 ? t("removeItem") : t("decreaseQuantity")}
         className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-white text-black flex items-center justify-center transition-all active:scale-90 cursor-pointer shadow-xs"
       >
         {quantity === 1 ? (

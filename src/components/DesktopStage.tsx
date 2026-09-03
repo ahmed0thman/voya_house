@@ -353,8 +353,8 @@ export default function DesktopStage({
           <div
             className="relative z-30"
             style={{
-              paddingLeft: "14%",
-              paddingRight: "10%",
+              paddingInlineStart: "14%",
+              paddingInlineEnd: "10%",
               paddingTop: "5.5rem",
             }}
           >
@@ -402,8 +402,8 @@ export default function DesktopStage({
                 className="exp-item-1 w-full flex flex-col justify-center shrink-0"
                 style={{
                   height: "75vh",
-                  paddingLeft: "14%",
-                  paddingRight: "10%",
+                  paddingInlineStart: "14%",
+                  paddingInlineEnd: "10%",
                 }}
               >
                 <h3
@@ -432,7 +432,7 @@ export default function DesktopStage({
                   className="flex items-center"
                   style={{ marginBottom: "2rem" }}
                 >
-                  <div style={{ paddingRight: "1.5rem" }}>
+                  <div style={{ paddingInlineEnd: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -458,7 +458,7 @@ export default function DesktopStage({
                       backgroundColor: "#333",
                     }}
                   />
-                  <div style={{ paddingLeft: "1.5rem" }}>
+                  <div style={{ paddingInlineStart: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -507,8 +507,8 @@ export default function DesktopStage({
                 className="exp-item-2 w-full flex flex-col justify-center opacity-20 shrink-0"
                 style={{
                   height: "75vh",
-                  paddingLeft: "14%",
-                  paddingRight: "10%",
+                  paddingInlineStart: "14%",
+                  paddingInlineEnd: "10%",
                 }}
               >
                 <h3
@@ -537,7 +537,7 @@ export default function DesktopStage({
                   className="flex items-center"
                   style={{ marginBottom: "2rem" }}
                 >
-                  <div style={{ paddingRight: "1.5rem" }}>
+                  <div style={{ paddingInlineEnd: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -563,7 +563,7 @@ export default function DesktopStage({
                       backgroundColor: "#333",
                     }}
                   />
-                  <div style={{ paddingLeft: "1.5rem" }}>
+                  <div style={{ paddingInlineStart: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -609,8 +609,8 @@ export default function DesktopStage({
                 className="exp-item-3 w-full flex flex-col justify-center opacity-20 shrink-0"
                 style={{
                   height: "75vh",
-                  paddingLeft: "14%",
-                  paddingRight: "10%",
+                  paddingInlineStart: "14%",
+                  paddingInlineEnd: "10%",
                 }}
               >
                 <h3
@@ -639,7 +639,7 @@ export default function DesktopStage({
                   className="flex items-center"
                   style={{ marginBottom: "2rem" }}
                 >
-                  <div style={{ paddingRight: "1.5rem" }}>
+                  <div style={{ paddingInlineEnd: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -665,7 +665,7 @@ export default function DesktopStage({
                       backgroundColor: "#333",
                     }}
                   />
-                  <div style={{ paddingLeft: "1.5rem" }}>
+                  <div style={{ paddingInlineStart: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -711,8 +711,8 @@ export default function DesktopStage({
                 className="exp-item-4 w-full flex flex-col justify-center opacity-20 shrink-0"
                 style={{
                   height: "75vh",
-                  paddingLeft: "14%",
-                  paddingRight: "10%",
+                  paddingInlineStart: "14%",
+                  paddingInlineEnd: "10%",
                 }}
               >
                 <h3
@@ -741,7 +741,7 @@ export default function DesktopStage({
                   className="flex items-center"
                   style={{ marginBottom: "2rem" }}
                 >
-                  <div style={{ paddingRight: "1.5rem" }}>
+                  <div style={{ paddingInlineEnd: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -767,7 +767,7 @@ export default function DesktopStage({
                       backgroundColor: "#333",
                     }}
                   />
-                  <div style={{ paddingLeft: "1.5rem" }}>
+                  <div style={{ paddingInlineStart: "1.5rem" }}>
                     <div
                       className="uppercase"
                       style={{
@@ -827,7 +827,7 @@ export default function DesktopStage({
               position: "absolute",
               top: 0,
               bottom: 0,
-              left: 0,
+              insetInlineStart: 0,
               width: "45%",
               background:
                 "linear-gradient(to right, rgba(8,9,7,1) 0%, rgba(8,9,7,0.9) 10%, rgba(8,9,7,0.7) 25%, rgba(8,9,7,0.4) 45%, rgba(8,9,7,0.15) 70%, rgba(8,9,7,0.02) 90%, transparent 100%)",
@@ -839,8 +839,8 @@ export default function DesktopStage({
           <div
             style={{
               position: "absolute",
-              left: 0,
-              right: 0,
+              insetInlineStart: 0,
+              insetInlineEnd: 0,
               bottom: 0,
               height: "35%",
               background:

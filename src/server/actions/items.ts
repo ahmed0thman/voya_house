@@ -24,7 +24,9 @@ export type ItemDTO = {
   id: string;
   categoryId: string;
   name: string;
+  nameAr: string | null;
   description: string | null;
+  descriptionAr: string | null;
   price: number;
   images: ItemImageDTO[];
   isAvailable: boolean;
@@ -36,7 +38,9 @@ function toItemDTO(item: Item): ItemDTO {
     id: item.id,
     categoryId: item.categoryId,
     name: item.name,
+    nameAr: item.nameAr,
     description: item.description,
+    descriptionAr: item.descriptionAr,
     price: item.price.toNumber(),
     images: item.images.map((key) => ({ key, url: resolveImageUrl(key) })),
     isAvailable: item.isAvailable,
@@ -113,7 +117,9 @@ export const createItem = defineAction({
       data: {
         categoryId: input.categoryId,
         name: input.name,
+        nameAr: input.nameAr || null,
         description: input.description || null,
+        descriptionAr: input.descriptionAr || null,
         price: input.price,
         images: input.images,
         sortOrder: (last?.sortOrder ?? -1) + 1,
@@ -144,8 +150,11 @@ export const updateItem = defineAction({
     data: {
       categoryId: input.categoryId,
       name: input.name,
+      nameAr: input.nameAr === undefined ? undefined : input.nameAr || null,
       description:
         input.description === undefined ? undefined : input.description || null,
+      descriptionAr:
+        input.descriptionAr === undefined ? undefined : input.descriptionAr || null,
       price: input.price,
       images: input.images,
       isAvailable: input.isAvailable,

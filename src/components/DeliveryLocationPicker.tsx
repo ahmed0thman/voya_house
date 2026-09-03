@@ -43,12 +43,12 @@ export default function DeliveryLocationPicker({
         const data = await res.json();
         if (typeof data?.display_name === "string") onAddressChange(data.display_name);
       } catch {
-        setGeoNotice("Couldn't look up that address automatically — feel free to type it in.");
+        setGeoNotice(t("geoLookupFailed"));
       } finally {
         setGeocoding(false);
       }
     },
-    [onAddressChange],
+    [onAddressChange, t],
   );
 
   const handlePick = useCallback(
@@ -62,7 +62,7 @@ export default function DeliveryLocationPicker({
 
   const handleUseGps = () => {
     if (!navigator.geolocation) {
-      setGeoNotice("Your browser doesn't support GPS location.");
+      setGeoNotice(t("geoUnsupported"));
       return;
     }
     setLocating(true);
@@ -75,7 +75,7 @@ export default function DeliveryLocationPicker({
       },
       () => {
         setLocating(false);
-        setGeoNotice("Couldn't get your location — check location permissions, or pick on the map instead.");
+        setGeoNotice(t("geoDenied"));
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -108,7 +108,7 @@ export default function DeliveryLocationPicker({
           className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl border border-white/15 hover:border-[#F1E6C3]/60 text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-white/70 hover:text-[#F1E6C3] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <GpsSignal01Icon size={13} className="shrink-0" />
-          <span>{locating ? "Locating…" : "Use My Location"}</span>
+          <span>{locating ? t("locating") : t("useMyLocation")}</span>
         </button>
         <button
           type="button"
@@ -120,7 +120,7 @@ export default function DeliveryLocationPicker({
           }`}
         >
           <MapPinpoint01Icon size={13} className="shrink-0" />
-          <span>{showMap ? "Hide Map" : "Pick On Map"}</span>
+          <span>{showMap ? t("hideMap") : t("pickOnMap")}</span>
         </button>
       </div>
 
