@@ -14,11 +14,13 @@ import {
   Location01Icon,
   ArrowRight01Icon,
   ShoppingBag01Icon,
+  WhatsappIcon,
 } from "hugeicons-react";
 import { useTranslations } from "next-intl";
 import { useCartStore } from "@/store/useCartStore";
 import { useGuestOrders } from "@/hooks/use-table-orders";
 import LocaleSwitcher from "@/components/LocaleSwitcher";
+import { SOCIAL_LINKS } from "@/lib/social-links";
 
 interface HeaderProps {
   onOpenBooklet?: (menu: "coffee" | "papa" | "mama") => void;
@@ -55,7 +57,9 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
     setMounted(true);
   }, []);
 
-  const totalItems = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
+  const totalItems = useCartStore((s) =>
+    s.items.reduce((sum, i) => sum + i.quantity, 0),
+  );
   const openCart = useCartStore((s) => s.openCart);
   const orderMode = useCartStore((s) => s.orderMode);
   const activeOrdersCount = useGuestOrders().data?.length ?? 0;
@@ -92,17 +96,29 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
         gsap.fromTo(
           sheetRef.current,
           { opacity: 0, backdropFilter: "blur(0px)" },
-          { opacity: 1, backdropFilter: "blur(24px)", duration: 0.4, ease: "power3.out" }
+          {
+            opacity: 1,
+            backdropFilter: "blur(24px)",
+            duration: 0.4,
+            ease: "power3.out",
+          },
         );
 
         gsap.fromTo(
           sheetRef.current.querySelectorAll(".sheet-anim-item"),
           { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.5, stagger: 0.06, ease: "power3.out", delay: 0.1 }
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.5,
+            stagger: 0.06,
+            ease: "power3.out",
+            delay: 0.1,
+          },
         );
       }
     },
-    { dependencies: [isOpen], scope: sheetRef }
+    { dependencies: [isOpen], scope: sheetRef },
   );
 
   const scrollToSection = (id: string) => {
@@ -139,7 +155,6 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
         />
 
         <div className="relative z-10 flex justify-between items-center w-full max-w-7xl mx-auto pointer-events-auto">
-          
           {/* Logo / Brand Name */}
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -176,7 +191,6 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
 
           {/* Right Actions: Language, Cart Button & Menu Toggle */}
           <div className="flex items-center gap-3 sm:gap-4">
-
             <LocaleSwitcher variant="pill" className="hidden sm:flex" />
             <LocaleSwitcher variant="compact" className="sm:hidden" />
 
@@ -217,7 +231,6 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               <span className="block w-3.5 h-[2px] bg-white transition-all duration-300 group-hover:w-6 group-hover:bg-[#F1E6C3]"></span>
             </button>
           </div>
-
         </div>
       </header>
 
@@ -242,7 +255,11 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                 />
                 {/* The wordmark is the brand's own spelling — it stays Latin in
                     both languages, like the logo beside it. */}
-                <span lang="en" dir="ltr" className="font-serif text-xl tracking-[0.15em] font-medium text-white">
+                <span
+                  lang="en"
+                  dir="ltr"
+                  className="font-serif text-xl tracking-[0.15em] font-medium text-white"
+                >
                   VOYA HOUSE
                 </span>
               </div>
@@ -319,7 +336,10 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                     >
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ background: `${booklet.color}20`, color: booklet.color }}
+                        style={{
+                          background: `${booklet.color}20`,
+                          color: booklet.color,
+                        }}
                       >
                         <Icon size={18} />
                       </div>
@@ -332,7 +352,8 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                         </p>
                       </div>
                       <span className="font-mono text-[10px] uppercase tracking-wider text-white/40 group-hover:text-white shrink-0">
-                        {tBooklets("open")} <span className="inline-block rtl:-scale-x-100">↗</span>
+                        {tBooklets("open")}{" "}
+                        <span className="inline-block rtl:-scale-x-100">↗</span>
                       </span>
                     </button>
                   );
@@ -357,13 +378,16 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
                         {totalItems > 0
                           ? t("unplacedItems", { count: totalItems })
                           : activeOrdersCount > 0
-                            ? t("ordersInProgress", { count: activeOrdersCount })
+                            ? t("ordersInProgress", {
+                                count: activeOrdersCount,
+                              })
                             : t("noItems")}
                       </span>
                     </div>
                   </div>
                   <span className="font-mono text-xs text-[#F1E6C3] font-bold">
-                    {t("view")} <span className="inline-block rtl:-scale-x-100">↗</span>
+                    {t("view")}{" "}
+                    <span className="inline-block rtl:-scale-x-100">↗</span>
                   </span>
                 </button>
               </div>
@@ -378,19 +402,20 @@ export default function Header({ onOpenBooklet }: HeaderProps) {
               </div>
 
               <div className="flex items-center gap-4 text-xs font-mono uppercase tracking-widest text-[#F1E6C3]">
-                {/* An address is a literal, not a phrase — it stays LTR so the
-                    local part doesn't get reordered around the @ in Arabic. */}
                 <a
-                  href="mailto:concierge@voyahouse.com"
+                  href={SOCIAL_LINKS.whatsapp}
+                  target="_blank"
+                  rel="noreferrer"
                   dir="ltr"
-                  className="hover:underline"
+                  className="inline-flex items-center gap-1.5 hover:underline"
                 >
-                  concierge@voyahouse.com
+                  <WhatsappIcon size={14} />
+                  WhatsApp
                 </a>
               </div>
             </div>
           </div>,
-          document.body
+          document.body,
         )}
     </>
   );

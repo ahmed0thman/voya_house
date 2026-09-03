@@ -106,13 +106,13 @@ export const structuredData = {
     foundingDate: "2026",
     logo: `${SITE_URL}/assets/logos/Asset 11.svg`,
     sameAs: [
-      // TODO: Replace with real social URLs when available
       "https://instagram.com/voyahouse",
-      "https://x.com/voyahouse",
+      "https://www.facebook.com/VoyaHouse",
+      "https://tiktok.com/@voya.house",
     ],
   },
 
-  /** Schema.org CafeOrCoffeeShop — the physical business. */
+  /** Shared across both branches — cuisine and hours don't vary by location. */
   business: {
     name: "Voya House",
     nameAr: "فويا هاوس",
@@ -121,21 +121,42 @@ export const structuredData = {
       ar: ["قهوة مختصة", "أكل صحي", "أكل بيتي"],
     },
     priceRange: "$$",
-    telephone: "+20-XXX-XXX-XXXX", // TODO: Replace with real phone
-    address: {
-      streetAddress: "123 Voyage Street",
-      streetAddressAr: "123 شارع فوياج",
-      addressLocality: "New Cairo",
-      addressLocalityAr: "القاهرة الجديدة",
-      addressRegion: "Cairo Governorate",
-      addressRegionAr: "محافظة القاهرة",
-      postalCode: "11835",
-      addressCountry: "EG",
-    },
     openingHours: "Mo-Su 07:00-23:00",
-    geo: {
-      latitude: 30.0131, // TODO: Replace with exact coordinates
-      longitude: 31.4966,
-    },
   },
+
+  /** One `CafeOrCoffeeShop` per physical branch — sourced from linktr.ee/voyahouse. */
+  branches: [
+    {
+      id: "elGazira",
+      nameSuffix: "El Gazira",
+      nameSuffixAr: "الجزيرة",
+      telephone: "+201103490030",
+      address: {
+        streetAddress: "Al Ahly Club",
+        streetAddressAr: "النادي الأهلي",
+        addressLocality: "El Gazira, Cairo",
+        addressLocalityAr: "الجزيرة، القاهرة",
+        addressRegion: "Cairo Governorate",
+        addressRegionAr: "محافظة القاهرة",
+        addressCountry: "EG",
+      },
+      geo: { latitude: 30.04471727, longitude: 31.22232108 },
+    },
+    {
+      id: "nasrCity",
+      nameSuffix: "Nasr City",
+      nameSuffixAr: "مدينة نصر",
+      telephone: "+201103490020",
+      address: {
+        streetAddress: "Al Ahly Club",
+        streetAddressAr: "النادي الأهلي",
+        addressLocality: "Nasr City, Cairo",
+        addressLocalityAr: "مدينة نصر، القاهرة",
+        addressRegion: "Cairo Governorate",
+        addressRegionAr: "محافظة القاهرة",
+        addressCountry: "EG",
+      },
+      geo: { latitude: 30.0709977, longitude: 31.357326 },
+    },
+  ],
 } as const;
