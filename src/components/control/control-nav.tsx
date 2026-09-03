@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/control/menu", label: "Menu", adminOnly: true },
   { href: "/control/tables", label: "Tables", adminOnly: true },
   { href: "/control/offers", label: "Offers", adminOnly: true },
+  { href: "/control/contact", label: "Contact", adminOnly: true },
   { href: "/control/users", label: "Users", adminOnly: true },
   { href: "/control/settings", label: "Settings", adminOnly: true },
 ] as const;

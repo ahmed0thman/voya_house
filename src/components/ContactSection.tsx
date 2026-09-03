@@ -1,11 +1,12 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { toast } from "sonner";
 import {
   Mail01Icon,
   Location01Icon,
@@ -17,39 +18,36 @@ import {
   Coffee01Icon,
   Leaf01Icon,
   Pizza01Icon,
+  WhatsappIcon,
+  InstagramIcon,
+  TiktokIcon,
+  Facebook02Icon,
+  GoogleMapsIcon,
 } from "hugeicons-react";
+import { useActiveContactSubjects, useSubmitContactMessage } from "@/hooks/use-contact";
+import { BRANCHES, SOCIAL_LINKS } from "@/lib/social-links";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const TOPICS = [
-  {
-    id: "general",
-    icon: SparklesIcon,
-    color: "#F1E6C3",
-  },
-  {
-    id: "coffee",
-    icon: Coffee01Icon,
-    color: "#F1E6C3",
-  },
-  {
-    id: "catering",
-    icon: Leaf01Icon,
-    color: "#B7D39A",
-  },
-  {
-    id: "events",
-    icon: Pizza01Icon,
-    color: "#D8A98F",
-  },
+/** Cycled by chip index so admin-managed subjects keep the same visual variety without needing per-subject icon management. */
+const TOPIC_PALETTE = [
+  { icon: SparklesIcon, color: "#F1E6C3" },
+  { icon: Coffee01Icon, color: "#F1E6C3" },
+  { icon: Leaf01Icon, color: "#B7D39A" },
+  { icon: Pizza01Icon, color: "#D8A98F" },
 ];
 
 export default function ContactSection() {
   const t = useTranslations("contactForm");
+  const tLocations = useTranslations("locations");
+  const locale = useLocale();
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedTopic, setSelectedTopic] = useState("general");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const { data: subjects } = useActiveContactSubjects();
+  const submitMessage = useSubmitContactMessage();
+  const isSubmitting = submitMessage.isPending;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -87,15 +85,26 @@ export default function ContactSection() {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 900);
+    submitMessage.mutate(
+      {
+        name: formData.name,
+        email: formData.email,
+        message: formData.message,
+        subjectId: selectedTopic ?? undefined,
+      },
+      {
+        onSuccess: () => setIsSubmitted(true),
+        onError: (error) => toast.error(error.message),
+      },
+    );
   };
 
-  const activeTopicObj =
-    TOPICS.find((t) => t.id === selectedTopic) || TOPICS[0];
+  const activeSubjectId = selectedTopic ?? subjects?.[0]?.id ?? null;
+  const activeSubjectIndex =
+    subjects?.findIndex((subject) => subject.id === activeSubjectId) ?? -1;
+  const activeTopicObj = TOPIC_PALETTE[
+    activeSubjectIndex >= 0 ? activeSubjectIndex % TOPIC_PALETTE.length : 0
+  ];
 
   return (
     <section
@@ -123,7 +132,8 @@ export default function ContactSection() {
           </div>
 
           <h2 className="contact-reveal font-serif text-4xl sm:text-6xl md:text-7xl font-medium tracking-tight text-white leading-tight">
-            {t("join")} <span className="text-[#F1E6C3] italic">{t("voyaHouse")}</span>
+            {t("join")}{" "}
+            <span className="text-[#F1E6C3] italic">{t("voyaHouse")}</span>
           </h2>
 
           <p className="contact-reveal font-sans text-sm sm:text-base text-white/70 max-w-lg mt-4 leading-relaxed">
@@ -169,13 +179,36 @@ export default function ContactSection() {
                   <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#F1E6C3] shrink-0 mt-0.5">
                     <Location01Icon size={16} />
                   </div>
-                  <div>
+                  <div className="flex-1 space-y-3">
                     <span className="block font-mono text-[10px] uppercase tracking-widest text-white/50">
-                      {t("address")}
+                      {tLocations("heading")}
                     </span>
-                    <p className="font-serif text-sm sm:text-base text-white/90 leading-snug mt-0.5">
-                      {t("addressValue")}
-                    </p>
+                    {BRANCHES.map((branch) => (
+                      <div key={branch.id}>
+                        <p className="font-serif text-sm sm:text-base text-white/90 leading-snug">
+                          {tLocations(`${branch.id}.label`)} —{" "}
+                          {tLocations(`${branch.id}.address`)}
+                        </p>
+                        <div className="flex items-center gap-3 mt-1 text-xs">
+                          <a
+                            href={`tel:${branch.phone}`}
+                            dir="ltr"
+                            className="font-mono text-white/60 hover:text-[#F1E6C3] transition-colors"
+                          >
+                            {branch.phone}
+                          </a>
+                          <a
+                            href={branch.mapUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 font-mono text-white/60 hover:text-[#F1E6C3] transition-colors"
+                          >
+                            <GoogleMapsIcon size={12} />
+                            {tLocations("viewOnMap")}
+                          </a>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -195,28 +228,64 @@ export default function ContactSection() {
 
                 <div className="flex items-start gap-4">
                   <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#F1E6C3] shrink-0 mt-0.5">
-                    <Mail01Icon size={16} />
+                    <WhatsappIcon size={16} />
                   </div>
                   <div>
                     <span className="block font-mono text-[10px] uppercase tracking-widest text-white/50">
                       {t("conciergeDesk")}
                     </span>
-                    <p dir="ltr" className="font-mono text-sm text-white/90 leading-snug mt-0.5 select-all">
-                      concierge@voyahouse.com
-                    </p>
+                    <a
+                      href={SOCIAL_LINKS.whatsapp}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="block font-mono text-sm text-white/90 hover:text-[#F1E6C3] transition-colors leading-snug mt-0.5"
+                    >
+                      {t("chatOnWhatsapp")}
+                    </a>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Bottom Ornamental Indicator */}
-            <div className="pt-8 mt-8 border-t border-white/10 flex items-center justify-between">
-              <span className="font-serif italic text-xs text-white/50">
+            <div className="pt-8 mt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="font-serif italic text-xs text-white/50 text-center sm:text-start">
                 &ldquo;{t("quote")}&rdquo;
               </span>
-              <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#F1E6C3] font-bold">
-                {t("est")}
-              </span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <a
+                    href={SOCIAL_LINKS.instagram}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t("followUs")}
+                    className="text-white/50 hover:text-[#F1E6C3] transition-colors"
+                  >
+                    <InstagramIcon size={15} />
+                  </a>
+                  <a
+                    href={SOCIAL_LINKS.tiktok}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t("followUs")}
+                    className="text-white/50 hover:text-[#F1E6C3] transition-colors"
+                  >
+                    <TiktokIcon size={15} />
+                  </a>
+                  <a
+                    href={SOCIAL_LINKS.facebook}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t("followUs")}
+                    className="text-white/50 hover:text-[#F1E6C3] transition-colors"
+                  >
+                    <Facebook02Icon size={15} />
+                  </a>
+                </div>
+                <span className="font-mono text-[9px] uppercase tracking-[0.25em] text-[#F1E6C3] font-bold">
+                  {t("est")}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -233,7 +302,9 @@ export default function ContactSection() {
                 <p className="font-sans text-sm text-white/70 max-w-sm mb-8 leading-relaxed">
                   {t.rich("thankYou", {
                     name: formData.name,
-                    b: (chunks) => <strong className="text-white">{chunks}</strong>,
+                    b: (chunks) => (
+                      <strong className="text-white">{chunks}</strong>
+                    ),
                   })}
                 </p>
                 <button
@@ -254,37 +325,43 @@ export default function ContactSection() {
               >
                 <div>
                   {/* Topic Selector Chips */}
-                  <div className="mb-6">
-                    <label className="block font-mono text-[10px] uppercase tracking-widest text-white/60 mb-3">
-                      {t("selectTopic")}
-                    </label>
-                    <div className="flex flex-wrap gap-2">
-                      {TOPICS.map((topic) => {
-                        const Icon = topic.icon;
-                        const isSelected = selectedTopic === topic.id;
-                        return (
-                          <button
-                            type="button"
-                            key={topic.id}
-                            onClick={() => setSelectedTopic(topic.id)}
-                            className={`px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 border transition-all duration-300 ${
-                              isSelected
-                                ? "bg-white text-black font-bold border-white shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-[1.02]"
-                                : "bg-white/5 text-white/70 border-white/10 hover:text-white hover:bg-white/10"
-                            }`}
-                          >
-                            <Icon
-                              size={14}
-                              className={
-                                isSelected ? "text-black" : "text-white/60"
-                              }
-                            />
-                            <span>{t(`topics.${topic.id}`)}</span>
-                          </button>
-                        );
-                      })}
+                  {!!subjects?.length && (
+                    <div className="mb-6">
+                      <label className="block font-mono text-[10px] uppercase tracking-widest text-white/60 mb-3">
+                        {t("selectTopic")}
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {subjects.map((subject, index) => {
+                          const { icon: Icon } =
+                            TOPIC_PALETTE[index % TOPIC_PALETTE.length];
+                          const isSelected = activeSubjectId === subject.id;
+                          const label =
+                            (locale === "ar" && subject.labelAr) ||
+                            subject.label;
+                          return (
+                            <button
+                              type="button"
+                              key={subject.id}
+                              onClick={() => setSelectedTopic(subject.id)}
+                              className={`px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 border transition-all duration-300 ${
+                                isSelected
+                                  ? "bg-white text-black font-bold border-white shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-[1.02]"
+                                  : "bg-white/5 text-white/70 border-white/10 hover:text-white hover:bg-white/10"
+                              }`}
+                            >
+                              <Icon
+                                size={14}
+                                className={
+                                  isSelected ? "text-black" : "text-white/60"
+                                }
+                              />
+                              <span>{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Input Fields */}
                   <div className="space-y-4">
