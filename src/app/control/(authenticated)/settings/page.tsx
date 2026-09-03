@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/lib/dal";
 import { SystemStatus } from "@/components/control/system-status";
+import { WhatsappSettingsCard } from "@/components/control/whatsapp-settings-card";
 
 export default async function ControlSettingsPage() {
   await requireAdmin();
@@ -12,6 +13,7 @@ export default async function ControlSettingsPage() {
           System configuration and status.
         </p>
       </div>
+      <WhatsappSettingsCard />
       <SystemStatus />
     </div>
   );
