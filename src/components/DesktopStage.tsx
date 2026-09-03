@@ -818,7 +818,10 @@ export default function DesktopStage({
             width: "58%",
             background:
               "radial-gradient(ellipse at 50% 60%, #F0ECE7 0%, #E5E1DA 100%)",
-            boxShadow: "inset -80px 0 120px 40px rgba(0,0,0,0.5)",
+            boxShadow:
+              dirFactor === -1
+                ? "inset 80px 0 120px 40px rgba(0,0,0,0.5)"
+                : "inset -80px 0 120px 40px rgba(0,0,0,0.5)",
           }}
         >
           {/* Smooth gradient shadow fading from the dark left into the background */}
@@ -829,8 +832,7 @@ export default function DesktopStage({
               bottom: 0,
               insetInlineStart: 0,
               width: "45%",
-              background:
-                "linear-gradient(to right, rgba(8,9,7,1) 0%, rgba(8,9,7,0.9) 10%, rgba(8,9,7,0.7) 25%, rgba(8,9,7,0.4) 45%, rgba(8,9,7,0.15) 70%, rgba(8,9,7,0.02) 90%, transparent 100%)",
+              background: `linear-gradient(to ${dirFactor === -1 ? "left" : "right"}, rgba(8,9,7,1) 0%, rgba(8,9,7,0.9) 10%, rgba(8,9,7,0.7) 25%, rgba(8,9,7,0.4) 45%, rgba(8,9,7,0.15) 70%, rgba(8,9,7,0.02) 90%, transparent 100%)`,
               zIndex: 10,
               pointerEvents: "none" as const,
             }}
