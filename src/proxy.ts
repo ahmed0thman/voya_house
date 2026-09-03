@@ -12,11 +12,14 @@ const handleGuestLocale = createIntlMiddleware(routing);
  * `(authenticated)` layout and every mutating Server Action. This just
  * keeps unauthenticated users from ever seeing the control board shell.
  */
+/** Reachable while signed out — everything else under `/control` requires a session cookie. */
+const PUBLIC_CONTROL_PATHS = new Set(["/control/login", "/control/forgot-password"]);
+
 function handleControlAuth(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const hasSessionCookie = request.cookies.has(SESSION_COOKIE_NAME);
 
-  if (pathname === "/control/login") {
+  if (PUBLIC_CONTROL_PATHS.has(pathname)) {
     if (hasSessionCookie) {
       return NextResponse.redirect(new URL("/control", request.url));
     }
