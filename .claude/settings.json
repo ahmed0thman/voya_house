@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c 'import sys,json *)",
+      "Bash(python3 -c ' *)",
+      "Bash(kill 50857)",
+      "Bash(lsof -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(nohup npm run dev)",
+      "Bash(disown)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/control/login)",
+      "Bash(node -e ' *)",
+      "Bash(bash -c 'set -a; source .env; set +a; DB_URL=\"${DATABASE_URL%%\\\\?*}\"; psql \"$DB_URL\" -c \"select id, label, label_ar, is_active, sort_order from contact_subjects;\" -c \"select count\\(*\\) from contact_messages;\"')"
+    ]
+  }
+}
