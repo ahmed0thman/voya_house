@@ -366,7 +366,7 @@ export const listOrdersByType = defineAction({
         status: { notIn: [OrderStatus.SERVED, OrderStatus.REJECTED] },
       },
       include: { items: true },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
     });
 
     return orders.map((order) => toOrderDTO(order, null));
