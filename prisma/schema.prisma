@@ -30,6 +30,9 @@ model Category {
   brandId   String   @map("brand_id")
   brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
   title     String
+  /// Arabic translation of `title`. Nullable — falls back to `title` on the
+  /// public menu when a category hasn't been translated yet.
+  titleAr   String?  @map("title_ar")
   /// URL-safe anchor, unique per brand (e.g. "signature-roasts")
   slug      String
   isActive  Boolean  @default(true) @map("is_active")
@@ -49,21 +52,66 @@ enum UserRole {
   STAFF
 }
 
-/// Control-board accounts. No login/session system yet — see AGENTS docs and
-/// README-BACKEND.md; this table exists so accounts can be managed ahead of
-/// that landing.
+/// Control-board accounts. No self-serve signup — see AGENTS docs and
+/// README-BACKEND.md; accounts are created by an Admin from the Users page.
 model User {
   id           String   @id @default(uuid(7))
   name         String
   username     String   @unique
+  /// Required for ADMIN accounts (enforced in the server action, not here) —
+  /// where the login 2FA code is sent. Optional for STAFF, who don't get 2FA.
+  email        String?  @unique
   passwordHash String   @map("password_hash")
   role         UserRole @default(STAFF)
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  sessions Session[]
+  sessions                Session[]
+  twoFactorChallenges     TwoFactorChallenge[]
+  passwordResetChallenges PasswordResetChallenge[]
 
   @@map("users")
+}
+
+/// One pending admin login, between password verification and 2FA code entry.
+/// Deleted as soon as it's consumed (correct code) or superseded (a fresh
+/// login attempt); an expired, never-verified row is just skipped as invalid,
+/// same tolerance the `sessions` table has — see README-BACKEND.md.
+model TwoFactorChallenge {
+  id        String   @id @default(uuid(7))
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// SHA-256 hash of the random token held in the browser's short-lived
+  /// challenge cookie — same "only the hash is stored" pattern as `Session`.
+  tokenHash String   @unique @map("token_hash")
+  /// SHA-256 hash of the 6-digit code emailed to the admin.
+  codeHash  String   @map("code_hash")
+  attempts  Int      @default(0)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("two_factor_challenges")
+}
+
+/// Admin-only "forgot password" flow — a user who isn't signed in proves they
+/// own the account's email (not its password) before choosing a new one.
+/// `verified` is the hinge between the two steps: the code-entry step flips it
+/// to true, and only then does the set-new-password step accept this row as
+/// authorization. Same expire/attempt-cap tolerance as `TwoFactorChallenge`.
+model PasswordResetChallenge {
+  id        String   @id @default(uuid(7))
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique @map("token_hash")
+  codeHash  String   @map("code_hash")
+  verified  Boolean  @default(false)
+  attempts  Int      @default(0)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("password_reset_challenges")
 }
 
 /// Server-side session store — the browser only ever holds an opaque token;
@@ -83,18 +131,23 @@ model Session {
 }
 
 model Item {
-  id          String   @id @default(uuid(7))
-  categoryId  String   @map("category_id")
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  name        String
-  description String?
-  price       Decimal  @db.Decimal(10, 2)
+  id            String   @id @default(uuid(7))
+  categoryId    String   @map("category_id")
+  category      Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  name          String
+  /// Arabic translation of `name`. Nullable — falls back to `name` on the
+  /// public menu when an item hasn't been translated yet.
+  nameAr        String?  @map("name_ar")
+  description   String?
+  /// Arabic translation of `description`. Same English fallback as `nameAr`.
+  descriptionAr String?  @map("description_ar")
+  price         Decimal  @db.Decimal(10, 2)
   /// Cloudflare R2 object keys — resolved to public URLs at read time via R2_PUBLIC_URL
-  images      String[] @default([])
-  isAvailable Boolean  @default(true) @map("is_available")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  images        String[] @default([])
+  isAvailable   Boolean  @default(true) @map("is_available")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   orderItems OrderItem[]
 
@@ -253,4 +306,57 @@ model CodeOffer {
   updatedAt          DateTime     @updatedAt @map("updated_at")
 
   @@map("code_offers")
+}
+
+/// A pre-set subject an admin defines for the landing page's contact form —
+/// shown to guests as a chip to pick from before writing their message.
+model ContactSubject {
+  id        String   @id @default(uuid(7))
+  label     String
+  /// Arabic translation of `label`. Nullable — falls back to `label` on the
+  /// public site when a subject hasn't been translated yet.
+  labelAr   String?  @map("label_ar")
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  messages ContactMessage[]
+
+  @@map("contact_subjects")
+}
+
+/// A message submitted through the landing page's contact form.
+model ContactMessage {
+  id        String          @id @default(uuid(7))
+  name      String
+  email     String
+  message   String
+  subjectId String?         @map("subject_id")
+  subject   ContactSubject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  /// Snapshot of the subject's labels at submit time — same reasoning as
+  /// OrderItem's name/price snapshot: a later rename or deletion of the
+  /// subject must not rewrite history the admin already saw.
+  subjectLabel   String?    @map("subject_label")
+  subjectLabelAr String?    @map("subject_label_ar")
+  createdAt DateTime        @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
+/// Single row (id is always the literal "singleton", enforced in the server
+/// action layer, not here) holding restaurant-wide config edited from the
+/// control board's Settings page. Grows as more such settings show up.
+model AppSettings {
+  id String @id
+
+  /// Digits only, international format, no leading "+" (e.g. "201097073224") —
+  /// exactly what a wa.me link expects. Null until an admin sets one, in which
+  /// case the guest checkout flow's "send to WhatsApp" step is skipped.
+  whatsappOrderNumber String? @map("whatsapp_order_number")
+
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
 }
