@@ -311,7 +311,22 @@ function CustomerDetails({ order }: { order: OrderDTO }) {
   );
 }
 
-export function OrderTicket({ order }: { order: OrderDTO }) {
+/** Where this ticket lives outside its own tab — shown only in cross-tab search results, where that's no longer implied by which panel it's rendered in. */
+export function channelLabelFor(order: OrderDTO): string {
+  if (order.type === "ON_TABLE") {
+    return order.tableNumber !== null ? `Table ${order.tableNumber}` : "On Table";
+  }
+  return order.type === "TAKEAWAY" ? "Takeaway" : "Delivery";
+}
+
+export function OrderTicket({
+  order,
+  channelLabel,
+}: {
+  order: OrderDTO;
+  /** Set only when rendered outside its normal tab (e.g. search results) — see `channelLabelFor`. */
+  channelLabel?: string;
+}) {
   const updateStatus = useUpdateOrderStatus();
 
   const nextAction = nextStepFor(order);
@@ -332,6 +347,7 @@ export function OrderTicket({ order }: { order: OrderDTO }) {
           <Badge variant="outline" className="font-mono">
             {formatTicketId(order.id)}
           </Badge>
+          {channelLabel && <Badge variant="secondary">{channelLabel}</Badge>}
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <ClockIcon className="size-3" />
             {TIME_FORMAT.format(new Date(order.createdAt))}
