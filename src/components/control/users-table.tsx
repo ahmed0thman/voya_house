@@ -31,6 +31,7 @@ function matchesSearch(user: UserDTO, query: string): boolean {
   return (
     user.name.toLowerCase().includes(needle) ||
     user.username.toLowerCase().includes(needle) ||
+    (user.email?.toLowerCase().includes(needle) ?? false) ||
     ROLE_LABEL[user.role].toLowerCase().includes(needle)
   );
 }
@@ -51,7 +52,7 @@ export function UsersTable() {
         <div className="relative w-full max-w-sm">
           <SearchIcon className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name, username or role…"
+            placeholder="Search by name, username, email or role…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             className="ps-8"
@@ -88,6 +89,7 @@ export function UsersTable() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Username</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className="w-px" />
               </TableRow>
@@ -98,6 +100,9 @@ export function UsersTable() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {user.username}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {user.email ?? "—"}
                   </TableCell>
                   <TableCell>
                     <Badge variant={user.role === "ADMIN" ? "default" : "secondary"}>

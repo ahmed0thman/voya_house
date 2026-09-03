@@ -50,10 +50,14 @@ const USERNAME_SCHEMA = z
   .max(50)
   .regex(/^[a-z0-9._-]+$/i, "Only letters, numbers, dots, underscores and hyphens");
 
+/** Blank is allowed (Staff don't need one) — the ADMIN-requires-email rule is a `.refine` below. */
+const EMAIL_SCHEMA = z.union([z.literal(""), z.email("Enter a valid email address")]);
+
 const createFormSchema = z
   .object({
     name: z.string().trim().min(1, "Name is required").max(120),
     username: USERNAME_SCHEMA,
+    email: EMAIL_SCHEMA,
     role: userRoleSchema,
     password: z.string().min(8, "Password must be at least 8 characters").max(72),
     passwordConfirmation: z.string(),
@@ -61,12 +65,17 @@ const createFormSchema = z
   .refine((data) => data.password === data.passwordConfirmation, {
     message: "Passwords do not match",
     path: ["passwordConfirmation"],
+  })
+  .refine((data) => data.role !== "ADMIN" || data.email !== "", {
+    message: "Email is required for Admins — it's where their 2FA code is sent",
+    path: ["email"],
   });
 
 const editFormSchema = z
   .object({
     name: z.string().trim().min(1, "Name is required").max(120),
     username: USERNAME_SCHEMA,
+    email: EMAIL_SCHEMA,
     role: userRoleSchema,
     // Blank means "keep the current password".
     password: z.string().max(72),
@@ -79,11 +88,16 @@ const editFormSchema = z
   .refine((data) => data.password === data.passwordConfirmation, {
     message: "Passwords do not match",
     path: ["passwordConfirmation"],
+  })
+  .refine((data) => data.role !== "ADMIN" || data.email !== "", {
+    message: "Email is required for Admins — it's where their 2FA code is sent",
+    path: ["email"],
   });
 
 type FormValues = {
   name: string;
   username: string;
+  email: string;
   role: CreateUserInput["role"];
   password: string;
   passwordConfirmation: string;
@@ -162,11 +176,19 @@ function UserFormFields({
       ? {
           name: props.user.name,
           username: props.user.username,
+          email: props.user.email ?? "",
           role: props.user.role,
           password: "",
           passwordConfirmation: "",
         }
-      : { name: "", username: "", role: "STAFF", password: "", passwordConfirmation: "" },
+      : {
+          name: "",
+          username: "",
+          email: "",
+          role: "STAFF",
+          password: "",
+          passwordConfirmation: "",
+        },
   });
 
   const onSubmit = (values: FormValues) => {
@@ -176,6 +198,7 @@ function UserFormFields({
           id: props.user.id,
           name: values.name,
           username: values.username,
+          email: values.email,
           role: values.role,
           password: values.password || undefined,
           passwordConfirmation: values.passwordConfirmation || undefined,
@@ -225,6 +248,21 @@ function UserFormFields({
             {...register("username")}
           />
           <FieldError errors={[errors.username]} />
+        </Field>
+
+        <Field data-invalid={!!errors.email}>
+          <FieldLabel htmlFor="user-email">Email</FieldLabel>
+          <Input
+            id="user-email"
+            type="email"
+            placeholder="e.g. amira@voyahouse.com"
+            autoComplete="email"
+            {...register("email")}
+          />
+          <FieldDescription>
+            Required for Admins — that&apos;s where their sign-in verification code is sent.
+          </FieldDescription>
+          <FieldError errors={[errors.email]} />
         </Field>
 
         <Field data-invalid={!!errors.role}>

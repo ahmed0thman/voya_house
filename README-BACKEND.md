@@ -148,6 +148,35 @@ bucket through another tool, outside this app — for that, Cloudflare's own
 usage notifications (dashboard → Notifications → add one for R2) are worth
 turning on as a second, informational layer.
 
+## Setting up email (Admin 2FA codes)
+
+Admin accounts require a 2FA code at login, emailed via
+[Resend](https://resend.com) — chosen for its generous free tier (3,000
+emails/month, 100/day, no card required), first-class Next.js support, and
+being built by the same team as `react-email`, which renders the templates.
+
+1. Sign up at resend.com and create an API key (dashboard → **API Keys**).
+   → `RESEND_API_KEY`
+2. Leave `EMAIL_FROM` unset to use Resend's shared sandbox sender
+   (`onboarding@resend.dev`) — no DNS setup, but it can only deliver to the
+   email address the Resend account itself was signed up with. To email real
+   admins, verify a domain in the Resend dashboard and set `EMAIL_FROM` to an
+   address on it (e.g. `"Voya Control Board <no-reply@voyahouse.com>"`).
+
+```
+RESEND_API_KEY="re_..."
+EMAIL_FROM="Voya Control Board <onboarding@resend.dev>"   # optional, see above
+```
+
+- `src/emails/two-factor-code.tsx` — the email template, built with
+  `@react-email/components` and rendered to HTML server-side
+  (`src/lib/email/send-two-factor-code.ts`) before being handed to Resend.
+- `src/lib/two-factor.ts` — code generation/hashing and the short-lived
+  challenge cookie, same "only the hash is stored" pattern as `Session`
+  (see Authentication below).
+- Staff accounts don't need an email or 2FA — only `ADMIN` does, enforced in
+  `src/lib/validations/user.ts`.
+
 ## Authentication
 
 Session-based, not JWT — a `Session` row per login, not a self-contained
@@ -178,14 +207,30 @@ a non-issue at this app's scale.
   Staff can sign in and manage the Dashboard/Menu; `/control/users` and
   `/control/settings` redirect Staff back to the dashboard (`requireAdmin()`
   in both the page and its backing Server Actions).
+- **Admin 2FA**: after a correct password, an `ADMIN` gets a 6-digit code
+  emailed to them (see "Setting up email" above) and must enter it before a
+  real session is created. The `TwoFactorChallenge` row holding that pending
+  login expires after 10 minutes and allows 5 wrong guesses before it's dead;
+  either way the admin just signs in again. Staff skip this entirely — no
+  email, no code, straight to a session.
+- **Admin password reset** (`/control/forgot-password`, `src/server/actions/password-reset.ts`):
+  Admin-only, same reasoning as 2FA — Staff have no email to send a code to.
+  Three steps sharing one `PasswordResetChallenge` row: enter username (always
+  a generic "if that account exists…" response, whether or not it does — an
+  outsider can't use this to enumerate usernames), enter the emailed code
+  (flips `verified` to `true`), then set a new password (only accepted once
+  `verified`). 15-minute expiry, 5 wrong-code attempts. Setting the new
+  password deletes every one of that admin's `Session` rows — a reset signs
+  you out everywhere, not just gives you a new password alongside old
+  sessions that still work.
 
-No self-serve signup, no password reset, no "log out everywhere" — accounts
-are created by an Admin from the Users page. Expired session rows aren't
-swept by a cron job; they just get skipped as invalid until whoever wrote
-the row logs in again and any *unrelated* session happens to be validated
-past its refresh threshold. At this app's traffic that's not worth building
-yet, but it's the first thing to add if the `sessions` table ever grows
-noticeably.
+No self-serve signup, no "log out everywhere" (aside from what a password
+reset itself does) — accounts are created by an Admin from the Users page.
+Expired session/challenge rows aren't swept by a cron job; they just get
+skipped as invalid until whoever wrote the row tries again and any
+*unrelated* session happens to be validated past its refresh threshold. At
+this app's traffic that's not worth building yet, but it's the first thing to
+add if these tables ever grow noticeably.
 
 ## What I deliberately did not do
 

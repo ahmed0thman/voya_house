@@ -447,10 +447,11 @@ async function seedMockOrders(itemPool: ItemPoolEntry[], tables: TableRef[]) {
 async function main() {
   await prisma.user.upsert({
     where: { username: "admin" },
-    update: {},
+    update: { email: "ahmedothman.code@gmail.com" },
     create: {
       name: "Admin",
       username: "admin",
+      email: "ahmedothman.code@gmail.com",
       passwordHash: hashPassword("1234qwer"),
       role: "ADMIN",
     },
