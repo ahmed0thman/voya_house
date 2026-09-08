@@ -67,14 +67,11 @@ export function defineAction<TAuth extends AuthMode>(config: BaseConfig<TAuth> &
     const t = config.auth === "public" ? await getTranslations("errors") : null;
 
     try {
-      // Order matters: authenticate before looking at anything the caller sent.
-      const user =
-        config.auth === "admin"
-          ? await requireAdmin()
-          : config.auth === "user"
-            ? await requireUser()
-            : null;
-
+      // Rate limit before anything else — including auth — so a flood of
+      // requests with an invalid/forged session cookie can't skip the limiter
+      // by getting redirected out of requireUser()/requireAdmin() first, each
+      // still having paid for a session lookup. It only reads the client IP,
+      // not caller-supplied input, so this doesn't touch the invariant below.
       const rateLimit = checkRateLimit(
         await getClientIp(),
         config.rateLimit ?? DEFAULT_RATE_LIMIT,
@@ -89,6 +86,14 @@ export function defineAction<TAuth extends AuthMode>(config: BaseConfig<TAuth> &
           },
         };
       }
+
+      // Order matters: authenticate before looking at anything the caller sent.
+      const user =
+        config.auth === "admin"
+          ? await requireAdmin()
+          : config.auth === "user"
+            ? await requireUser()
+            : null;
 
       let input = rawInput;
       if (config.schema) {

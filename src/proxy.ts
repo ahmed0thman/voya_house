@@ -32,7 +32,10 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   // Next's statically rendered output and the reviewed JSON-LD include inline
   // scripts; the static inline styles also include a runtime chart stylesheet.
-  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
+  // va.vercel-scripts.com is Speed Insights' script host — used in dev always,
+  // and in production too unless this deploys on Vercel itself (which proxies
+  // it same-origin instead).
+  `script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com${isProduction ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src ${imageSources.join(" ")} data: blob:`,
   `connect-src ${connectSources.join(" ")}`,
