@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Outfit, Cormorant_Garamond, IBM_Plex_Sans_Arabic, Amiri } from "next/font/google";
+import { Inter, Outfit, Cormorant_Garamond, Noto_Sans_Arabic, Amiri } from "next/font/google";
 import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -26,16 +26,14 @@ const cormorant = Cormorant_Garamond({
  * The Arabic side of the type system, chosen to carry the same voice rather
  * than merely to render the glyphs.
  *
- * IBM Plex Sans Arabic answers Inter: both are neutral, generously spaced
- * workhorses, so UI chrome reads identically in either language. Amiri answers
- * Cormorant — each is a revival of a classic book face (a Naskh and a Garamond),
- * which is what keeps the editorial headline voice intact across the switch.
- * Arabic has no serif/sans split of its own, so this pairing is a deliberate
- * mapping of *role*, not a search for a literal equivalent.
+ * Noto Sans Arabic is used for body copy, labels, controls, and smaller titles
+ * because its open letterforms stay clear at compact sizes. Amiri remains the
+ * Arabic display face, preserving the editorial voice of the main headings.
+ * Arabic has no serif/sans split of its own, so this pairing maps fonts by role.
  */
-const plexArabic = IBM_Plex_Sans_Arabic({
+const notoArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
-  weight: ["400", "500", "600", "700"],
+  weight: "variable",
   variable: "--font-arabic-sans",
 });
 const amiri = Amiri({
@@ -137,7 +135,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[lo
     inter.variable,
     outfit.variable,
     cormorant.variable,
-    ...(dir === "rtl" ? [plexArabic.variable, amiri.variable] : []),
+    ...(dir === "rtl" ? [notoArabic.variable, amiri.variable] : []),
   ].join(" ");
 
   return (
