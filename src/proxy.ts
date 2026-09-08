@@ -6,6 +6,76 @@ import { routing } from "@/i18n/routing";
 
 const handleGuestLocale = createIntlMiddleware(routing);
 
+const r2PublicUrl = process.env.CLOUDFLARE_R2_PUBLIC_URL ?? "";
+const r2Hostname = r2PublicUrl ? new URL(r2PublicUrl).hostname : undefined;
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://voyahouse.com";
+const appOrigin = new URL(appUrl).origin;
+const r2Origin = r2Hostname ? `https://${r2Hostname}` : undefined;
+const r2AccountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
+const r2StorageOrigin = r2AccountId ? `https://${r2AccountId}.r2.cloudflarestorage.com` : undefined;
+const isProduction = process.env.NODE_ENV === "production";
+
+const contentSources = ["'self'", appOrigin, r2Origin].filter(
+  (source): source is string => Boolean(source),
+);
+const imageSources = [
+  ...contentSources,
+  "https://unpkg.com",
+  "https://*.tile.openstreetmap.org",
+];
+const connectSources = [
+  ...contentSources,
+  r2StorageOrigin,
+  "https://nominatim.openstreetmap.org",
+].filter((source): source is string => Boolean(source));
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  // Next's statically rendered output and the reviewed JSON-LD include inline
+  // scripts; the static inline styles also include a runtime chart stylesheet.
+  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
+  "style-src 'self' 'unsafe-inline'",
+  `img-src ${imageSources.join(" ")} data: blob:`,
+  `connect-src ${connectSources.join(" ")}`,
+  "font-src 'self' data:",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+const permissionsPolicy = [
+  "accelerometer=()",
+  "autoplay=()",
+  "camera=()",
+  "display-capture=()",
+  "encrypted-media=()",
+  "fullscreen=()",
+  "gamepad=()",
+  // The guest delivery picker uses geolocation, restricted to this origin.
+  "geolocation=(self)",
+  "gyroscope=()",
+  "magnetometer=()",
+  "microphone=()",
+  "payment=()",
+  "picture-in-picture=()",
+  "publickey-credentials-get=()",
+  "screen-wake-lock=()",
+  "usb=()",
+  "web-share=()",
+  "xr-spatial-tracking=()",
+].join(", ");
+
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set("Content-Security-Policy", contentSecurityPolicy);
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", permissionsPolicy);
+  if (isProduction) {
+    response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  return response;
+}
+
 /**
  * Optimistic check only (cookie presence, no DB hit) — the real,
  * DB-validated check lives in the DAL (`src/lib/dal.ts`) and runs in the
@@ -47,10 +117,10 @@ function handleControlAuth(request: NextRequest) {
  */
 export function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/control")) {
-    return handleControlAuth(request);
+    return addSecurityHeaders(handleControlAuth(request));
   }
 
-  return handleGuestLocale(request);
+  return addSecurityHeaders(handleGuestLocale(request));
 }
 
 export const config = {

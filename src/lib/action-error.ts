@@ -3,6 +3,7 @@ export type ActionErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "UNAUTHORIZED"
+  | "RATE_LIMITED"
   /** Never thrown by app code — what `defineAction` reports when it catches a real bug. */
   | "UNEXPECTED";
 

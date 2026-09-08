@@ -82,6 +82,7 @@ async function issueTwoFactorChallenge(user: { id: string; name: string; email: 
 
 export const login = defineAction({
   auth: "public",
+  rateLimit: { limit: 5, windowMs: 15 * 60_000 },
   schema: loginSchema,
   handler: async (input): Promise<LoginResult> => {
     const user = await prisma.user.findUnique({ where: { username: input.username } });
@@ -106,6 +107,7 @@ export const login = defineAction({
 
 export const verifyTwoFactorCode = defineAction({
   auth: "public",
+  rateLimit: { limit: 10, windowMs: 15 * 60_000 },
   schema: verifyTwoFactorSchema,
   handler: async (input): Promise<AuthUserDTO> => {
     const token = await getTwoFactorChallengeTokenFromCookies();
@@ -159,6 +161,7 @@ export const verifyTwoFactorCode = defineAction({
 
 export const resendTwoFactorCode = defineAction({
   auth: "public",
+  rateLimit: { limit: 3, windowMs: 15 * 60_000 },
   handler: async (): Promise<{ maskedEmail: string }> => {
     const token = await getTwoFactorChallengeTokenFromCookies();
     if (!token) {

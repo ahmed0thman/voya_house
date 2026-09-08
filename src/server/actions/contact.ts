@@ -154,6 +154,7 @@ export const reorderContactSubjects = defineAction({
  */
 export const submitContactMessage = defineAction({
   auth: "public",
+  rateLimit: { limit: 5, windowMs: 15 * 60_000 },
   schema: submitContactMessageSchema,
   handler: async (input): Promise<{ id: string }> => {
     const subject = input.subjectId

@@ -64,6 +64,7 @@ async function issuePasswordResetChallenge(user: { id: string; name: string; ema
 
 export const requestPasswordReset = defineAction({
   auth: "public",
+  rateLimit: { limit: 3, windowMs: 15 * 60_000 },
   schema: requestPasswordResetSchema,
   handler: async (input): Promise<{ ok: true }> => {
     const user = await prisma.user.findUnique({ where: { username: input.username } });
@@ -82,6 +83,7 @@ export const requestPasswordReset = defineAction({
 
 export const verifyPasswordResetCode = defineAction({
   auth: "public",
+  rateLimit: { limit: 10, windowMs: 15 * 60_000 },
   schema: verifyPasswordResetCodeSchema,
   handler: async (input): Promise<{ ok: true }> => {
     const token = await getPasswordResetChallengeTokenFromCookies();
@@ -123,6 +125,7 @@ export const verifyPasswordResetCode = defineAction({
 
 export const resendPasswordResetCode = defineAction({
   auth: "public",
+  rateLimit: { limit: 3, windowMs: 15 * 60_000 },
   handler: async (): Promise<{ ok: true }> => {
     const token = await getPasswordResetChallengeTokenFromCookies();
     if (!token) throw EXPIRED_ERROR;

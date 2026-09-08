@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { ActionError } from "@/lib/action-error";
 import type { ActionResult } from "@/lib/action-result";
 import { requireUser, requireAdmin } from "@/lib/dal";
+import { checkRateLimit, getClientIp, type RateLimitConfig } from "@/lib/rate-limit";
 import type { SessionUser } from "@/lib/session";
 
 /**
@@ -21,7 +22,12 @@ type ActionContext<TAuth extends AuthMode> = TAuth extends "public"
 
 type BaseConfig<TAuth extends AuthMode> = {
   auth: TAuth;
+  /** Uses the default below unless an action needs a tighter request budget. */
+  rateLimit?: RateLimitConfig;
 };
+
+/** Applies to every Server Action, including authenticated control-board actions. */
+const DEFAULT_RATE_LIMIT: RateLimitConfig = { limit: 60, windowMs: 60_000 };
 
 /** The most useful message for a toast: the first thing that actually failed. */
 function firstIssueMessage(error: z.ZodError, fallback: string): string {
@@ -44,12 +50,11 @@ export function defineAction<TAuth extends AuthMode, TOutput>(
 
 /**
  * Wraps a Server Action with the three things every one of them needs: an auth
- * check, schema validation, and a failure channel that survives a production
- * build. The handler stays free to `throw new ActionError(...)` for expected
- * problems — that's caught here and returned as data.
+ * check, rate limit, schema validation, and a failure channel that survives a
+ * production build. The handler stays free to `throw new ActionError(...)` for
+ * expected problems — that's caught here and returned as data.
  */
-export function defineAction<TAuth extends AuthMode>(config: {
-  auth: TAuth;
+export function defineAction<TAuth extends AuthMode>(config: BaseConfig<TAuth> & {
   schema?: z.ZodType<unknown>;
   handler: (input: never, ctx: { user: SessionUser | null }) => Promise<unknown>;
 }) {
@@ -69,6 +74,21 @@ export function defineAction<TAuth extends AuthMode>(config: {
           : config.auth === "user"
             ? await requireUser()
             : null;
+
+      const rateLimit = checkRateLimit(
+        await getClientIp(),
+        config.rateLimit ?? DEFAULT_RATE_LIMIT,
+        config,
+      );
+      if (!rateLimit.allowed) {
+        return {
+          ok: false,
+          error: {
+            message: `Too many requests. Please try again in ${Math.max(1, Math.ceil(rateLimit.retryAfterMs / 1000))} seconds.`,
+            code: "RATE_LIMITED",
+          },
+        };
+      }
 
       let input = rawInput;
       if (config.schema) {

@@ -10,7 +10,19 @@ const r2Hostname = r2PublicUrl
   ? new URL(r2PublicUrl).hostname
   : undefined;
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://voyahouse.com";
+const appHost = new URL(appUrl).host;
+const allowedActionOrigins = [
+  appHost,
+  ...(process.env.NODE_ENV === "development" ? ["localhost", "localhost:3000"] : []),
+];
+
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      allowedOrigins: allowedActionOrigins,
+    },
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     ...(r2Hostname && {
